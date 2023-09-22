@@ -6,7 +6,6 @@ import pytest
 from scipy import sparse
 
 
-
 # First-party/Local
 from pandorapsf import PACKAGEDIR, PSF, TESTDIR, Scene, TraceScene, __version__
 
@@ -30,14 +29,16 @@ def test_vis_grad_scene():
     )
     locations = np.vstack([row.ravel(), column.ravel()]).T
     s = Scene(locations=locations, shape=(100, 100), corner=(0, 0))
-    # img0 = s.dX0.dot(np.ones(s.dX0.shape[1])).reshape((100, 100))
-    # img1 = s.dX1.dot(np.ones(s.dX1.shape[1])).reshape((100, 100))
-    # img = img0 + img 1
-    img = sparse.vstack([s.dX0, s.dX1]).dot(np.ones(len(locations))).reshape((100, 100))
+    img0 = s.dX0.dot(np.ones(s.dX0.shape[1])).reshape((100, 100))
+    img1 = s.dX1.dot(np.ones(s.dX1.shape[1])).reshape((100, 100))
+    img = img0 + img1
     fig, ax = plt.subplots()
     ax.imshow(img, origin="lower")
     ax.set(title="Simple Visible Grad Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(TESTDIR + "output/test_vis_grad_scene.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_grad_scene.png", dpi=150, bbox_inches="tight"
+    )
+
 
 def test_simple_IR_scene():
     row, column = np.meshgrid(
@@ -55,9 +56,11 @@ def test_simple_IR_scene():
 
 def test_trace_scene():
     locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
-    spectra = np.ones(100)[:, None]
     p = PSF.from_name("nirda")
+    spectra = np.ones(p.trace_dpixel.shape[0])[:, None]
     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
+
+    img = s.X.dot(spectra.ravel()).reshape(s.shape)
 
     locations = np.vstack([np.asarray([250, 300]), np.asarray([40, 60])]).T
     spectra = np.ones(s.psf.trace_dpixel.shape[0])[:, None] * np.ones(2)
@@ -67,11 +70,20 @@ def test_trace_scene():
 
     img = s.model(spectra)
     fig, ax = plt.subplots()
-    ax.imshow(np.log10(img), origin="lower")
+    ax.imshow(img, origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight")
-    
+
+    img = s.model(spectra)
+    fig, ax = plt.subplots()
+    img0 = s.dX0.dot(spectra.ravel()).reshape(s.shape)
+    img1 = s.dX1.dot(spectra.ravel()).reshape(s.shape)
+    img = img0 + img1
+    ax.imshow(img, origin="lower")
+    ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
+    fig.savefig(
+        TESTDIR + "output/test_nir_trace_grad.png", dpi=150, bbox_inches="tight"
+    )
+
     with pytest.raises(ValueError):
         img = s.model(spectra[:, 0][:, None])
-    
-

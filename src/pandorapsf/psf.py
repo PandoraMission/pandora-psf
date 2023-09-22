@@ -297,7 +297,7 @@ class PSF(object):
             return p
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
-                f"{PACKAGEDIR}/data/pandora_nir_hr_20220506.fits",
+                f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
                 transpose=transpose,
                 blur_value=blur_value,
                 expand=True,
@@ -463,6 +463,7 @@ class PSF(object):
                 getattr(self, key + "1d").value,
                 dPSF0,
             )
+        d = kwargs.copy()
         dPSF1 = self._psf_flux_blur_grad[1]
         for key in self.dimension_names:
             value = d.pop(key, getattr(self, key + "0d"))

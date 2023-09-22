@@ -166,6 +166,7 @@ def test_vis_psf():
     assert p.dpsf().shape == (2, *p.shape)
     assert p.dprf(row=0, column=0)[2].ndim == 3
 
+
 def test_nir_psf():
     p = PSF.from_file(
         filename=f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",

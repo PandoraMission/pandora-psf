@@ -73,8 +73,8 @@ class TraceScene(object):
         self,
         locations: npt.ArrayLike,
         psf: PSF = None,
-        shape: Tuple = (2048, 2048),
-        corner: Tuple = (-1024, -1024),
+        shape: Tuple = (400, 80),
+        corner: Tuple = (0, 0),
     ):
         self.locations = locations
         self.shape = shape
@@ -99,11 +99,13 @@ class TraceScene(object):
         return len(self.locations)
 
     def _get_Xs(self):
-        Xs = []
+        Xs, dX0s, dX1s = [], [], []
         for dpix, wav, sens in zip(
             self.psf.trace_dpixel, self.psf.trace_wavelength, self.psf.trace_sensitivity
         ):
             X = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
+            dX0 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
+            dX1 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
             for idx, location in enumerate(self.locations):
                 rb, cb, ar = prep_for_add(
                     *self.psf.prf(
@@ -113,8 +115,22 @@ class TraceScene(object):
                     corner=self.corner,
                 )
                 X[rb * self.shape[1] + cb, idx] = ar * sens.value
+
+                rb, cb, dar = prep_for_add(
+                    *self.psf.dprf(
+                        row=location[0] + dpix.value, column=location[1], wavelength=wav
+                    ),
+                    shape=self.shape,
+                    corner=self.corner,
+                )
+                dX0[rb * self.shape[1] + cb, idx] = dar[0] * sens.value
+                dX1[rb * self.shape[1] + cb, idx] = dar[1] * sens.value
             Xs.append(X)
+            dX0s.append(dX0)
+            dX1s.append(dX1)
         self.X = sparse.hstack(Xs, format="csr")
+        self.dX0 = sparse.hstack(dX0s, format="csr")
+        self.dX1 = sparse.hstack(dX1s, format="csr")
 
     def model(self, spectra: npt.ArrayLike) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets"""
