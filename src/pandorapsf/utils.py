@@ -6,8 +6,10 @@ import numpy as np
 from astropy.io import fits
 from scipy.io import loadmat
 
+from . import PACKAGEDIR
 
-def make_PSF_fits_files(dir, nbin=2):
+
+def make_PSF_fits_files(dir, nbin=2, suffix=""):
     d = loadmat(dir + "pandora_vis_20220506_hot_PSF_512.mat")
 
     PSF_hot = d["PSF"][:-1, :-1, :][128:384, 128:384]
@@ -75,7 +77,7 @@ def make_PSF_fits_files(dir, nbin=2):
     hdu[4].header["UNIT"] = wvl.unit.to_string()
     hdu[5].header["UNIT"] = temp.unit.to_string()
     hdu.writeto(
-        "/Users/chedges/repos/pandora-sat/src/pandorasat/data/pandora_vis_20220506.fits",
+        PACKAGEDIR + f"/data/pandora_vis{suffix}_20220506.fits",
         overwrite=True,
     )
 
@@ -83,7 +85,6 @@ def make_PSF_fits_files(dir, nbin=2):
     # -----------------------------------#
 
     d = loadmat(dir + "pandora_nir_20220506_thin_prism_hot_PSF_512.mat")
-
     PSF_hot = d["PSF"][:-1, :-1, :-1][128:384, 128:384]
     PSF_hot = np.asarray(
         [[PSF_hot[idx::nbin, jdx::nbin] for idx in range(nbin)] for jdx in range(nbin)]
@@ -100,15 +101,15 @@ def make_PSF_fits_files(dir, nbin=2):
     pixel_size = 18 * u.micron / u.pix
 
     # Bin down wavelength too, also too big.
-    0
-    PSF_cold = np.asarray([PSF_cold[:, :, idx::nbin] for idx in range(nbin)]).mean(
+    wbin = 10
+    PSF_cold = np.asarray([PSF_cold[:, :, idx::wbin] for idx in range(wbin)]).mean(
         axis=(0)
     )
-    PSF_hot = np.asarray([PSF_hot[:, :, idx::nbin] for idx in range(nbin)]).mean(
+    PSF_hot = np.asarray([PSF_hot[:, :, idx::wbin] for idx in range(wbin)]).mean(
         axis=(0)
     )
     wvl = (
-        np.asarray([d["wvl"][:900][idx::nbin] for idx in range(nbin)]).mean(axis=(0))[
+        np.asarray([d["wvl"][:900][idx::wbin] for idx in range(wbin)]).mean(axis=(0))[
             :, 0
         ]
         * u.micron
@@ -118,6 +119,7 @@ def make_PSF_fits_files(dir, nbin=2):
     temp = temp[None, :] * np.ones(wvl.shape)
 
     PSF = np.asarray([PSF_cold, PSF_hot]).transpose([1, 2, 3, 0])
+
     PSF /= PSF.sum(axis=(0, 1))
 
     hdr = fits.Header(
@@ -151,6 +153,23 @@ def make_PSF_fits_files(dir, nbin=2):
     hdu[2].header["UNIT"] = wvl.unit.to_string()
     hdu[3].header["UNIT"] = temp.unit.to_string()
     hdu.writeto(
-        "/Users/chedges/repos/pandora-sat/src/pandorasat/data/pandora_nir_20220506.fits",
+        PACKAGEDIR + f"/data/pandora_nir{suffix}_20220506.fits",
         overwrite=True,
     )
+
+
+def prep_for_add(row, column, prf, shape=(100, 100), corner=(-50, -50)):
+    Y, X = np.asarray(
+        np.meshgrid(
+            row - corner[0],
+            column - corner[1],
+            indexing="ij",
+        )
+    ).astype(int)
+    k = (X >= 0) & (X < shape[1]) & (Y >= 0) & (Y < shape[0])
+    if prf.ndim == 2:
+        return Y[k], X[k], prf[k]
+    elif prf.ndim == 3:
+        return Y[k], X[k], prf[:, k]
+    else:
+        raise ValueError("can not parse prf for adding")

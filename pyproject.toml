@@ -12,6 +12,8 @@ numpy = "^1.26.0"
 matplotlib = "^3.8.0"
 astropy = "^5.3.3"
 rich = "^13.5.3"
+scipy = "^1.11.2"
+pandas = "^2.1.1"
 
 
 [tool.poetry.group.dev.dependencies]

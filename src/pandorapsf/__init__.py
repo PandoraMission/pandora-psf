@@ -3,6 +3,7 @@ __version__ = "0.1.0"
 import os  # noqa
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
+TESTDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/tests/"
 PANDORASTYLE = "{}/data/pandora.mplstyle".format(PACKAGEDIR)
 
 # Standard library
@@ -39,3 +40,4 @@ if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_nir_20220506.fits"):
     log.warning(f"NIR PSF downloaded to {PACKAGEDIR}/data/pandora_nir_20220506.fits.")
 
 from .psf import PSF  # noqa: F401, E402
+from .scene import Scene, TraceScene  # noqa: F401, E402

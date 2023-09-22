@@ -2,7 +2,7 @@
 
 # Standard library
 from copy import deepcopy
-from typing import Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 # Third-party
 import astropy.units as u
@@ -31,6 +31,7 @@ class PSF(object):
         freeze_dictionary: Dict = {},
         blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         check_bounds: bool = True,
+        expand: bool = False,
     ):
         """
         PSF class for making PSFs, PRFs, and traces.
@@ -70,6 +71,7 @@ class PSF(object):
         self.freeze_dictionary = freeze_dictionary
         self.blur_value = blur_value
         self.check_bounds = check_bounds
+        self.expand = expand
 
         for name, x in zip(dimension_names, X):
             setattr(self, name, x)
@@ -157,7 +159,7 @@ class PSF(object):
             )  # [:, None]
             return
         s = a.shape
-        a = a.reshape((s[0], s[1], np.prod(s[2:])))
+        a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
         b = np.asarray(
             [
                 convolve(
@@ -257,8 +259,16 @@ class PSF(object):
             self.sub_pixel_size,
             freeze_dictionary=kwargs.copy(),
             blur_value=self.blur_value,
+            expand=self.expand,
         )
         return psf2
+
+    def integrate_dimension(self, name: str, func: Callable = None):
+        """Integrates a dimension of the PSF
+
+        This is how we would find the integrated shape on the visible side...in theory.
+        """
+        raise NotImplementedError
 
     def __repr__(self):
         freeze_dictionary = (
@@ -269,10 +279,47 @@ class PSF(object):
         return f"{self.ndims}D PSF Model [{', '.join(self.dimension_names)}]{freeze_dictionary}"
 
     @staticmethod
+    def from_name(
+        name: str,
+        transpose: bool = False,
+        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
+    ):
+        """Open a PSF file based on the detector name"""
+        if name.lower() in ["vis", "visda", "visible"]:
+            p = PSF.from_file(
+                f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
+                transpose=transpose,
+                blur_value=blur_value,
+                expand=True,
+            )
+            p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=-5 * u.deg_C)
+            p._blur(blur_value=(0.25 * u.pixel, 0.25 * u.pixel))
+            return p
+        elif name.lower() in ["nir", "nirda", "ir"]:
+            p = PSF.from_file(
+                f"{PACKAGEDIR}/data/pandora_nir_hr_20220506.fits",
+                transpose=transpose,
+                blur_value=blur_value,
+                expand=True,
+            )
+            p = p.freeze_dimension(temperature=-5 * u.deg_C)
+            p._blur(blur_value=(0.15 * u.pixel, 0.15 * u.pixel))
+            hdu = fits.open(
+                "/Users/chedges/repos/pandora-psf/src/pandorapsf/data/nirda-wav-solution.fits"
+            )
+            for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
+                name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
+                setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
+            return p
+        else:
+            raise ValueError(f"No such PSF as `{name}`")
+
+    @staticmethod
     def from_file(
         filename: str = f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
         transpose: bool = False,
         blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
+        expand: bool = False,
     ):
         """Build a PSF class from an input fits file.
 
@@ -326,6 +373,7 @@ class PSF(object):
             sub_pixel_size,
             transpose=transpose,
             blur_value=blur_value,
+            expand=expand,
         )
 
     def _get_dim(self, dim: Union[int, str], dimension_names=None):
@@ -354,10 +402,17 @@ class PSF(object):
             value = u.Quantity(value, self.dimension_units[dim])
             bounds = getattr(self, self.dimension_names[dim] + "_bounds")
             if (value.value < bounds[0].value) | (value.value > bounds[1].value):
-                raise OutOfBoundsError(
-                    f"Point ({value}) out of {self.dimension_names[dim]} bounds."
-                )
-            cleaned[key] = value
+                if not self.expand:
+                    raise OutOfBoundsError(
+                        f"Point ({value}) out of {self.dimension_names[dim]} bounds."
+                    )
+                else:
+                    if value.value < bounds[0].value:
+                        cleaned[key] = bounds[0]
+                    elif value.value > bounds[1].value:
+                        cleaned[key] = bounds[1]
+            else:
+                cleaned[key] = value
         return cleaned
 
     def psf(self, **kwargs):
@@ -374,14 +429,49 @@ class PSF(object):
         """
         if self.check_bounds:
             kwargs = self._check_bounds(**kwargs)
+        d = kwargs.copy()
         PSF0 = self.psf_flux
-        for key, value in kwargs.items():
+        for key in self.dimension_names:
+            value = d.pop(key, getattr(self, key + "0d"))
             PSF0 = interpfunc(
                 value.value,
                 getattr(self, key + "1d").value,
                 PSF0,
             )
         return PSF0 / PSF0.sum()
+
+    def dpsf(self, **kwargs):
+        """Interpolate the gradient of the PSF cube to a particular point
+
+        Parameters
+        ----------
+        args: dict
+            Dictionary of arguments to pass, set each dimension name to a value
+        Returns
+        -------
+        ar : np.ndarray of shape self.shape
+            The interpolated PSF
+        """
+        if self.check_bounds:
+            kwargs = self._check_bounds(**kwargs)
+        d = kwargs.copy()
+        dPSF0 = self._psf_flux_blur_grad[0]
+        for key in self.dimension_names:
+            value = d.pop(key, getattr(self, key + "0d"))
+            dPSF0 = interpfunc(
+                value.value,
+                getattr(self, key + "1d").value,
+                dPSF0,
+            )
+        dPSF1 = self._psf_flux_blur_grad[1]
+        for key in self.dimension_names:
+            value = d.pop(key, getattr(self, key + "0d"))
+            dPSF1 = interpfunc(
+                value.value,
+                getattr(self, key + "1d").value,
+                dPSF1,
+            )
+        return np.asarray([dPSF0, dPSF1])
 
     def prf(self, row, column, **kwargs):
         """
@@ -403,26 +493,52 @@ class PSF(object):
         """
         if self.check_bounds:
             test1 = np.in1d(list(kwargs.keys()), self.dimension_names)
-            test2 = np.in1d(
-                self.dimension_names, ["row", "column", *list(kwargs.keys())]
-            )
             if not test1.all():
                 raise ValueError(
                     f"Pass only dimension names from {self.dimension_names}"
                 )
-            if not test2.all():
-                raise ValueError(
-                    f"Pass all dimension names from {self.dimension_names}"
-                )
-
         row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
-        mod = (self.psf_column.value + column.value) % 1
-        cyc = ((self.psf_column.value + column.value) - mod).astype(int)
-        colbin = np.unique(cyc)
         if "row" in self.dimension_names:
             psf0 = self.psf(row=row, column=column, **kwargs)
         else:
             psf0 = self.psf(**kwargs)
+        return self._bin_prf(psf0, row, column)
+
+    def dprf(self, row, column, **kwargs):
+        """
+        Bins the gradient of the PSF down to the pixel scale.
+
+        Parameters
+        ----------
+        args: dict
+            Dictionary of arguments to pass, set each dimension name to a value
+
+        Returns
+        -------
+        row: np.ndarray
+            Array of integer row positions
+        column: np.ndarray
+            Array of integer column positions
+        """
+        if self.check_bounds:
+            test1 = np.in1d(list(kwargs.keys()), self.dimension_names)
+            if not test1.all():
+                raise ValueError(
+                    f"Pass only dimension names from {self.dimension_names}"
+                )
+        row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
+        if "row" in self.dimension_names:
+            dpsf0, dpsf1 = self.dpsf(row=row, column=column, **kwargs)
+        else:
+            dpsf0, dpsf1 = self.dpsf(**kwargs)
+        rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column)
+        _, _, dpsf1 = self._bin_prf(dpsf1, row, column)
+        return rb, cb, np.asarray([dpsf0, dpsf1])
+
+    def _bin_prf(self, psf0, row, column):
+        mod = (self.psf_column.value + column.value) % 1
+        cyc = ((self.psf_column.value + column.value) - mod).astype(int)
+        colbin = np.unique(cyc)
         psf1 = np.asarray(
             [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
         ).T
@@ -466,7 +582,7 @@ def reorder(ar: np.ndarray, dim: int = 0):
         dim = [dim]
     cdim = [d + 2 for d in dim]
     l = set(np.arange(ar.ndim)[2:]) - set(cdim)
-    return ar.transpose(np.hstack([0, 1, cdim, list(l)]))
+    return ar.transpose(np.hstack([0, 1, cdim, list(l)]).astype(int))
 
 
 class OutOfBoundsError(Exception):
