@@ -305,7 +305,7 @@ class PSF(object):
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
             p._blur(blur_value=(0.15 * u.pixel, 0.15 * u.pixel))
             hdu = fits.open(
-                "/Users/chedges/repos/pandora-psf/src/pandorapsf/data/nirda-wav-solution.fits"
+                f"{PACKAGEDIR}/data/nirda-wav-solution.fits"
             )
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
