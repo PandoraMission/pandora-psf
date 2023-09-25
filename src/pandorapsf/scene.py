@@ -1,12 +1,11 @@
 """Class to deal with scenes?"""
 
-from typing import Callable, Tuple
+from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
 
-from . import PACKAGEDIR
 from .psf import PSF
 from .utils import prep_for_add
 
@@ -82,7 +81,7 @@ class TraceScene(object):
         if psf is None:
             psf = PSF.from_name("nirda")
         self.psf = psf
-        if not "wavelength" in self.psf.dimension_names:
+        if "wavelength" not in self.psf.dimension_names:
             raise ValueError(
                 "Can only create a trace scene if `PSF` has a `'wavelength'` dimension"
             )

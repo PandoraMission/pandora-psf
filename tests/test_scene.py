@@ -1,13 +1,10 @@
 # Third-party
-import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from scipy import sparse
-
 
 # First-party/Local
-from pandorapsf import PACKAGEDIR, PSF, TESTDIR, Scene, TraceScene, __version__
+from pandorapsf import PSF, TESTDIR, Scene, TraceScene
 
 
 def test_simple_vis_scene():
