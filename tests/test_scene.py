@@ -13,7 +13,7 @@ def test_simple_vis_scene():
     )
     locations = np.vstack([row.ravel(), column.ravel()]).T
     s = Scene(locations=locations, shape=(2048, 2048), corner=(-1024, -1024))
-    assert (s.X.sum(axis=0) <= 1. + 1e10).all()
+    assert (s.X.sum(axis=0) <= 1.0 + 1e10).all()
     img = s.model(np.ones(s.X.shape[1]))
     fig, ax = plt.subplots()
     ax.imshow(np.log10(img), origin="lower")
@@ -57,7 +57,7 @@ def test_trace_scene():
     p = PSF.from_name("nirda")
     spectra = np.ones(p.trace_dpixel.shape[0])[:, None]
     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
-
+    assert (s.X.sum(axis=0) < 4).all()
     img = s.X.dot(spectra.ravel()).reshape(s.shape)
 
     locations = np.vstack([np.asarray([250, 300]), np.asarray([40, 60])]).T

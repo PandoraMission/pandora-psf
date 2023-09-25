@@ -1,6 +1,6 @@
 """Class to deal with scenes?"""
 
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -27,6 +27,7 @@ class Scene(object):
             psf = PSF.from_name("visda")
         self.psf = psf
         self.rb, self.cb, self.prf = [], [], []
+        self.ntargets = len(self.locations)
         self._get_X()
 
     def __repr__(self):
@@ -63,8 +64,25 @@ class Scene(object):
         self.dX0 = self.dX0.tocsr()
         self.dX1 = self.dX1.tocsr()
 
-    def model(self, flux: npt.ArrayLike) -> npt.ArrayLike:
-        return self.X.dot(flux).reshape(self.shape)
+    def model(self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None) -> npt.ArrayLike:
+        """
+        Parameters:
+        -----------
+        flux : npt.ArrayLike
+            Array of flux values with shape (ntargets, ntimes)
+        jitter : npt.ArrayLike
+            Array of jitter values in row and column, has shape (2, ntargets, ntimes)
+        """
+        if flux.ndim == 1:
+            flux = flux[:, None]
+        if flux.shape[0] != self.ntargets:
+            raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
+        nt = flux.shape[1]
+        ar = self.X.dot(flux).T.reshape((nt, *self.shape))
+        if jitter is not None:
+            for tdx in np.arange(0, nt):
+                ar[tdx] += (self.dX0.multiply(jitter[0, tdx]) + self.dX1.multiply(jitter[1, tdx])).dot(flux[:, tdx]).reshape(self.shape)
+        return ar
 
 
 class TraceScene(object):
@@ -87,7 +105,7 @@ class TraceScene(object):
             )
         if not hasattr(self.psf, "trace_dpixel"):
             raise ValueError("No trace parameters, you need to set them.")
-
+        self.ntargets = len(self.locations)
         self.rb, self.cb, self.prf = [], [], []
         self._get_Xs()
 

@@ -304,12 +304,11 @@ class PSF(object):
             )
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
             p._blur(blur_value=(0.15 * u.pixel, 0.15 * u.pixel))
-            hdu = fits.open(
-                f"{PACKAGEDIR}/data/nirda-wav-solution.fits"
-            )
+            hdu = fits.open(f"{PACKAGEDIR}/data/nirda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
                 setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
+            setattr(p, "trace_sensitivity_correction", hdu[1].header['SENSCORR'] * u.Quantity(1, hdu[1].header['CORRUNIT']))
             return p
         else:
             raise ValueError(f"No such PSF as `{name}`")
@@ -532,11 +531,11 @@ class PSF(object):
             dpsf0, dpsf1 = self.dpsf(row=row, column=column, **kwargs)
         else:
             dpsf0, dpsf1 = self.dpsf(**kwargs)
-        rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column)
-        _, _, dpsf1 = self._bin_prf(dpsf1, row, column)
+        rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column, normalize=False)
+        _, _, dpsf1 = self._bin_prf(dpsf1, row, column, normalize=False)
         return rb, cb, np.asarray([dpsf0, dpsf1])
 
-    def _bin_prf(self, psf0, row, column):
+    def _bin_prf(self, psf0, row, column, normalize=True):
         mod = (self.psf_column.value + column.value) % 1
         cyc = ((self.psf_column.value + column.value) - mod).astype(int)
         colbin = np.unique(cyc)
@@ -549,7 +548,9 @@ class PSF(object):
         psf2 = np.asarray(
             [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
         )
-        return rowbin.astype(int), colbin.astype(int), psf2 / psf2.sum()
+        if normalize:
+            psf2 /= psf2.sum()
+        return rowbin.astype(int), colbin.astype(int), psf2
 
 
 def interpfunc(l, lp, PSF0):
