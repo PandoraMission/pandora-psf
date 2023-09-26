@@ -1,6 +1,6 @@
 """Class to deal with scenes?"""
 
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -20,6 +20,8 @@ class Scene(object):
         shape: Tuple = (2048, 2048),
         corner: Tuple = (-1024, -1024),
     ):
+        if locations.shape[1] != 2:
+            raise ValueError("`locations` must have shape (n, 2).")
         self.locations = locations
         self.shape = shape
         self.corner = corner
@@ -64,7 +66,9 @@ class Scene(object):
         self.dX0 = self.dX0.tocsr()
         self.dX1 = self.dX1.tocsr()
 
-    def model(self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None) -> npt.ArrayLike:
+    def model(
+        self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None
+    ) -> npt.ArrayLike:
         """
         Parameters:
         -----------
@@ -81,7 +85,14 @@ class Scene(object):
         ar = self.X.dot(flux).T.reshape((nt, *self.shape))
         if jitter is not None:
             for tdx in np.arange(0, nt):
-                ar[tdx] += (self.dX0.multiply(jitter[0, tdx]) + self.dX1.multiply(jitter[1, tdx])).dot(flux[:, tdx]).reshape(self.shape)
+                ar[tdx] += (
+                    (
+                        self.dX0.multiply(jitter[0, tdx])
+                        + self.dX1.multiply(jitter[1, tdx])
+                    )
+                    .dot(flux[:, tdx])
+                    .reshape(self.shape)
+                )
         return ar
 
 
@@ -93,6 +104,8 @@ class TraceScene(object):
         shape: Tuple = (400, 80),
         corner: Tuple = (0, 0),
     ):
+        if locations.shape[1] != 2:
+            raise ValueError("`locations` must have shape (n, 2).")
         self.locations = locations
         self.shape = shape
         self.corner = corner
@@ -154,3 +167,22 @@ class TraceScene(object):
         if spectra.shape != (self.psf.trace_dpixel.shape[0], len(self)):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
         return self.X.dot(spectra.ravel()).reshape(self.shape)
+
+
+        # if flux.ndim == 1:
+        #     flux = flux[:, None]
+        # if flux.shape[0] != self.ntargets:
+        #     raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
+        # nt = flux.shape[1]
+        # ar = self.X.dot(flux).T.reshape((nt, *self.shape))
+        # if jitter is not None:
+        #     for tdx in np.arange(0, nt):
+        #         ar[tdx] += (
+        #             (
+        #                 self.dX0.multiply(jitter[0, tdx])
+        #                 + self.dX1.multiply(jitter[1, tdx])
+        #             )
+        #             .dot(flux[:, tdx])
+        #             .reshape(self.shape)
+        #         )
+        # return ar

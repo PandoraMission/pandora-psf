@@ -130,9 +130,10 @@ class PSF(object):
         for dim, p in enumerate(self.dimension_names):
             lp = getattr(self, self.dimension_names[dim])
             setattr(self, p + "_bounds", [lp.min(), lp.max()])
-        self._psf_flux_jitter = np.zeros_like(self._psf_flux)
+        #        self._psf_flux_jitter = np.zeros_like(self._psf_flux)
         self._blur(self.blur_value)
-        self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
+
+    #       self.psf_flux = self._psf_flux_blur #+ self._psf_flux_jitter
 
     def _blur(self, blur_value: Tuple):
         """Blurs the PSF using a Gaussian Kernel. Will update `self`.
@@ -155,7 +156,11 @@ class PSF(object):
         if (xstd == 0) & (ystd == 0):
             self._psf_flux_blur = deepcopy(self._psf_flux)
             self._psf_flux_blur_grad = np.asarray(
-                np.gradient(self._psf_flux_blur, axis=(0, 1))
+                np.gradient(
+                    self._psf_flux_blur,
+                    (np.median(np.diff(self.psf_row)) * self.sub_pixel_size).value,
+                    axis=(0, 1),
+                )
             )  # [:, None]
             return
         s = a.shape
@@ -176,55 +181,59 @@ class PSF(object):
         b /= b.sum(axis=(0, 1))[None, None]
         self._psf_flux_blur = b
         self._psf_flux_blur_grad = np.asarray(
-            np.gradient(self._psf_flux_blur, axis=(0, 1))
-        )
-        self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
-        return
-
-    def _jitter(self, row: npt.ArrayLike, column: npt.ArrayLike):
-        """Jitters the PSF using gradients. Will update `self`
-
-        Parameters:
-        -----------
-        row: npt.ArrayLike
-            Row positions to jitter to. Will be downsampled
-        column: npt.ArrayLike
-            Column positions to jitter to. Will be downsampled
-        """
-
-        def grow(ar, ndims):
-            for i in range(ndims):
-                ar = ar[:, None]
-            return ar
-
-        def downsample(ar, npoints):
-            nbin = np.ceil(ar.shape[0] / npoints).astype(int)
-            a = np.asarray(
-                [ar[idx * nbin : (idx + 1) * nbin] for idx in range(npoints)]
+            np.gradient(
+                self._psf_flux_blur,
+                (np.median(np.diff(self.psf_row)) * self.sub_pixel_size).value,
+                axis=(0, 1),
             )
-            mean, weight = np.asarray([a1.mean() for a1 in a]), np.asarray(
-                [len(a1) for a1 in a]
-            ).astype(float)
-            weight /= weight.max()
-            return mean, weight
-
-        if len(row) > 5:
-            row, row_w = downsample(row, 5)
-            column, column_w = downsample(column, 5)
-        else:
-            row_w = np.ones(len(row))
-            column_w = np.ones(len(column))
-        self._psf_flux_jitter *= 0
-        if (row.sum() == 0) & (column.sum() == 0):
-            self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
-            return
-        g1, g2 = self._psf_flux_blur_grad
-        self._psf_flux_jitter = (
-            g1 * grow(row * row_w, self.ndims + 2)
-            + g2 * grow(column * column_w, self.ndims + 2)
-        ).sum(axis=0)
-        self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
+        )
+        self.psf_flux = self._psf_flux_blur  # + self._psf_flux_jitter
         return
+
+    # def _jitter(self, row: npt.ArrayLike, column: npt.ArrayLike):
+    #     """Jitters the PSF using gradients. Will update `self`
+
+    #     Parameters:
+    #     -----------
+    #     row: npt.ArrayLike
+    #         Row positions to jitter to. Will be downsampled
+    #     column: npt.ArrayLike
+    #         Column positions to jitter to. Will be downsampled
+    #     """
+
+    #     def grow(ar, ndims):
+    #         for i in range(ndims):
+    #             ar = ar[:, None]
+    #         return ar
+
+    #     def downsample(ar, npoints):
+    #         nbin = np.ceil(ar.shape[0] / npoints).astype(int)
+    #         a = np.asarray(
+    #             [ar[idx * nbin : (idx + 1) * nbin] for idx in range(npoints)]
+    #         )
+    #         mean, weight = np.asarray([a1.mean() for a1 in a]), np.asarray(
+    #             [len(a1) for a1 in a]
+    #         ).astype(float)
+    #         weight /= weight.max()
+    #         return mean, weight
+
+    #     if len(row) > 5:
+    #         row, row_w = downsample(row, 5)
+    #         column, column_w = downsample(column, 5)
+    #     else:
+    #         row_w = np.ones(len(row))
+    #         column_w = np.ones(len(column))
+    #     self._psf_flux_jitter *= 0
+    #     if (row.sum() == 0) & (column.sum() == 0):
+    #         self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
+    #         return
+    #     g1, g2 = self._psf_flux_blur_grad
+    #     self._psf_flux_jitter = (
+    #         g1 * grow(row * row_w, self.ndims + 2)
+    #         + g2 * grow(column * column_w, self.ndims + 2)
+    #     ).sum(axis=0)
+    #     self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
+    #     return
 
     def freeze_dimension(self, **kwargs):
         """Drop a dimension of the PSF model"""
@@ -308,7 +317,11 @@ class PSF(object):
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
                 setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
-            setattr(p, "trace_sensitivity_correction", hdu[1].header['SENSCORR'] * u.Quantity(1, hdu[1].header['CORRUNIT']))
+            setattr(
+                p,
+                "trace_sensitivity_correction",
+                hdu[1].header["SENSCORR"] * u.Quantity(1, hdu[1].header["CORRUNIT"]),
+            )
             return p
         else:
             raise ValueError(f"No such PSF as `{name}`")
@@ -449,7 +462,7 @@ class PSF(object):
         Returns
         -------
         ar : np.ndarray of shape self.shape
-            The interpolated PSF
+            The interpolated PSF gradient in units of 1/micron
         """
         if self.check_bounds:
             kwargs = self._check_bounds(**kwargs)
@@ -519,6 +532,9 @@ class PSF(object):
             Array of integer row positions
         column: np.ndarray
             Array of integer column positions
+        dpsf: np.ndarray
+            3D array of PRF gradient values with shape (2, nrows, ncolumns)
+            in units of 1/micron
         """
         if self.check_bounds:
             test1 = np.in1d(list(kwargs.keys()), self.dimension_names)

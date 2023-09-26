@@ -5,12 +5,20 @@ import numpy as np
 from IPython.display import HTML
 from matplotlib import animation as mplanimation
 
-def plot_spatial(
-    psf,
-    n=3,
-    image_type="PSF",
-    **kwargs
-):
+
+def _get_v(kwargs, image_type):
+    if image_type.lower() == "psf":
+        vmin, vmax = kwargs.pop("vmin", 0), kwargs.pop("vmax", 0.001)
+    elif image_type.lower() == "prf":
+        vmin, vmax = kwargs.pop("vmin", 0), kwargs.pop("vmax", 0.05)
+    elif image_type.lower() == "dprf":
+        vmin, vmax = kwargs.pop("vmin", -0.05), kwargs.pop("vmax", 0.05)
+    elif image_type.lower() == "dpsf":
+        vmin, vmax = kwargs.pop("vmin", -0.001), kwargs.pop("vmax", 0.001)
+    return vmin, vmax
+
+
+def plot_spatial(psf, n=3, image_type="PSF", **kwargs):
     """Plot a PSF that has some spatial dimesions"""
     if "row" not in psf.dimension_names:
         raise ValueError("Not a spatial PSF")
@@ -20,21 +28,12 @@ def plot_spatial(
     if not (n % 2) == 1:
         n += 1
 
-    if image_type.lower() == "psf":
-        vmin, vmax = kwargs.pop('vmin',0), kwargs.pop('vmax', 0.001)
-    elif image_type.lower() == "prf":
-        vmin, vmax = kwargs.pop('vmin',0), kwargs.pop('vmax', 0.05)
-    elif image_type.lower() == "dprf":
-        vmin, vmax = kwargs.pop('vmin',-0.05), kwargs.pop('vmax', 0.05)
-    elif image_type.lower() == "dpsf":
-        vmin, vmax = kwargs.pop('vmin',-0.001), kwargs.pop('vmax', 0.001)
-
     locdict = {}
     for dnm in psf.dimension_names:
         if (dnm == "row") | (dnm == "column"):
             continue
         locdict[dnm] = getattr(psf, dnm + "0d")
-
+    vmin, vmax = _get_v(kwargs, image_type)
     fig, ax = plt.subplots(n, n, figsize=(n * 2, n * 2))
     for x1, y1 in (
         np.asarray(((np.mgrid[:n, :n] - n // 2) * (600 / (n // 2))))
@@ -147,9 +146,8 @@ def plot_spectral(
     # )
     return fig
 
-def _to_matplotlib_animation(
-    data, step: int = None, interval: int = 200, **plot_args
-):
+
+def _to_matplotlib_animation(data, step: int = None, interval: int = 200, **plot_args):
     """lifted from Lightkurve"""
     if step is None:
         step = len(data) // 50
@@ -159,6 +157,7 @@ def _to_matplotlib_animation(
     _, ax = plt.subplots()
     ax.imshow(data[0], **plot_args)
     ax.set(xticks=[], yticks=[])
+
     def init():
         return ax.images
 
@@ -180,8 +179,10 @@ def _to_matplotlib_animation(
     )
     return anim
 
+
 def animate(data, step: int = None, interval: int = 200, **plot_args):
-    try:
-        return HTML(_to_matplotlib_animation(data, step=step, interval=interval, **plot_args).to_jshtml())
-    except ModuleNotFoundError:
-        log.error("ipython needs to be installed for animate() to work (e.g., `pip install ipython`)")
+    return HTML(
+        _to_matplotlib_animation(
+            data, step=step, interval=interval, **plot_args
+        ).to_jshtml()
+    )

@@ -2335,6 +2335,22 @@ files = [
 diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
+name = "pysynphot"
+version = "2.0.0"
+description = "Python Synthetic Photometry Utilities"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pysynphot-2.0.0.tar.gz", hash = "sha256:45c29f69248ec8a641c38625d11409dd2411ea1d6faffd8c3b44da354c4d22e7"},
+]
+
+[package.dependencies]
+astropy = "*"
+beautifulsoup4 = "*"
+numpy = "*"
+six = "*"
+
+[[package]]
 name = "pytest"
 version = "7.4.2"
 description = "pytest: simple powerful testing with Python"
@@ -3275,4 +3291,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "690f64f4db97a9b666d7352cda4a6fb145e22fa6c0ab1928c6e7d4623bbc6a70"
+content-hash = "37bf9283108f1ff58d5d49433a3dc58d568ae3242272a522f0674fd1120b51a9"
