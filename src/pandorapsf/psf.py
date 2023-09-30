@@ -31,7 +31,7 @@ class PSF(object):
         freeze_dictionary: Dict = {},
         blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         check_bounds: bool = True,
-        expand: bool = False,
+        extrapolate: bool = False,
     ):
         """
         PSF class for making PSFs, PRFs, and traces.
@@ -39,7 +39,8 @@ class PSF(object):
         Parameters:
         -----------
         X : np.NDArray
-            Array of 1D vectors describing each axis of `psf_flux`
+            Array of 1D vectors defining the value of each dimension for every element of `psf_flux`.
+            Should have as many entries as `psf_flux` has dimensions.
         psf_flux: np.NDArray
             ND array of flux values
         dimension_names: list
@@ -56,7 +57,8 @@ class PSF(object):
             Dictionary of dimensions to freeze
         blur_value: tuple
             Tuple of astropy quantities in pixels describing the amount of blur in each axis.
-
+        extrapolate : bool
+            Whether to allow the PSF to be evaluated outside of the bounds (i.e. will extrapolate)
         """
         self._psf_flux = psf_flux
         self.transpose = transpose
@@ -71,7 +73,7 @@ class PSF(object):
         self.freeze_dictionary = freeze_dictionary
         self.blur_value = blur_value
         self.check_bounds = check_bounds
-        self.expand = expand
+        self.extrapolate = extrapolate
 
         for name, x in zip(dimension_names, X):
             setattr(self, name, x)
@@ -136,19 +138,14 @@ class PSF(object):
     #       self.psf_flux = self._psf_flux_blur #+ self._psf_flux_jitter
 
     def _blur(self, blur_value: Tuple):
-        """Blurs the PSF using a Gaussian Kernel. Will update `self`.
+        """Blurs the PSF using a Gaussian Kernel. Will update `self._psf_flux_blur` and `self._psf_flux_blur_grad`.
 
         Parameters:
         -----------
-        blur_value: tuple of astropy quantities, must be in pixels
+        blur_value: tuple of astropy quantities, must be in units of pixels
         """
         xstd, ystd = blur_value
-        if not hasattr(xstd, "unit"):
-            xstd *= u.pixel
-        if not hasattr(ystd, "unit"):
-            ystd *= u.pixel
-        if np.any([(not (xstd.unit == u.pix)), (not (ystd.unit == u.pix))]):
-            raise ValueError("Must pass `blur_value` in units of pixel.")
+        xstd, ystd = u.Quantity(xstd, "pixel"), u.Quantity(ystd, "pixel")
 
         xstd = ((self.pixel_size * xstd) / self.sub_pixel_size).value
         ystd = ((self.pixel_size * ystd) / self.sub_pixel_size).value
@@ -161,7 +158,7 @@ class PSF(object):
                     (np.median(np.diff(self.psf_row)) * self.sub_pixel_size).value,
                     axis=(0, 1),
                 )
-            )  # [:, None]
+            )
             return
         s = a.shape
         a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
@@ -268,7 +265,7 @@ class PSF(object):
             self.sub_pixel_size,
             freeze_dictionary=kwargs.copy(),
             blur_value=self.blur_value,
-            expand=self.expand,
+            extrapolate=self.extrapolate,
         )
         return psf2
 
@@ -299,17 +296,27 @@ class PSF(object):
                 f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
                 transpose=transpose,
                 blur_value=blur_value,
-                expand=True,
+                extrapolate=True,
             )
             p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=-5 * u.deg_C)
             p._blur(blur_value=(0.25 * u.pixel, 0.25 * u.pixel))
+            hdu = fits.open(f"{PACKAGEDIR}/data/visda-wav-solution.fits")
+            for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
+                name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
+                setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
+            setattr(
+                p,
+                "trace_sensitivity_correction",
+                hdu[1].header["SENSCORR"] * u.Quantity(1, hdu[1].header["CORRUNIT"]),
+            )
             return p
+        
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
                 f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
                 transpose=transpose,
                 blur_value=blur_value,
-                expand=True,
+                extrapolate=True,
             )
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
             p._blur(blur_value=(0.15 * u.pixel, 0.15 * u.pixel))
@@ -331,7 +338,7 @@ class PSF(object):
         filename: str = f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
         transpose: bool = False,
         blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
-        expand: bool = False,
+        extrapolate: bool = False,
     ):
         """Build a PSF class from an input fits file.
 
@@ -385,7 +392,7 @@ class PSF(object):
             sub_pixel_size,
             transpose=transpose,
             blur_value=blur_value,
-            expand=expand,
+            extrapolate=extrapolate,
         )
 
     def _get_dim(self, dim: Union[int, str], dimension_names=None):
@@ -414,7 +421,7 @@ class PSF(object):
             value = u.Quantity(value, self.dimension_units[dim])
             bounds = getattr(self, self.dimension_names[dim] + "_bounds")
             if (value.value < bounds[0].value) | (value.value > bounds[1].value):
-                if not self.expand:
+                if not self.extrapolate:
                     raise OutOfBoundsError(
                         f"Point ({value}) out of {self.dimension_names[dim]} bounds."
                     )
@@ -484,7 +491,7 @@ class PSF(object):
                 getattr(self, key + "1d").value,
                 dPSF1,
             )
-        return np.asarray([dPSF0, dPSF1])
+        return np.asarray([dPSF0 - dPSF0.mean(), dPSF1 - dPSF1.mean()])
 
     def prf(self, row, column, **kwargs):
         """
@@ -549,7 +556,7 @@ class PSF(object):
             dpsf0, dpsf1 = self.dpsf(**kwargs)
         rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column, normalize=False)
         _, _, dpsf1 = self._bin_prf(dpsf1, row, column, normalize=False)
-        return rb, cb, np.asarray([dpsf0, dpsf1])
+        return rb, cb, np.asarray([dpsf0 - dpsf0.mean(), dpsf1 - dpsf1.mean()])
 
     def _bin_prf(self, psf0, row, column, normalize=True):
         mod = (self.psf_column.value + column.value) % 1

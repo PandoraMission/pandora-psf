@@ -57,13 +57,13 @@ def test_simple_IR_scene():
 def test_trace_scene():
     locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
     p = PSF.from_name("nirda")
-    spectra = np.ones(p.trace_dpixel.shape[0])[:, None]
+    spectra = np.ones(p.trace_pixel.shape[0])[:, None]
     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
     assert (s.X.sum(axis=0) < 4).all()
     img = s.X.dot(spectra.ravel()).reshape(s.shape)
 
     locations = np.vstack([np.asarray([250, 300]), np.asarray([40, 60])]).T
-    spectra = np.ones(s.psf.trace_dpixel.shape[0])[:, None] * np.ones(2)
+    spectra = np.ones(s.psf.trace_pixel.shape[0])[:, None] * np.ones(2)
     spectra[:, 1] *= 0.1
     p = PSF.from_name("nirda")
     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
@@ -87,3 +87,5 @@ def test_trace_scene():
 
     with pytest.raises(ValueError):
         img = s.model(spectra[:, 0][:, None])
+
+    # test trace (without sensitivity) dot ones results in roughly ones

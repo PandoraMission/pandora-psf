@@ -147,24 +147,33 @@ def plot_spectral(
     return fig
 
 
-def _to_matplotlib_animation(data, step: int = None, interval: int = 200, **plot_args):
+def _to_matplotlib_animation(data, instance_name:str ='Frame', step: int = None, interval: int = 200, figsize=None, **plot_args):
     """lifted from Lightkurve"""
     if step is None:
         step = len(data) // 50
         if step < 1:
             step = 1
 
-    _, ax = plt.subplots()
+    if figsize is None:
+        x, y = 1., 1 * data.shape[1]/data.shape[2]
+        if np.max([x, y]) < 10.:
+            c = 10./np.max([x, y])
+            x *= c
+            y *= c
+        x, y = int(x), int(y)
+        figsize = (x, y)
+
+    _, ax = plt.subplots(figsize=figsize)
     ax.imshow(data[0], **plot_args)
     ax.set(xticks=[], yticks=[])
-
+    plt.gca().set_position([0, 0, 1, 1])
     def init():
         return ax.images
 
     def animate(i):
         frame = i * step
         ax.images[0].set_data(data[frame])
-        ax.set_title(f"Frame {frame}")
+        ax.set_title(f"{instance_name} {frame}")
         return ax.images
 
     plt.close(ax.figure)

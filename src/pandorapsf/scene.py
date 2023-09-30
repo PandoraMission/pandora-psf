@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
+from tqdm import tqdm
 
 from .psf import PSF
 from .utils import prep_for_add
@@ -75,7 +76,7 @@ class Scene(object):
         flux : npt.ArrayLike
             Array of flux values with shape (ntargets, ntimes)
         jitter : npt.ArrayLike
-            Array of jitter values in row and column, has shape (2, ntargets, ntimes)
+            Array of jitter values in row and column, has shape (2, ntimes)
         """
         if flux.ndim == 1:
             flux = flux[:, None]
@@ -116,7 +117,7 @@ class TraceScene(object):
             raise ValueError(
                 "Can only create a trace scene if `PSF` has a `'wavelength'` dimension"
             )
-        if not hasattr(self.psf, "trace_dpixel"):
+        if not hasattr(self.psf, "trace_pixel"):
             raise ValueError("No trace parameters, you need to set them.")
         self.ntargets = len(self.locations)
         self.rb, self.cb, self.prf = [], [], []
@@ -130,8 +131,8 @@ class TraceScene(object):
 
     def _get_Xs(self):
         Xs, dX0s, dX1s = [], [], []
-        for dpix, wav, sens in zip(
-            self.psf.trace_dpixel, self.psf.trace_wavelength, self.psf.trace_sensitivity
+        for pix, wav in zip(
+            self.psf.trace_pixel, self.psf.trace_wavelength
         ):
             X = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
             dX0 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
@@ -139,22 +140,22 @@ class TraceScene(object):
             for idx, location in enumerate(self.locations):
                 rb, cb, ar = prep_for_add(
                     *self.psf.prf(
-                        row=location[0] + dpix.value, column=location[1], wavelength=wav
+                        row=location[0] + pix.value, column=location[1], wavelength=wav
                     ),
                     shape=self.shape,
                     corner=self.corner,
                 )
-                X[rb * self.shape[1] + cb, idx] = ar * sens.value
+                X[rb * self.shape[1] + cb, idx] = ar
 
                 rb, cb, dar = prep_for_add(
                     *self.psf.dprf(
-                        row=location[0] + dpix.value, column=location[1], wavelength=wav
+                        row=location[0] + pix.value, column=location[1], wavelength=wav
                     ),
                     shape=self.shape,
                     corner=self.corner,
                 )
-                dX0[rb * self.shape[1] + cb, idx] = dar[0] * sens.value
-                dX1[rb * self.shape[1] + cb, idx] = dar[1] * sens.value
+                dX0[rb * self.shape[1] + cb, idx] = dar[0]
+                dX1[rb * self.shape[1] + cb, idx] = dar[1]
             Xs.append(X)
             dX0s.append(dX0)
             dX1s.append(dX1)
@@ -162,27 +163,39 @@ class TraceScene(object):
         self.dX0 = sparse.hstack(dX0s, format="csr")
         self.dX1 = sparse.hstack(dX1s, format="csr")
 
-    def model(self, spectra: npt.ArrayLike) -> npt.ArrayLike:
-        """`spectra` must have shape nwav x ntargets"""
-        if spectra.shape != (self.psf.trace_dpixel.shape[0], len(self)):
+    def model(
+        self, spectra: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None, quiet: bool = True) -> npt.ArrayLike:
+        """`spectra` must have shape nwav x ntargets x ntime"""
+
+        if spectra.ndim == 1:
+            spectra = spectra[:, None, None]
+        elif spectra.ndim == 2:
+            spectra = spectra[:, :, None]
+        elif spectra.ndim != 3:
+            raise ValueError("Pass a 3D array for flux (nwav, ntargets, ntime).")
+        if (spectra.shape[0] != self.psf.trace_pixel.shape[0]) | (
+            spectra.shape[1] != len(self)
+        ):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
-        return self.X.dot(spectra.ravel()).reshape(self.shape)
+        if jitter is not None:
+            if spectra.ndim == 1:
+                jitter = jitter[:, None]
+            elif jitter.ndim != 2:
+                raise ValueError("Pass 2D array for jitter (2, ntime).")
 
-
-        # if flux.ndim == 1:
-        #     flux = flux[:, None]
-        # if flux.shape[0] != self.ntargets:
-        #     raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
-        # nt = flux.shape[1]
-        # ar = self.X.dot(flux).T.reshape((nt, *self.shape))
-        # if jitter is not None:
-        #     for tdx in np.arange(0, nt):
-        #         ar[tdx] += (
-        #             (
-        #                 self.dX0.multiply(jitter[0, tdx])
-        #                 + self.dX1.multiply(jitter[1, tdx])
-        #             )
-        #             .dot(flux[:, tdx])
-        #             .reshape(self.shape)
-        #         )
-        # return ar
+        nt = spectra.shape[2]
+        ar = np.zeros((nt, *self.shape))
+        for tdx in tqdm(range(nt), disable=quiet, desc='Time index'):
+            ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel()).T.reshape(
+                *self.shape
+            )
+            if jitter is not None:
+                ar[tdx] += (
+                    (
+                        self.dX0.multiply(jitter[0, tdx])
+                        + self.dX1.multiply(jitter[1, tdx])
+                    )
+                    .dot(spectra[:, :, tdx].ravel())
+                    .reshape(self.shape)
+                )
+        return ar

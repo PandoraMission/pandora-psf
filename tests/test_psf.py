@@ -230,3 +230,6 @@ def test_nir_psf():
     p = PSF.from_name("nirda")
     assert hasattr(p, "trace_wavelength")
     assert hasattr(p, "trace_sensitivity")
+
+
+# Needs to test the `extrapolate` funcionality
