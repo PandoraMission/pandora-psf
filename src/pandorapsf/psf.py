@@ -288,14 +288,12 @@ class PSF(object):
     def from_name(
         name: str,
         transpose: bool = False,
-        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
     ):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
                 f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
                 transpose=transpose,
-                blur_value=blur_value,
                 extrapolate=True,
             )
             p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=-5 * u.deg_C)
@@ -310,16 +308,16 @@ class PSF(object):
                 hdu[1].header["SENSCORR"] * u.Quantity(1, hdu[1].header["CORRUNIT"]),
             )
             return p
-        
+
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
                 f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
                 transpose=transpose,
-                blur_value=blur_value,
                 extrapolate=True,
             )
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
             p._blur(blur_value=(0.15 * u.pixel, 0.15 * u.pixel))
+            p.blur_value = (0.15 * u.pixel, 0.15 * u.pixel)
             hdu = fits.open(f"{PACKAGEDIR}/data/nirda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]

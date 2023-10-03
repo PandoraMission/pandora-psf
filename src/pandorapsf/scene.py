@@ -1,5 +1,6 @@
 """Class to deal with scenes?"""
 
+from copy import deepcopy
 from typing import Optional, Tuple
 
 import numpy as np
@@ -10,7 +11,7 @@ from tqdm import tqdm
 from .psf import PSF
 from .utils import prep_for_add
 
-__all__ = ["Scene"]
+__all__ = ["Scene", "TraceScene"]
 
 
 class Scene(object):
@@ -63,9 +64,9 @@ class Scene(object):
             )
             self.dX0[rb * self.shape[1] + cb, idx] = dar[0]
             self.dX1[rb * self.shape[1] + cb, idx] = dar[1]
-        self.X = self.X.tocsr()
-        self.dX0 = self.dX0.tocsr()
-        self.dX1 = self.dX1.tocsr()
+        self.X = SparseWarp.from_coo(self.X.tocoo())
+        self.dX0 = SparseWarp.from_coo(self.dX0.tocoo())
+        self.dX1 = SparseWarp.from_coo(self.dX1.tocoo())
 
     def model(
         self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None
@@ -131,9 +132,7 @@ class TraceScene(object):
 
     def _get_Xs(self):
         Xs, dX0s, dX1s = [], [], []
-        for pix, wav in zip(
-            self.psf.trace_pixel, self.psf.trace_wavelength
-        ):
+        for pix, wav in zip(self.psf.trace_pixel, self.psf.trace_wavelength):
             X = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
             dX0 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
             dX1 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
@@ -159,12 +158,16 @@ class TraceScene(object):
             Xs.append(X)
             dX0s.append(dX0)
             dX1s.append(dX1)
-        self.X = sparse.hstack(Xs, format="csr")
-        self.dX0 = sparse.hstack(dX0s, format="csr")
-        self.dX1 = sparse.hstack(dX1s, format="csr")
+        self.X = SparseWarp.from_coo(sparse.hstack(Xs, format="coo"))
+        self.dX0 = SparseWarp.from_coo(sparse.hstack(dX0s, format="coo"))
+        self.dX1 = SparseWarp.from_coo(sparse.hstack(dX1s, format="coo"))
 
     def model(
-        self, spectra: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None, quiet: bool = True) -> npt.ArrayLike:
+        self,
+        spectra: npt.ArrayLike,
+        jitter: Optional[npt.ArrayLike] = None,
+        quiet: bool = True,
+    ) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets x ntime"""
 
         if spectra.ndim == 1:
@@ -185,7 +188,7 @@ class TraceScene(object):
 
         nt = spectra.shape[2]
         ar = np.zeros((nt, *self.shape))
-        for tdx in tqdm(range(nt), disable=quiet, desc='Time index'):
+        for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
             ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel()).T.reshape(
                 *self.shape
             )
@@ -199,3 +202,51 @@ class TraceScene(object):
                     .reshape(self.shape)
                 )
         return ar
+
+
+class SparseWarp(sparse.coo_matrix):
+    """A special instance of a `coo_matrix` that can be translated in column and row."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_row = deepcopy(self.row)
+        self.original_col = deepcopy(self.col)
+        self.original_data = deepcopy(self.data)
+
+    def translate(self, position: Tuple):
+        """Translate the data in the array by `position` in (row, column)"""
+        self.reset()
+        # If translating to (0, 0) just return the original data
+        if position == (0, 0):
+            return self
+        row, col = position
+        # If you're translating more than one shape away just return 0s
+        if (row > self.shape[0]) | (col > self.shape[1]):
+            self.data *= 0
+            return self
+        # find where the data is within the array bounds
+        new_row, new_col = self.row + row, self.col + col
+        k = (
+            (new_row >= 0)
+            & (new_row < self.shape[0])
+            & (new_col >= 0)
+            & (new_col < self.shape[1])
+        )
+
+        self.data[~k] *= 0
+        self.row[~k] *= row
+        self.col[~k] *= col
+        self.data[k] += deepcopy(self.original_data)
+        self.row[k] += row
+        self.col[k] += col
+        return self
+
+    def reset(self):
+        """Reset any translation back to the original data"""
+        self.row = deepcopy(self.original_row)
+        self.col = deepcopy(self.original_col)
+        self.data = deepcopy(self.original_data)
+
+    @staticmethod
+    def from_coo(coo):
+        return SparseWarp((coo.data, (coo.row, coo.col)), shape=coo.shape, dtype=coo.dtype)
