@@ -64,9 +64,9 @@ class Scene(object):
             )
             self.dX0[rb * self.shape[1] + cb, idx] = dar[0]
             self.dX1[rb * self.shape[1] + cb, idx] = dar[1]
-        self.X = SparseWarp.from_coo(self.X.tocoo())
-        self.dX0 = SparseWarp.from_coo(self.dX0.tocoo())
-        self.dX1 = SparseWarp.from_coo(self.dX1.tocoo())
+        self.X = self.X.tocsr()
+        self.dX0 = self.dX0.tocsr()
+        self.dX1 = self.dX1.tocsr()
 
     def model(
         self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None
@@ -158,9 +158,9 @@ class TraceScene(object):
             Xs.append(X)
             dX0s.append(dX0)
             dX1s.append(dX1)
-        self.X = SparseWarp.from_coo(sparse.hstack(Xs, format="coo"))
-        self.dX0 = SparseWarp.from_coo(sparse.hstack(dX0s, format="coo"))
-        self.dX1 = SparseWarp.from_coo(sparse.hstack(dX1s, format="coo"))
+        self.X = sparse.hstack(Xs, format="csr")
+        self.dX0 = sparse.hstack(dX0s, format="csr")
+        self.dX1 = sparse.hstack(dX1s, format="csr")
 
     def model(
         self,
@@ -205,7 +205,7 @@ class TraceScene(object):
 
 
 class SparseWarp(sparse.coo_matrix):
-    """A special instance of a `coo_matrix` that can be translated in column and row."""
+    """A special instance of a `csr_matrix` that can be translated in column and row."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
