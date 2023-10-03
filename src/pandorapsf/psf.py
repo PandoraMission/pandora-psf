@@ -292,7 +292,7 @@ class PSF(object):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
-                f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
+                f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
                 transpose=transpose,
                 extrapolate=True,
             )
