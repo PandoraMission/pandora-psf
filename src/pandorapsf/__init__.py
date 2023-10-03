@@ -24,7 +24,7 @@ if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_vis_20220506.fits"):
     log.warning("No PSF file found. Downloading 100MB VIS PSF file.")
     p = download_file(
         "https://zenodo.org/record/7596336/files/pandora_vis_20220506.fits?download=1",
-        pkgname="pandora-sat",
+        pkgname="pandora-psf",
     )
     shutil.move(p, f"{PACKAGEDIR}/data/pandora_vis_20220506.fits")
     log.warning(f"VIS PSF downloaded to {PACKAGEDIR}/data/pandora_vis_20220506.fits.")
@@ -34,7 +34,7 @@ if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_nir_20220506.fits"):
     log.warning("No PSF file found. Downloading 10MB NIR PSF")
     p = download_file(
         "https://zenodo.org/record/7596336/files/pandora_nir_20220506.fits?download=1",
-        pkgname="pandora-sat",
+        pkgname="pandora-psf",
     )
     shutil.move(p, f"{PACKAGEDIR}/data/pandora_nir_20220506.fits")
     log.warning(f"NIR PSF downloaded to {PACKAGEDIR}/data/pandora_nir_20220506.fits.")
