@@ -1,11 +1,12 @@
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
+
+# import pytest
 from scipy import sparse
 
 # First-party/Local
-from pandorapsf import PSF, TESTDIR, Scene, TraceScene
+from pandorapsf import PSF, TESTDIR, Scene  # , TraceScene
 from pandorapsf.scene import SparseWarp
 
 
@@ -37,7 +38,9 @@ def test_vis_grad_scene():
     ax.imshow(img, origin="lower")
     ax.set(title="Simple Visible Grad Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_vis_grad_scene.png", dpi=150, bbox_inches="tight"
+        TESTDIR + "output/test_vis_grad_scene.png",
+        dpi=150,
+        bbox_inches="tight",
     )
 
 
@@ -91,7 +94,7 @@ def test_simple_IR_scene():
 #     with pytest.raises(ValueError):
 #         img = s.model(spectra[:, 0][:, None])
 
-    # test trace (without sensitivity) dot ones results in roughly ones
+# test trace (without sensitivity) dot ones results in roughly ones
 
 
 def test_sparsewarp():

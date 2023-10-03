@@ -249,4 +249,6 @@ class SparseWarp(sparse.coo_matrix):
 
     @staticmethod
     def from_coo(coo):
-        return SparseWarp((coo.data, (coo.row, coo.col)), shape=coo.shape, dtype=coo.dtype)
+        return SparseWarp(
+            (coo.data, (coo.row, coo.col)), shape=coo.shape, dtype=coo.dtype
+        )

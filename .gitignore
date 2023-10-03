@@ -2,6 +2,7 @@ sandbox
 src/pandorapsf/data/pandora_*20220506.*
 src/pandorapsf/data/pandora_*20210602.*
 src/pandorapsf/data/phoenix
+src/pandorapsf/data/phoenix.zip
 
 # Mac things
 .DS_Store
