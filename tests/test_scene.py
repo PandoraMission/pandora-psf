@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 
 # First-party/Local
-from pandorapsf import PSF, TESTDIR, Scene  # , TraceScene
+from pandorapsf import PSF, TESTDIR, Scene, TraceScene
 from pandorapsf.scene import SparseWarp3D
 
 
@@ -60,41 +60,51 @@ def test_simple_IR_scene():
 
 
 # Image shapes are wrong here need to fix
-# def test_trace_scene():
-#     locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
-#     p = PSF.from_name("nirda")
-#     spectra = np.ones(p.trace_pixel.shape[0])[:, None]
-#     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
-#     assert (s.X.sum(axis=0) < 4).all()
-#     img = s.X.dot(spectra.ravel()).reshape(s.shape)
+def test_trace_scene():
+    p = PSF.from_name("nirda")
+    locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
+    s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
 
-#     locations = np.vstack([np.asarray([250, 300]), np.asarray([40, 60])]).T
-#     spectra = np.ones(s.psf.trace_pixel.shape[0])[:, None] * np.ones(2)
-#     spectra[:, 1] *= 0.1
-#     p = PSF.from_name("nirda")
-#     s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
+    spectra = np.ones(p.trace_pixel.shape[0])
+    assert (s.X.sum(axis=0) < 4).all()
+    img = s.model(spectra)
+    assert img.ndim == 3
+    assert img.shape == (1, 400, 80)
+    img = s.model(spectra[:, None])
+    assert img.ndim == 3
+    assert img.shape == (1, 400, 80)
+    img = s.model(spectra[:, None, None])
+    assert img.ndim == 3
+    assert img.shape == (1, 400, 80)
 
-#     img = s.model(spectra)
-#     fig, ax = plt.subplots()
-#     ax.imshow(img[0], origin="lower")
-#     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
-#     fig.savefig(TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight")
+    locations = np.vstack([np.asarray([250, 300]), np.asarray([20, 60])]).T
+    s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
+    spectra = np.ones(s.psf.trace_pixel.shape[0])[:, None] * np.ones(2)
+    spectra[:, 1] *= 0.1
 
-#     img = s.model(spectra)
-#     fig, ax = plt.subplots()
-#     img0 = s.dX0.dot(spectra.ravel()).reshape(s.shape)
-#     img1 = s.dX1.dot(spectra.ravel()).reshape(s.shape)
-#     img = img0 + img1
-#     ax.imshow(img[0], origin="lower")
-#     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
-#     fig.savefig(
-#         TESTDIR + "output/test_nir_trace_grad.png", dpi=150, bbox_inches="tight"
-#     )
+    img = s.model(spectra)
+    assert img.ndim == 3
+    assert img.shape == (1, 400, 80)
 
-#     with pytest.raises(ValueError):
-#         img = s.model(spectra[:, 0][:, None])
+    img = s.model(spectra[:, :, None])
+    assert img.ndim == 3
+    assert img.shape == (1, 400, 80)
 
-# test trace (without sensitivity) dot ones results in roughly ones
+    assert img[0, :, :40].sum() > 5 * img[0, :, 40:].sum()
+    fig, ax = plt.subplots()
+    ax.imshow(img[0], origin="lower")
+    ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
+    fig.savefig(TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight")
+
+    fig, ax = plt.subplots()
+    img0 = s.dX0.dot(spectra.ravel())
+    img1 = s.dX1.dot(spectra.ravel())
+    img = img0 + img1
+    ax.imshow(img[0], origin="lower")
+    ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
+    fig.savefig(
+        TESTDIR + "output/test_nir_trace_grad.png", dpi=150, bbox_inches="tight"
+    )
 
 
 def test_sparsewarp():
@@ -105,8 +115,8 @@ def test_sparsewarp():
     C = C[:, :, None] * np.ones(10, dtype=int)[None, None, :]
     data = np.ones_like(R).astype(float)
 
-    sw = SparseWarp3D(data, R, C, (50, 50, 10))
-    assert sw.imshape == (50, 50, 10)
+    sw = SparseWarp3D(data, R, C, (50, 50))
+    assert sw.imshape == (50, 50)
     assert sw.shape == sw.cooshape == (2500, 10)
     assert sw.subshape == R.shape
     assert isinstance(sw, sparse.coo_matrix)
@@ -115,7 +125,7 @@ def test_sparsewarp():
     assert sw.dtype == float
 
     # Move data out of frame
-    sw = SparseWarp3D(data, R + 50, C, (50, 50, 10))
+    sw = SparseWarp3D(data, R + 50, C, (50, 50))
     assert len(sw.data) == 0
     # translate back into frame
     sw.translate((-50, 0))
@@ -124,10 +134,10 @@ def test_sparsewarp():
     sw.reset()
     assert len(sw.data) == 0
 
-    sw = SparseWarp3D(data, R + np.arange(10), C + np.arange(10), (50, 50, 10))
+    sw = SparseWarp3D(data, R + np.arange(10), C + np.arange(10), (50, 50))
     sw.translate((-1, 1))
     assert len(sw.data) == 300
 
-    assert sw.dot(np.ones(10)).shape == (50, 50)
+    assert sw.dot(np.ones(10)).shape == (1, 50, 50)
     assert isinstance(sw.dot(np.ones(10)), np.ndarray)
     assert sw.dot(np.ones(10)).sum() == 300

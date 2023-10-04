@@ -1,9 +1,12 @@
 """Functions to plot up PSFs"""
 
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import HTML
 from matplotlib import animation as mplanimation
+from matplotlib.animation import FFMpegWriter
 
 
 def _get_v(kwargs, image_type):
@@ -152,6 +155,7 @@ def _to_matplotlib_animation(
     instance_name: str = "Frame",
     step: int = None,
     interval: int = 200,
+    position: Optional = None,
     figsize=None,
     **plot_args,
 ):
@@ -173,7 +177,8 @@ def _to_matplotlib_animation(
     _, ax = plt.subplots(figsize=figsize)
     ax.imshow(data[0], **plot_args)
     ax.set(xticks=[], yticks=[])
-    plt.gca().set_position([0, 0, 1, 1])
+    if position is not None:
+        plt.gca().set_position(position)
 
     def init():
         return ax.images
@@ -200,6 +205,13 @@ def _to_matplotlib_animation(
 def animate(data, step: int = None, interval: int = 200, **plot_args):
     return HTML(
         _to_matplotlib_animation(
-            data, step=step, interval=interval, **plot_args
+            data, step=step, interval=interval, position=[0, 0, 1, 1], **plot_args
         ).to_jshtml()
     )
+
+
+def save_mp4(
+    data, outfile="out.mp4", step: int = None, interval: int = 200, **plot_args
+):
+    anim = _to_matplotlib_animation(data, step=step, interval=interval, **plot_args)
+    anim.save(outfile, writer=FFMpegWriter(fps=1000 / interval, bitrate=5000), dpi=100)

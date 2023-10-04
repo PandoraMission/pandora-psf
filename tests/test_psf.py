@@ -163,8 +163,8 @@ def test_vis_psf():
 
     p = PSF.from_name("visda")
     assert p.psf().shape == p.shape
-    assert p.dpsf().shape == (2, *p.shape)
-    assert p.dprf(row=0, column=0)[2].ndim == 3
+    assert np.asarray(p.psf(gradients=True)[1:]).shape == (2, *p.shape)
+    assert np.asarray(p.prf(row=0, column=0, gradients=True)[3:5]).ndim == 3
 
 
 def test_nir_psf():

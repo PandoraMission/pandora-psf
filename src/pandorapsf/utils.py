@@ -81,12 +81,13 @@ def make_vis_PSF_fits_files(dir, nbin=2, suffix=""):
         overwrite=True,
     )
 
+
 def make_nir_PSF_fits_files(dir, nbin=2, suffix=""):
     # NIR PSF with thermal info
     # -----------------------------------#
 
     d = loadmat(dir + "pandora_nir_20220506_thin_prism_hot_PSF_512.mat")
-    PSF_hot = d["PSF"][:-1, :-1, :-1]#[128:384, 128:384]
+    PSF_hot = d["PSF"][:-1, :-1, :-1]  # [128:384, 128:384]
     PSF_hot = np.asarray(
         [[PSF_hot[idx::nbin, jdx::nbin] for idx in range(nbin)] for jdx in range(nbin)]
     ).mean(axis=(0, 1))
