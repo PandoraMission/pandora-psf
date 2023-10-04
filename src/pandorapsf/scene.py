@@ -110,17 +110,21 @@ class Scene(object):
             if (jitter.shape[0] != 2) | (jitter.shape[1] != nt):
                 raise ValueError("`jitter` must be an array with shape (2 x ntimes).")
 
-        ar = self.X.dot(flux)
         if jitter is not None:
+            ar = np.zeros((nt, *self.shape))
+            grad_ar = deepcopy(self.dX0)
             for tdx in np.arange(0, nt):
-                ar[tdx] += (
-                    (
-                        self.dX0.multiply(jitter[0, tdx])
-                        + self.dX1.multiply(jitter[1, tdx])
-                    )
-                    .dot(flux[:, tdx])
-                    .reshape(self.shape)
-                )
+                jitterdec = jitter[:, tdx] % 1
+                jitterint = jitter[:, tdx] - jitterdec
+                grad_ar.data = self.dX0.data * jitterdec[0] + self.dX1.data * jitterdec[1]
+                grad_ar.translate(tuple(jitterint.astype(int)))
+                self.X.translate(tuple(jitterint.astype(int)))
+                
+                ar[tdx] += self.X.dot(flux[:, tdx])[0]
+                ar[tdx] += grad_ar.dot(flux[:, tdx])[0]
+            self.X.reset()
+        else:
+            ar = self.X.dot(flux)
         return ar
 
 
@@ -257,30 +261,42 @@ class SparseWarp3D(sparse.coo_matrix):
         super().__init__(self.cooshape)
         self._set_data()
 
+    def __add__(self, other):
+        if isinstance(other, SparseWarp3D):
+            data = deepcopy(self.subdata + other.subdata)
+            if (self.subcol != other.subcol) | (self.subrow != other.subrow) | (self.imshape != other.imshape) | (self.subshape != other.subshape):
+                raise ValueError("Must have same base indicies.")
+            return SparseWarp3D(data=data, row=self.subrow, col=self.subcol, imshape=self.imshape)
+        else: 
+            return super(sparse.coo_matrix, self).__add__(other)
+
     def index(self, offset=(0, 0)):
         """Get the 2D positions of the data"""
-        index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[0] + (
-            np.vstack(self.subcol) + offset[1]
-        )
+        # index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[1] + (
+        #     np.vstack(self.subcol) + offset[1]
+        # )
+        index0 = (np.vstack(self.subcol) + offset[1]) * self.imshape[0] + (
+            np.vstack(self.subrow) + offset[0]
+        )        
         index1 = np.vstack(self.subdepth).ravel()
         return np.vstack([index0.ravel(), index1.ravel()])
 
     def _get_submask(self, offset=(0, 0)):
         # find where the data is within the array bounds
-        kr = ((self.subrow[:, 0, 0] + offset[0]) < self.imshape[0]) & (
-            (self.subrow[:, 0, 0] + offset[0]) >= 0
+        kr = ((self.subrow + offset[0]) < self.imshape[0]) & (
+            (self.subrow + offset[0]) >= 0
         )
-        kc = ((self.subcol[0, :, 0] + offset[1]) < self.imshape[1]) & (
-            (self.subcol[0, :, 0] + offset[1]) >= 0
+        kc = ((self.subcol + offset[1]) < self.imshape[1]) & (
+            (self.subcol + offset[1]) >= 0
         )
-        return (kr[:, None, None] & kc[None, :, None]) * np.ones(self.subshape[-1], bool)
+        return (kr & kc)
 
     def _set_data(self, offset=(0, 0)):
         # find where the data is within the array bounds
         k = np.vstack(
             self._get_submask(offset=offset)
         ).ravel()
-        new_row, new_col = self.index(offset)
+        new_row, new_col = self.index(offset=offset)
         self.row, self.col = new_row[k], new_col[k]
         self.data = np.vstack(deepcopy(self.subdata)).ravel()[k]
 
@@ -291,7 +307,7 @@ class SparseWarp3D(sparse.coo_matrix):
         if other.ndim == 1:
             other = other[:, None]
         nt = other.shape[1]        
-        return super().dot(other).reshape((nt, *self.imshape))
+        return super().dot(other).reshape((*self.imshape, nt)).T
 
     def reset(self):
         """Reset any translation back to the original data"""
