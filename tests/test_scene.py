@@ -7,7 +7,7 @@ from scipy import sparse
 
 # First-party/Local
 from pandorapsf import PSF, TESTDIR, Scene  # , TraceScene
-from pandorapsf.scene import SparseWarp
+from pandorapsf.scene import SparseWarp3D
 
 
 def test_simple_vis_scene():
@@ -98,15 +98,36 @@ def test_simple_IR_scene():
 
 
 def test_sparsewarp():
-    R, C = np.meshgrid(np.arange(20, 25), np.arange(20, 25), indexing="ij")
-    data = np.ones((5, 5))
-    sw = SparseWarp((data.ravel(), (R.ravel(), C.ravel())), shape=(50, 50))
+    R, C = np.meshgrid(
+        np.arange(20, 25).astype(int), np.arange(10, 16).astype(int), indexing="ij"
+    )
+    R = R[:, :, None] * np.ones(10, dtype=int)[None, None, :]
+    C = C[:, :, None] * np.ones(10, dtype=int)[None, None, :]
+    data = np.ones_like(R).astype(float)
+
+    sw = SparseWarp3D(data, R, C, (50, 50, 10))
+    assert sw.imshape == (50, 50, 10)
+    assert sw.shape == sw.cooshape == (2500, 10)
+    assert sw.subshape == R.shape
     assert isinstance(sw, sparse.coo_matrix)
-    assert sparse.issparse(sw)
-    assert hasattr(sw, "translate")
-    assert sw.shape == (50, 50)
-    assert sw.data.sum() != 0
-    sw.translate((1, 1))
-    assert sw.data.sum() != 0
-    sw.translate((100, 1))
-    assert sw.data.sum() == 0
+    assert len(sw.data) == 300
+    assert sw.data.sum() == 300
+    assert sw.dtype == float
+
+    # Move data out of frame
+    sw = SparseWarp3D(data, R + 50, C, (50, 50, 10))
+    assert len(sw.data) == 0
+    # translate back into frame
+    sw.translate((-50, 0))
+    assert len(sw.data) == 300
+    # reset it
+    sw.reset()
+    assert len(sw.data) == 0
+
+    sw = SparseWarp3D(data, R + np.arange(10), C + np.arange(10), (50, 50, 10))
+    sw.translate((-1, 1))
+    assert len(sw.data) == 300
+
+    assert sw.dot(np.ones(10)).shape == (50, 50)
+    assert isinstance(sw.dot(np.ones(10)), np.ndarray)
+    assert sw.dot(np.ones(10)).sum() == 300

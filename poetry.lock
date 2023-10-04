@@ -1567,6 +1567,20 @@ files = [
 ]
 
 [[package]]
+name = "memory-profiler"
+version = "0.61.0"
+description = "A module for monitoring memory usage of a python program"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "memory_profiler-0.61.0-py3-none-any.whl", hash = "sha256:400348e61031e3942ad4d4109d18753b2fb08c2f6fb8290671c5513a34182d84"},
+    {file = "memory_profiler-0.61.0.tar.gz", hash = "sha256:4e5b73d7864a1d1292fb76a03e82a3e78ef934d06828a698d9dada76da2067b0"},
+]
+
+[package.dependencies]
+psutil = "*"
+
+[[package]]
 name = "mergedeep"
 version = "1.3.4"
 description = "A deep merge function for 🐍."
@@ -3311,4 +3325,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "24570865e10c6eb9dc8aa2ec1544797862e8508d790e5af6c9f734b77f0be3dd"
+content-hash = "5f4d808e105ec08402df2b1c7d5473dd11dda0ac13408c90231c4af9d74afbea"

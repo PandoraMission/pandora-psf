@@ -28,6 +28,7 @@ mkdocs-material = "^9.3.2"
 mkdocstrings = "^0.23.0"
 pytest = "^7.4.2"
 pysynphot = "^2.0.0"
+memory-profiler = "^0.61.0"
 
 [build-system]
 requires = ["poetry-core"]

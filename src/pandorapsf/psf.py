@@ -155,7 +155,7 @@ class PSF(object):
             self._psf_flux_blur_grad = np.asarray(
                 np.gradient(
                     self._psf_flux_blur,
-                    (np.median(np.diff(self.psf_row)) * self.sub_pixel_size).value,
+                    np.median(np.diff(self.psf_row)).value,
                     axis=(0, 1),
                 )
             )
@@ -180,7 +180,7 @@ class PSF(object):
         self._psf_flux_blur_grad = np.asarray(
             np.gradient(
                 self._psf_flux_blur,
-                (np.median(np.diff(self.psf_row)) * self.sub_pixel_size).value,
+                np.median(np.diff(self.psf_row)).value,
                 axis=(0, 1),
             )
         )
@@ -292,7 +292,7 @@ class PSF(object):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
-                f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
+                f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
                 transpose=transpose,
                 extrapolate=True,
             )
@@ -432,7 +432,7 @@ class PSF(object):
                 cleaned[key] = value
         return cleaned
 
-    def psf(self, **kwargs):
+    def psf(self, gradients=False, **kwargs):
         """Interpolate the PSF cube to a particular point
 
         Parameters
@@ -448,6 +448,9 @@ class PSF(object):
             kwargs = self._check_bounds(**kwargs)
         d = kwargs.copy()
         PSF0 = self.psf_flux
+        if gradients:
+            dPSF0 = self._psf_flux_blur_grad[0]
+            dPSF1 = self._psf_flux_blur_grad[1]
         for key in self.dimension_names:
             value = d.pop(key, getattr(self, key + "0d"))
             PSF0 = interpfunc(
@@ -455,43 +458,56 @@ class PSF(object):
                 getattr(self, key + "1d").value,
                 PSF0,
             )
+            if gradients:
+                dPSF0 = interpfunc(
+                    value.value,
+                    getattr(self, key + "1d").value,
+                    dPSF0,
+                )
+                dPSF1 = interpfunc(
+                    value.value,
+                    getattr(self, key + "1d").value,
+                    dPSF1,
+                )
+        if gradients:
+            return PSF0 / PSF0.sum(), dPSF0 - dPSF0.mean(), dPSF1 - dPSF1.mean()
         return PSF0 / PSF0.sum()
 
-    def dpsf(self, **kwargs):
-        """Interpolate the gradient of the PSF cube to a particular point
+    # def dpsf(self, **kwargs):
+    #     """Interpolate the gradient of the PSF cube to a particular point
 
-        Parameters
-        ----------
-        args: dict
-            Dictionary of arguments to pass, set each dimension name to a value
-        Returns
-        -------
-        ar : np.ndarray of shape self.shape
-            The interpolated PSF gradient in units of 1/micron
-        """
-        if self.check_bounds:
-            kwargs = self._check_bounds(**kwargs)
-        d = kwargs.copy()
-        dPSF0 = self._psf_flux_blur_grad[0]
-        for key in self.dimension_names:
-            value = d.pop(key, getattr(self, key + "0d"))
-            dPSF0 = interpfunc(
-                value.value,
-                getattr(self, key + "1d").value,
-                dPSF0,
-            )
-        d = kwargs.copy()
-        dPSF1 = self._psf_flux_blur_grad[1]
-        for key in self.dimension_names:
-            value = d.pop(key, getattr(self, key + "0d"))
-            dPSF1 = interpfunc(
-                value.value,
-                getattr(self, key + "1d").value,
-                dPSF1,
-            )
-        return np.asarray([dPSF0 - dPSF0.mean(), dPSF1 - dPSF1.mean()])
+    #     Parameters
+    #     ----------
+    #     args: dict
+    #         Dictionary of arguments to pass, set each dimension name to a value
+    #     Returns
+    #     -------
+    #     ar : np.ndarray of shape self.shape
+    #         The interpolated PSF gradient in units of 1/micron
+    #     """
+    #     if self.check_bounds:
+    #         kwargs = self._check_bounds(**kwargs)
+    #     d = kwargs.copy()
+    #     dPSF0 = self._psf_flux_blur_grad[0]
+    #     for key in self.dimension_names:
+    #         value = d.pop(key, getattr(self, key + "0d"))
+    #         dPSF0 = interpfunc(
+    #             value.value,
+    #             getattr(self, key + "1d").value,
+    #             dPSF0,
+    #         )
+    #     d = kwargs.copy()
+    #     dPSF1 = self._psf_flux_blur_grad[1]
+    #     for key in self.dimension_names:
+    #         value = d.pop(key, getattr(self, key + "0d"))
+    #         dPSF1 = interpfunc(
+    #             value.value,
+    #             getattr(self, key + "1d").value,
+    #             dPSF1,
+    #         )
+    #     return np.asarray([dPSF0 - dPSF0.mean(), dPSF1 - dPSF1.mean()])
 
-    def prf(self, row, column, **kwargs):
+    def prf(self, row, column, gradients=False, **kwargs):
         """
         Bins the PSF down to the pixel scale.
 
@@ -517,44 +533,55 @@ class PSF(object):
                 )
         row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
         if "row" in self.dimension_names:
-            psf0 = self.psf(row=row, column=column, **kwargs)
+            if gradients:
+                psf0, dpsf0, dpsf1 = self.psf(row=row, column=column, gradients=True, **kwargs)
+            else:
+                psf0 = self.psf(row=row, column=column, **kwargs)
         else:
-            psf0 = self.psf(**kwargs)
-        return self._bin_prf(psf0, row, column)
+            if gradients:
+                psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
+            else:
+                psf0 = self.dpsf(**kwargs)
+        rb, cb, psfb = self._bin_prf(psf0, row, column)
+        if gradients:
+            _, _, dpsf0b = self._bin_prf(dpsf0, row, column, normalize=False)
+            _, _, dpsf1b = self._bin_prf(dpsf1, row, column, normalize=False)
+            return rb, cb, psfb, dpsf0b, dpsf1b
+        return rb, cb, psfb
 
-    def dprf(self, row, column, **kwargs):
-        """
-        Bins the gradient of the PSF down to the pixel scale.
+    # def dprf(self, row, column, **kwargs):
+    #     """
+    #     Bins the gradient of the PSF down to the pixel scale.
 
-        Parameters
-        ----------
-        args: dict
-            Dictionary of arguments to pass, set each dimension name to a value
+    #     Parameters
+    #     ----------
+    #     args: dict
+    #         Dictionary of arguments to pass, set each dimension name to a value
 
-        Returns
-        -------
-        row: np.ndarray
-            Array of integer row positions
-        column: np.ndarray
-            Array of integer column positions
-        dpsf: np.ndarray
-            3D array of PRF gradient values with shape (2, nrows, ncolumns)
-            in units of 1/micron
-        """
-        if self.check_bounds:
-            test1 = np.in1d(list(kwargs.keys()), self.dimension_names)
-            if not test1.all():
-                raise ValueError(
-                    f"Pass only dimension names from {self.dimension_names}"
-                )
-        row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
-        if "row" in self.dimension_names:
-            dpsf0, dpsf1 = self.dpsf(row=row, column=column, **kwargs)
-        else:
-            dpsf0, dpsf1 = self.dpsf(**kwargs)
-        rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column, normalize=False)
-        _, _, dpsf1 = self._bin_prf(dpsf1, row, column, normalize=False)
-        return rb, cb, np.asarray([dpsf0 - dpsf0.mean(), dpsf1 - dpsf1.mean()])
+    #     Returns
+    #     -------
+    #     row: np.ndarray
+    #         Array of integer row positions
+    #     column: np.ndarray
+    #         Array of integer column positions
+    #     dpsf: np.ndarray
+    #         3D array of PRF gradient values with shape (2, nrows, ncolumns)
+    #         in units of 1/micron
+    #     """
+    #     if self.check_bounds:
+    #         test1 = np.in1d(list(kwargs.keys()), self.dimension_names)
+    #         if not test1.all():
+    #             raise ValueError(
+    #                 f"Pass only dimension names from {self.dimension_names}"
+    #             )
+    #     row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
+    #     if "row" in self.dimension_names:
+    #         dpsf0, dpsf1 = self.dpsf(row=row, column=column, **kwargs)
+    #     else:
+    #         dpsf0, dpsf1 = self.dpsf(**kwargs)
+    #     rb, cb, dpsf0 = self._bin_prf(dpsf0, row, column, normalize=False)
+    #     _, _, dpsf1 = self._bin_prf(dpsf1, row, column, normalize=False)
+    #     return rb, cb, np.asarray([dpsf0 - dpsf0.mean(), dpsf1 - dpsf1.mean()])
 
     def _bin_prf(self, psf0, row, column, normalize=True):
         mod = (self.psf_column.value + column.value) % 1

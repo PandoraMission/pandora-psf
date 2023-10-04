@@ -40,33 +40,53 @@ class Scene(object):
     def __len__(self):
         return len(self.locations)
 
+    # def _get_X(self):
+    #     self.X = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
+    #     self.dX0 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
+    #     self.dX1 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
+    #     for idx, location in enumerate(self.locations):
+    #         rb, cb, ar = prep_for_add(
+    #             *self.psf.prf(
+    #                 row=location[0],
+    #                 column=location[1],
+    #             ),
+    #             shape=self.shape,
+    #             corner=self.corner,
+    #         )
+    #         self.X[rb * self.shape[1] + cb, idx] = ar
+    #         rb, cb, dar = prep_for_add(
+    #             *self.psf.dprf(
+    #                 row=location[0],
+    #                 column=location[1],
+    #             ),
+    #             shape=self.shape,
+    #             corner=self.corner,
+    #         )
+    #         self.dX0[rb * self.shape[1] + cb, idx] = dar[0]
+    #         self.dX1[rb * self.shape[1] + cb, idx] = dar[1]
+    #     self.X = self.X.tocsr()
+    #     self.dX0 = self.dX0.tocsr()
+    #     self.dX1 = self.dX1.tocsr()
+
     def _get_X(self):
-        self.X = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
-        self.dX0 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
-        self.dX1 = sparse.lil_matrix((np.prod(self.shape), len(self.locations)))
-        for idx, location in enumerate(self.locations):
-            rb, cb, ar = prep_for_add(
-                *self.psf.prf(
-                    row=location[0],
-                    column=location[1],
-                ),
-                shape=self.shape,
-                corner=self.corner,
-            )
-            self.X[rb * self.shape[1] + cb, idx] = ar
-            rb, cb, dar = prep_for_add(
-                *self.psf.dprf(
-                    row=location[0],
-                    column=location[1],
-                ),
-                shape=self.shape,
-                corner=self.corner,
-            )
-            self.dX0[rb * self.shape[1] + cb, idx] = dar[0]
-            self.dX1[rb * self.shape[1] + cb, idx] = dar[1]
-        self.X = self.X.tocsr()
-        self.dX0 = self.dX0.tocsr()
-        self.dX1 = self.dX1.tocsr()
+        row, col, data, grad0, grad1 = [], [], [], [], []
+        for location in self.locations:
+            r, c, ar, g0, g1 = self.psf.prf(
+                        row=location[0],
+                        column=location[1],
+                        gradients=True
+                    )
+            row.append(r[:, None] * np.ones(c.shape[0], int))
+            col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
+            grad0.append(g0)
+            grad1.append(g1)
+            data.append(ar)
+        data, row, col, grad0, grad1 = np.asarray(data), np.asarray(row), np.asarray(col), np.asarray(grad0), np.asarray(grad1)        
+        self.X = SparseWarp3D(data.transpose([1, 2, 0]), row.transpose([1, 2, 0]) - self.corner[0], col.transpose([1, 2, 0]) - self.corner[1], imshape=self.shape)
+        self.dX0 = SparseWarp3D(grad0.transpose([1, 2, 0]), row.transpose([1, 2, 0]) - self.corner[0], col.transpose([1, 2, 0]) - self.corner[1], imshape=self.shape)
+        self.dX1 = SparseWarp3D(grad1.transpose([1, 2, 0]), row.transpose([1, 2, 0]) - self.corner[0], col.transpose([1, 2, 0]) - self.corner[1], imshape=self.shape)
+        return
+
 
     def model(
         self, flux: npt.ArrayLike, jitter: Optional[npt.ArrayLike] = None
@@ -84,7 +104,13 @@ class Scene(object):
         if flux.shape[0] != self.ntargets:
             raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
         nt = flux.shape[1]
-        ar = self.X.dot(flux).T.reshape((nt, *self.shape))
+        if jitter is not None:
+            if jitter.ndim == 1:
+                jitter = jitter[:, None]
+            if (jitter.shape[0] != 2) | (jitter.shape[1] != nt):
+                raise ValueError("`jitter` must be an array with shape (2 x ntimes).")
+
+        ar = self.X.dot(flux)
         if jitter is not None:
             for tdx in np.arange(0, nt):
                 ar[tdx] += (
@@ -181,7 +207,7 @@ class TraceScene(object):
         ):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
         if jitter is not None:
-            if spectra.ndim == 1:
+            if jitter.ndim == 1:
                 jitter = jitter[:, None]
             elif jitter.ndim != 2:
                 raise ValueError("Pass 2D array for jitter (2, ntime).")
@@ -204,51 +230,87 @@ class TraceScene(object):
         return ar
 
 
-class SparseWarp(sparse.coo_matrix):
-    """A special instance of a `csr_matrix` that can be translated in column and row."""
+class SparseWarp3D(sparse.coo_matrix):
+    """Special class for working with stacks of sparse 3D images"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.original_row = deepcopy(self.row)
-        self.original_col = deepcopy(self.col)
-        self.original_data = deepcopy(self.data)
+    def __init__(self, data, row, col, imshape):
+        if not np.all([row.ndim == 3, col.ndim == 3, data.ndim == 3]):
+            raise ValueError("Pass a 3D array (nrow, ncol, nvecs)")
+        self.nvecs = data.shape[-1]
+        if not np.all(
+            [
+                row.shape[-1] == self.nvecs,
+                col.shape[-1] == self.nvecs,
+            ]
+        ):
+            raise ValueError("Must have the same 3rd dimension (nvecs).")
+        self.subrow = row.astype(int)
+        self.subcol = col.astype(int)
+        self.subdepth = (
+            np.arange(row.shape[-1], dtype=int)[None, None, :]
+            * np.ones(row.shape, dtype=int)[:, :, None]
+        )
+        self.subdata = data
+        self.imshape = imshape
+        self.subshape = row.shape
+        self.cooshape = (np.prod([*self.imshape[:2]]), self.nvecs)
+        super().__init__(self.cooshape)
+        self._set_data()
+
+    def index(self, offset=(0, 0)):
+        """Get the 2D positions of the data"""
+        index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[0] + (
+            np.vstack(self.subcol) + offset[1]
+        )
+        index1 = np.vstack(self.subdepth).ravel()
+        return np.vstack([index0.ravel(), index1.ravel()])
+
+    def _get_submask(self, offset=(0, 0)):
+        # find where the data is within the array bounds
+        kr = ((self.subrow[:, 0, 0] + offset[0]) < self.imshape[0]) & (
+            (self.subrow[:, 0, 0] + offset[0]) >= 0
+        )
+        kc = ((self.subcol[0, :, 0] + offset[1]) < self.imshape[1]) & (
+            (self.subcol[0, :, 0] + offset[1]) >= 0
+        )
+        return (kr[:, None, None] & kc[None, :, None]) * np.ones(self.subshape[-1], bool)
+
+    def _set_data(self, offset=(0, 0)):
+        # find where the data is within the array bounds
+        k = np.vstack(
+            self._get_submask(offset=offset)
+        ).ravel()
+        new_row, new_col = self.index(offset)
+        self.row, self.col = new_row[k], new_col[k]
+        self.data = np.vstack(deepcopy(self.subdata)).ravel()[k]
+
+    def __repr__(self):
+        return f"<{(*self.imshape, self.nvecs)} SparseWarp3D array of type {self.dtype}>"
+
+    def dot(self, other):
+        if other.ndim == 1:
+            other = other[:, None]
+        nt = other.shape[1]        
+        return super().dot(other).reshape((nt, *self.imshape))
+
+    def reset(self):
+        """Reset any translation back to the original data"""
+        self._set_data(offset=(0, 0))
+        return
+
+    def clear(self):
+        """Clear data in the array"""
+        self.data = np.asarray([])
+        self.row = np.asarray([])
+        self.col = np.asarray([])
+        return
 
     def translate(self, position: Tuple):
         """Translate the data in the array by `position` in (row, column)"""
         self.reset()
-        # If translating to (0, 0) just return the original data
+        # If translating to (0, 0), do nothing
         if position == (0, 0):
-            return self
-        row, col = position
-        # If you're translating more than one shape away just return 0s
-        if (row > self.shape[0]) | (col > self.shape[1]):
-            self.data *= 0
-            return self
-        # find where the data is within the array bounds
-        new_row, new_col = self.row + row, self.col + col
-        k = (
-            (new_row >= 0)
-            & (new_row < self.shape[0])
-            & (new_col >= 0)
-            & (new_col < self.shape[1])
-        )
-
-        self.data[~k] *= 0
-        self.row[~k] *= row
-        self.col[~k] *= col
-        self.data[k] += deepcopy(self.original_data)
-        self.row[k] += row
-        self.col[k] += col
-        return self
-
-    def reset(self):
-        """Reset any translation back to the original data"""
-        self.row = deepcopy(self.original_row)
-        self.col = deepcopy(self.original_col)
-        self.data = deepcopy(self.original_data)
-
-    @staticmethod
-    def from_coo(coo):
-        return SparseWarp(
-            (coo.data, (coo.row, coo.col)), shape=coo.shape, dtype=coo.dtype
-        )
+            return
+        self.clear()
+        self._set_data(position)
+        return
