@@ -160,6 +160,69 @@ def make_nir_PSF_fits_files(dir, nbin=2, suffix=""):
     )
 
 
+def make_gaussian_psf():
+    hdu1 = fits.open(f'{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits')
+    pixel_size = hdu1[0].header["PIXSIZE"] * u.micron / u.pix
+    sub_pixel_size = hdu1[0].header["SUBPIXSZ"] * u.micron / u.pix
+    shape = hdu1[1].data.shape[:2]
+    psf_column = (
+        (np.arange(shape[1]) - shape[1] // 2)
+        * u.pixel
+        * sub_pixel_size
+    ) / pixel_size
+    psf_row = (
+        (np.arange(shape[0]) - shape[0] // 2)
+        * u.pixel
+        * sub_pixel_size
+    ) / pixel_size
+
+    def gauss(row, col, sigma):
+        return (1/(sigma*np.sqrt(2*np.pi))) * np.exp(-((col[None, :])**2/(2*sigma**2) + (row[:, None])**2/(2*sigma**2)))
+        
+    R = np.abs(hdu1[2].data[:, 0, 0, 0]) / 600 + 1
+    C = np.abs(hdu1[3].data[0, :, 0, 0]) / 600 + 1
+
+    ar = np.zeros((9, 9, 256, 256))
+    for idx, r1 in enumerate(R):
+        for jdx, c1 in enumerate(C):
+            ar[idx, jdx] = gauss(psf_row.value, psf_column.value, np.hypot(r1, c1))
+    ar = ar.transpose([2, 3, 0, 1])
+    integral = np.trapz(np.trapz(ar, dx=np.median(np.diff(psf_row).value), axis=0), dx=np.median(np.diff(psf_column).value), axis=0)
+    ar /= integral[None, None, :, :]
+    hdr = fits.Header(
+        [
+            ("AUTHOR1", "Christina Hedges"),
+            ("ORIGIN1", "Gaussian"),
+            ("CREATED", datetime.now().isoformat()),
+            ("DATE", datetime.now().isoformat()),
+            (
+                "PIXSIZE",
+                pixel_size.value,
+                f"PSF pixel size in {pixel_size.unit.to_string()}",
+            ),
+            (
+                "SUBPIXSZ",
+                sub_pixel_size.value,
+                f"PSF sub pixel size in {sub_pixel_size.unit.to_string()}",
+            ),
+        ]
+    )
+    primaryhdu = fits.PrimaryHDU(header=hdr)
+    hdu = fits.HDUList(
+        [
+            primaryhdu,
+            fits.ImageHDU(ar, name="PSF"),
+            fits.ImageHDU(hdu1[2].data[:, :, 0, 0], name="X"),
+            fits.ImageHDU(hdu1[3].data[:, :, 0, 0], name="Y"),
+        ]
+    )
+    hdu[2].header["UNIT"] = u.pixel.to_string()
+    hdu[3].header["UNIT"] = u.pixel.to_string()
+    hdu.writeto(
+        PACKAGEDIR + f"/data/pandora_gaussian_psf.fits",
+        overwrite=True,
+    )
+
 def prep_for_add(row, column, prf, shape=(100, 100), corner=(-50, -50)):
     Y, X = np.asarray(
         np.meshgrid(

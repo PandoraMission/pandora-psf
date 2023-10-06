@@ -91,6 +91,7 @@ class Scene(object):
         delta_pos : npt.ArrayLike
             Array of jitter values in row and column, has shape (2, ntimes)
         """
+        delta_pos = deepcopy(delta_pos)
         if flux.ndim == 1:
             flux = flux[:, None]
         if flux.shape[0] != self.ntargets:
@@ -103,17 +104,27 @@ class Scene(object):
                 raise ValueError(
                     "`delta_pos` must be an array with shape (2 x ntimes)."
                 )
-
         if delta_pos is not None:
             ar = np.zeros((nt, *self.shape))
             # to save a bit on time we're going to just update the data in a copied array
             grad_ar = deepcopy(self.dX0)
             for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
-                jitterdec = delta_pos[:, tdx] % 1
-                jitterint = delta_pos[:, tdx] - jitterdec
-                grad_ar.data = (
-                    self.dX0.data * jitterdec[0] + self.dX1.data * jitterdec[1]
+                jitterdec = ((delta_pos[:, tdx] + 0.5) % 1) - 1
+
+                
+                jitterint = delta_pos[:, tdx] - jitterdec# + 1
+                # Not sure where this comes from...
+                # if delta_pos[0, tdx] < -1:
+                #     jitterint[0] -= 1
+                # if delta_pos[1, tdx] < -1:
+                #     jitterint[1] -= 1
+
+                # Fudge factor...
+                jitterdec *= 100 / 1.3
+                grad_ar.subdata = (
+                    deepcopy(self.dX0.subdata) * -jitterdec[0] + deepcopy(self.dX1.subdata) * -jitterdec[1]
                 )
+                grad_ar._set_data()
                 grad_ar.translate(tuple(jitterint.astype(int)))
                 self.X.translate(tuple(jitterint.astype(int)))
 
@@ -219,7 +230,7 @@ class TraceScene(object):
         self,
         spectra: npt.ArrayLike,
         delta_pos: Optional[npt.ArrayLike] = None,
-        quiet: bool = True,
+        quiet: bool = False,
     ) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets x ntime"""
 
@@ -245,13 +256,15 @@ class TraceScene(object):
             grad_ar = deepcopy(self.dX0)
         for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
             if delta_pos is not None:
-                jitterdec = delta_pos[:, tdx] % 1
-                jitterint = delta_pos[:, tdx] - jitterdec
-                grad_ar.data = (
-                    self.dX0.data * jitterdec[0] + self.dX1.data * jitterdec[1]
+#                jitterdec = ((delta_pos[:, tdx] - 0.5) % 1) + 0.5
+#                jitterint = delta_pos[:, tdx] - jitterdec + 1
+#                print(jitterint)
+                jitterdec = delta_pos[:, tdx]
+                grad_ar.subdata = (
+                    self.dX0.subdata * jitterdec[0] + self.dX1.subdata * jitterdec[1]
                 )
-                grad_ar.translate(tuple(jitterint.astype(int)))
-                self.X.translate(tuple(jitterint.astype(int)))
+#                grad_ar.translate(tuple(jitterint.astype(int)))
+#                self.X.translate(tuple(jitterint.astype(int)))
 
                 ar[tdx] += self.X.dot(spectra[:, :, tdx].ravel())[0]
                 ar[tdx] += grad_ar.dot(spectra[:, :, tdx].ravel())[0]
@@ -303,10 +316,6 @@ class SparseWarp3D(sparse.coo_matrix):
         else:
             return super(sparse.coo_matrix, self).__add__(other)
 
-    @property
-    def __class__(self):
-        return sparse.coo_matrix
-
     def index(self, offset=(0, 0)):
         """Get the 2D positions of the data"""
         # index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[1] + (
@@ -344,7 +353,7 @@ class SparseWarp3D(sparse.coo_matrix):
         if other.ndim == 1:
             other = other[:, None]
         nt = other.shape[1]
-        return super().dot(other).reshape((nt, *self.imshape))
+        return super().dot(other).reshape((*self.imshape, nt)).transpose([2, 0, 1])
 
     def reset(self):
         """Reset any translation back to the original data"""

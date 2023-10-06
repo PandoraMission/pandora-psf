@@ -159,6 +159,7 @@ class PSF(object):
                     axis=(0, 1),
                 )
             )
+            self.psf_flux = deepcopy(self._psf_flux)
             return
         s = a.shape
         a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
@@ -290,6 +291,14 @@ class PSF(object):
         transpose: bool = False,
     ):
         """Open a PSF file based on the detector name"""
+        if name.lower() in ["gauss", "gaussian", "test"]:
+            p = PSF.from_file(
+                f"{PACKAGEDIR}/data/pandora_gaussian_psf.fits",
+                transpose=transpose,
+                extrapolate=True,
+            )
+            return p
+        
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
                 f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
@@ -372,9 +381,9 @@ class PSF(object):
                 np.where(np.asarray(dimension_names) == "row")[0][0],
                 np.where(np.asarray(dimension_names) == "column")[0][0],
             )
-            l = np.hstack([l, list(set(list(np.arange(len(hdu) - 2))) - set(l))])
+            l = np.hstack([l, list(set(list(np.arange(len(hdu) - 2))) - set(l))]).astype(int)
         else:
-            l = np.arange(len(hdu) - 2)
+            l = np.arange(len(hdu) - 2).astype(int)
 
         psf_flux = hdu[1].data.transpose(np.hstack([1, 0, *l + 2]))
         dimension_names = [dimension_names[l1] for l1 in l]
@@ -469,9 +478,10 @@ class PSF(object):
                     getattr(self, key + "1d").value,
                     dPSF1,
                 )
+        integral = PSF0.sum()
         if gradients:
-            return PSF0 / PSF0.sum(), dPSF0 - dPSF0.mean(), dPSF1 - dPSF1.mean()
-        return PSF0 / PSF0.sum()
+            return PSF0 / integral, (dPSF0 - dPSF0.mean())/integral, (dPSF1 - dPSF1.mean())/integral
+        return PSF0 / integral
 
     def prf(self, row, column, gradients=False, **kwargs):
         """
