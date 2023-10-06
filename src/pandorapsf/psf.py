@@ -12,6 +12,7 @@ from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.io import fits
 
 from . import PACKAGEDIR
+from .utils import bin_prf
 
 __all__ = ["PSF"]
 
@@ -158,7 +159,7 @@ class PSF(object):
                     np.median(np.diff(self.psf_row)).value,
                     axis=(0, 1),
                 )
-            )
+            ) * (self.sub_pixel_size/self.pixel_size).value
             self.psf_flux = deepcopy(self._psf_flux)
             return
         s = a.shape
@@ -184,7 +185,7 @@ class PSF(object):
                 np.median(np.diff(self.psf_row)).value,
                 axis=(0, 1),
             )
-        )
+        ) * (self.sub_pixel_size/self.pixel_size).value
         self.psf_flux = self._psf_flux_blur  # + self._psf_flux_jitter
         return
 
@@ -509,40 +510,45 @@ class PSF(object):
                 )
         row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
         if "row" in self.dimension_names:
-            if gradients:
-                psf0, dpsf0, dpsf1 = self.psf(
-                    row=row, column=column, gradients=True, **kwargs
-                )
-            else:
+            # if gradients:
+            #     psf0, dpsf0, dpsf1 = self.psf(
+            #         row=row, column=column, gradients=True, **kwargs
+            #     )
+            # else:
                 psf0 = self.psf(row=row, column=column, **kwargs)
         else:
-            if gradients:
-                psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
-            else:
+            # if gradients:
+            #     psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
+            #else:
                 psf0 = self.psf(**kwargs)
-        rb, cb, psfb = self._bin_prf(psf0, row, column)
+        rb, cb, psfb = bin_prf(psf0, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
+        psfb /= np.sum(psfb)
         if gradients:
-            _, _, dpsf0b = self._bin_prf(dpsf0, row, column, normalize=False)
-            _, _, dpsf1b = self._bin_prf(dpsf1, row, column, normalize=False)
-            return rb, cb, psfb, dpsf0b, dpsf1b
+            # # _, _, dpsf0b = bin_prf(dpsf0, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
+            # # _, _, dpsf1b = bin_prf(dpsf1, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
+            # return rb, cb, psfb/integral, (dpsf0b - dpsf0b.mean())/integral, (dpsf1b - dpsf1b.mean())/integral
+            dpsf0, dpsf1 = np.gradient(psfb)
+            dpsf0 -= dpsf0.mean()
+            dpsf1 -= dpsf1.mean()
+            return rb, cb, psfb, dpsf0, dpsf1
         return rb, cb, psfb
 
-    def _bin_prf(self, psf0, row, column, normalize=True):
-        mod = (self.psf_column.value + column.value) % 1
-        cyc = ((self.psf_column.value + column.value) - mod).astype(int)
-        colbin = np.unique(cyc)
-        psf1 = np.asarray(
-            [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
-        ).T
-        mod = (self.psf_row.value + row.value) % 1
-        cyc = ((self.psf_row.value + row.value) - mod).astype(int)
-        rowbin = np.unique(cyc)
-        psf2 = np.asarray(
-            [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
-        )
-        if normalize:
-            psf2 /= psf2.sum()
-        return rowbin.astype(int), colbin.astype(int), psf2
+    # def _bin_prf(self, psf0, row, column, normalize=True):
+    #     mod = (self.psf_column.value + column.value) % 1
+    #     cyc = ((self.psf_column.value + column.value) - mod).astype(int)
+    #     colbin = np.unique(cyc)
+    #     psf1 = np.asarray(
+    #         [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
+    #     ).T
+    #     mod = (self.psf_row.value + row.value) % 1
+    #     cyc = ((self.psf_row.value + row.value) - mod).astype(int)
+    #     rowbin = np.unique(cyc)
+    #     psf2 = np.asarray(
+    #         [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
+    #     )
+    #     if normalize:
+    #         psf2 /= psf2.sum()
+    #     return rowbin.astype(int), colbin.astype(int), psf2
 
 
 def interpfunc(l, lp, PSF0):

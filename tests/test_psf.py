@@ -14,6 +14,43 @@ from pandorapsf.utils import prep_for_add
 def test_version():
     assert __version__ == "0.2.0"
 
+def test_gaussian():
+    """Check that a gaussian PSF behaves as expected"""
+    p = pandorapsf.PSF.from_name('gaussian')
+    psf, dx, dy = p.psf(row=p.row1d[0].value, column=p.column1d[0].value, gradients=True)
+    R, C = np.meshgrid(np.arange(psf.shape[0]), np.arange(psf.shape[1]), indexing='ij')
+    original_shape = psf.shape
+    binning_factor = 4
+    def bin(ar):
+        return np.mean(ar.reshape(
+            (original_shape[0] // binning_factor, binning_factor, original_shape[1] // binning_factor, binning_factor)), axis=(1, 3))
+
+    # Binning the Array
+    psfb, dxb, dyb, Rb, Cb = bin(psf), bin(dx), bin(dy), bin(R), bin(C)
+
+    integral = np.sum(psfb)
+    psfb, dxb, dyb = psfb/integral, dxb/integral, dyb/integral
+
+    ar = psf + dx * 0.1 + dy * 0.2
+    arb = psfb + dxb * 0.1 + dyb * 0.2
+
+    assert np.isclose((np.average(R, weights=psf) - np.average(R, weights=ar)), 0.1, rtol=1e-4)
+    assert np.isclose((np.average(C, weights=psf) - np.average(C, weights=ar)), 0.2, rtol=1e-4)
+
+    assert np.isclose((np.average(Rb, weights=psfb) - np.average(Rb, weights=arb)), 0.1, rtol=1e-4)
+    assert np.isclose((np.average(Cb, weights=psfb) - np.average(Cb, weights=arb)), 0.2, rtol=1e-4)
+
+    rb, cb, prf, dx, dy = p.prf(row=0, column=0, gradients=True)
+
+    R, C = np.meshgrid(np.arange(prf.shape[0]), np.arange(prf.shape[1]), indexing='ij')
+
+    ar = prf + dx * 0.1 + dy * 0.2
+
+    assert np.isclose((np.average(R, weights=prf) - np.average(R, weights=ar)), 0.1, rtol=1e-4)
+    assert np.isclose((np.average(C, weights=prf) - np.average(C, weights=ar)), 0.2, rtol=1e-4)
+
+
+
 
 def test_vis_psf_init():
     p = PSF.from_file(
@@ -54,6 +91,7 @@ def test_nir_psf_init():
     assert p.shape == (128, 128)
     assert p.ndims == 1
     assert p.__repr__() == "1D PSF Model [wavelength] (Frozen: temperature: 30.0 deg_C)"
+
 
 
 def test_vis_psf():

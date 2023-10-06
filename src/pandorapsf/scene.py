@@ -109,24 +109,18 @@ class Scene(object):
             # to save a bit on time we're going to just update the data in a copied array
             grad_ar = deepcopy(self.dX0)
             for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
-                jitterdec = ((delta_pos[:, tdx] + 0.5) % 1) - 1
-
-                
-                jitterint = delta_pos[:, tdx] - jitterdec# + 1
-                # Not sure where this comes from...
-                # if delta_pos[0, tdx] < -1:
-                #     jitterint[0] -= 1
-                # if delta_pos[1, tdx] < -1:
-                #     jitterint[1] -= 1
+                jitterdec = (delta_pos[:, tdx] - 0.5) % 1 - 0.5
+                jitterint = np.round(delta_pos[:, tdx] - jitterdec).astype(int)# + 1
 
                 # Fudge factor...
-                jitterdec *= 100 / 1.3
+#                jitterdec *= 100 / 1.3
+
                 grad_ar.subdata = (
                     deepcopy(self.dX0.subdata) * -jitterdec[0] + deepcopy(self.dX1.subdata) * -jitterdec[1]
                 )
                 grad_ar._set_data()
-                grad_ar.translate(tuple(jitterint.astype(int)))
-                self.X.translate(tuple(jitterint.astype(int)))
+                grad_ar.translate(tuple(jitterint))
+                self.X.translate(tuple(jitterint))
 
                 ar[tdx] += self.X.dot(flux[:, tdx])[0]
                 ar[tdx] += grad_ar.dot(flux[:, tdx])[0]

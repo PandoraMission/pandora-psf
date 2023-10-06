@@ -238,3 +238,22 @@ def prep_for_add(row, column, prf, shape=(100, 100), corner=(-50, -50)):
         return Y[k], X[k], prf[:, k]
     else:
         raise ValueError("can not parse prf for adding")
+
+
+def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
+    mod = (psf_column + location[1]) % 1
+    cyc = ((psf_column + location[1]) - mod).astype(int)
+    colbin = np.unique(cyc)
+    psf1 = np.asarray(
+        [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
+    ).T
+    
+    mod = (psf_row + location[0]) % 1
+    cyc = ((psf_row + location[0]) - mod).astype(int)
+    rowbin = np.unique(cyc)
+    psf2 = np.asarray(
+        [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
+    )
+    if normalize:
+        psf2 /= psf2.sum()
+    return rowbin.astype(int), colbin.astype(int), psf2

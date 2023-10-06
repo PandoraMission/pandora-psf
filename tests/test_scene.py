@@ -10,6 +10,25 @@ from pandorapsf import PSF, TESTDIR, Scene, TraceScene
 from pandorapsf.scene import SparseWarp3D
 
 
+def test_centered():
+    for name in ['gaussian', 'visda', 'nirda']:
+        p = pandorapsf.PSF.from_name(name)
+        locations = np.vstack([np.asarray([0]), np.asarray([0])]).T
+        s = Scene(locations, psf=p, shape=(50, 70), corner=(-25, -35))
+        delta_pos = np.random.normal(0, 3, size=(2, 100))
+        delta_pos[1] *= 2
+        flux = np.ones(delta_pos.shape[1])[None, :]
+        
+        ar = s.model(flux, delta_pos)
+        
+        R, C = np.meshgrid(np.arange(50), np.arange(70), indexing='ij')
+        rmid = np.asarray([np.average(R, weights=ar[tdx]) for tdx in range(ar.shape[0])])
+        cmid = np.asarray([np.average(C, weights=ar[tdx]) for tdx in range(ar.shape[0])])
+        dr = rmid - R.mean() - delta_pos[0]
+        dc = cmid - C.mean() - delta_pos[1]
+        np.allclose(dr - np.mean(dr), 0, atol=0.01)
+        np.allclose(dc - np.mean(dc), 0, atol=0.01)
+
 def test_simple_vis_scene():
     row, column = np.meshgrid(
         np.arange(-1024, 1024, 100), np.arange(-1024, 1024, 100), indexing="ij"
