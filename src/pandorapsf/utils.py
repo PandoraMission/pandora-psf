@@ -161,24 +161,25 @@ def make_nir_PSF_fits_files(dir, nbin=2, suffix=""):
 
 
 def make_gaussian_psf():
-    hdu1 = fits.open(f'{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits')
+    hdu1 = fits.open(f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits")
     pixel_size = hdu1[0].header["PIXSIZE"] * u.micron / u.pix
     sub_pixel_size = hdu1[0].header["SUBPIXSZ"] * u.micron / u.pix
     shape = hdu1[1].data.shape[:2]
     psf_column = (
-        (np.arange(shape[1]) - shape[1] // 2)
-        * u.pixel
-        * sub_pixel_size
+        (np.arange(shape[1]) - shape[1] // 2) * u.pixel * sub_pixel_size
     ) / pixel_size
     psf_row = (
-        (np.arange(shape[0]) - shape[0] // 2)
-        * u.pixel
-        * sub_pixel_size
+        (np.arange(shape[0]) - shape[0] // 2) * u.pixel * sub_pixel_size
     ) / pixel_size
 
     def gauss(row, col, sigma):
-        return (1/(sigma*np.sqrt(2*np.pi))) * np.exp(-((col[None, :])**2/(2*sigma**2) + (row[:, None])**2/(2*sigma**2)))
-        
+        return (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(
+            -(
+                (col[None, :]) ** 2 / (2 * sigma**2)
+                + (row[:, None]) ** 2 / (2 * sigma**2)
+            )
+        )
+
     R = np.abs(hdu1[2].data[:, 0, 0, 0]) / 600 + 1
     C = np.abs(hdu1[3].data[0, :, 0, 0]) / 600 + 1
 
@@ -187,7 +188,11 @@ def make_gaussian_psf():
         for jdx, c1 in enumerate(C):
             ar[idx, jdx] = gauss(psf_row.value, psf_column.value, np.hypot(r1, c1))
     ar = ar.transpose([2, 3, 0, 1])
-    integral = np.trapz(np.trapz(ar, dx=np.median(np.diff(psf_row).value), axis=0), dx=np.median(np.diff(psf_column).value), axis=0)
+    integral = np.trapz(
+        np.trapz(ar, dx=np.median(np.diff(psf_row).value), axis=0),
+        dx=np.median(np.diff(psf_column).value),
+        axis=0,
+    )
     ar /= integral[None, None, :, :]
     hdr = fits.Header(
         [
@@ -219,9 +224,10 @@ def make_gaussian_psf():
     hdu[2].header["UNIT"] = u.pixel.to_string()
     hdu[3].header["UNIT"] = u.pixel.to_string()
     hdu.writeto(
-        PACKAGEDIR + f"/data/pandora_gaussian_psf.fits",
+        f"{PACKAGEDIR}/data/pandora_gaussian_psf.fits",
         overwrite=True,
     )
+
 
 def prep_for_add(row, column, prf, shape=(100, 100), corner=(-50, -50)):
     Y, X = np.asarray(
@@ -247,13 +253,37 @@ def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
     psf1 = np.asarray(
         [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
     ).T
-    
+
     mod = (psf_row + location[0]) % 1
     cyc = ((psf_row + location[0]) - mod).astype(int)
     rowbin = np.unique(cyc)
-    psf2 = np.asarray(
-        [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
-    )
+    psf2 = np.asarray([psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin])
     if normalize:
         psf2 /= psf2.sum()
     return rowbin.astype(int), colbin.astype(int), psf2
+
+
+def downsample(ar, n=2):
+    if not ar.ndim == 3:
+        raise ValueError("Pass a 3D array")
+    if not isinstance(n, int):
+        raise ValueError("Can only downsample by an integer")
+
+    # Calculate the dimensions for the result array
+    new_shape = (ar.shape[0], *tuple(np.asarray(ar.shape[1:]) // n))
+
+    # Reshape the input array into smaller blocks
+    try:
+        reshaped_array = ar.reshape(
+            ar.shape[0],
+            new_shape[1],
+            ar.shape[1] // new_shape[1],
+            new_shape[2],
+            ar.shape[2] // new_shape[2],
+        )
+    except ValueError:
+        raise ValueError(
+            f"Can not reshape array shape {ar.shape} into array shape {new_shape}."
+        )
+    # Take the mean over the new dimensions
+    return reshaped_array.sum(axis=(2, 4))

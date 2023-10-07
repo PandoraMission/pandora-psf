@@ -9,6 +9,7 @@ from scipy import sparse
 from tqdm import tqdm
 
 from .psf import PSF
+from .utils import downsample
 
 __all__ = ["Scene", "TraceScene"]
 
@@ -18,17 +19,21 @@ class Scene(object):
         self,
         locations: npt.ArrayLike,
         psf: PSF = None,
-        shape: Tuple = (2048, 2048),
-        corner: Tuple = (-1024, -1024),
+        shape: Tuple = (100, 100),
+        corner: Tuple = (0, 0),
+        scale: int = 1,
     ):
         if locations.shape[1] != 2:
             raise ValueError("`locations` must have shape (n, 2).")
         self.locations = locations
-        self.shape = shape
-        self.corner = corner
+        #        self.shape = shape
+        #        self.corner = corner
         if psf is None:
-            psf = PSF.from_name("visda")
+            psf = PSF.from_name("visda", scale=scale)
         self.psf = psf
+        self.scale = self.psf.scale
+        self.shape = tuple(np.asarray(shape) * self.scale)
+        self.corner = tuple(np.asarray(corner) * self.scale)
         self.rb, self.cb, self.prf = [], [], []
         self.ntargets = len(self.locations)
         self._get_X()
@@ -41,7 +46,7 @@ class Scene(object):
 
     def _get_X(self):
         row, col, data, grad0, grad1 = [], [], [], [], []
-        for location in self.locations:
+        for location in self.locations * self.scale:
             r, c, ar, g0, g1 = self.psf.prf(
                 row=location[0], column=location[1], gradients=True
             )
@@ -91,43 +96,51 @@ class Scene(object):
         delta_pos : npt.ArrayLike
             Array of jitter values in row and column, has shape (2, ntimes)
         """
-        delta_pos = deepcopy(delta_pos)
         if flux.ndim == 1:
             flux = flux[:, None]
         if flux.shape[0] != self.ntargets:
             raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
         nt = flux.shape[1]
         if delta_pos is not None:
+            delta_pos = deepcopy(delta_pos) * float(self.scale)
             if delta_pos.ndim == 1:
                 delta_pos = delta_pos[:, None]
             if (delta_pos.shape[0] != 2) | (delta_pos.shape[1] != nt):
                 raise ValueError(
                     "`delta_pos` must be an array with shape (2 x ntimes)."
                 )
+
         if delta_pos is not None:
             ar = np.zeros((nt, *self.shape))
-            # to save a bit on time we're going to just update the data in a copied array
-            grad_ar = deepcopy(self.dX0)
-            for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
-                jitterdec = (delta_pos[:, tdx] - 0.5) % 1 - 0.5
-                jitterint = np.round(delta_pos[:, tdx] - jitterdec).astype(int)# + 1
-
-                # Fudge factor...
-#                jitterdec *= 100 / 1.3
-
-                grad_ar.subdata = (
-                    deepcopy(self.dX0.subdata) * -jitterdec[0] + deepcopy(self.dX1.subdata) * -jitterdec[1]
-                )
-                grad_ar._set_data()
-                grad_ar.translate(tuple(jitterint))
-                self.X.translate(tuple(jitterint))
-
-                ar[tdx] += self.X.dot(flux[:, tdx])[0]
-                ar[tdx] += grad_ar.dot(flux[:, tdx])[0]
-            self.X.reset()
+            jitterdec = (delta_pos - 0.5) % 1 - 0.5
+            jitterint = np.round(delta_pos - jitterdec).astype(int)  # + 1
+            unique_coordinates, unique_indices = np.unique(
+                jitterint.T, axis=0, return_inverse=True
+            )
+            for index, coord in enumerate(unique_coordinates):
+                self.X.translate(tuple(coord))
+                self.dX0.translate(tuple(coord))
+                self.dX1.translate(tuple(coord))
+                grad_ar = deepcopy(self.dX0)
+                tdxs = np.where(unique_indices == index)[0]
+                for tdx in tqdm(
+                    tdxs,
+                    desc=f"Time index {index + 1}/{len(unique_coordinates)}",
+                    leave=True,
+                    position=0,
+                    disable=quiet,
+                ):
+                    grad_ar.data = (
+                        deepcopy(self.dX0.data) * -jitterdec[0, tdx]
+                        + deepcopy(self.dX1.data) * -jitterdec[1, tdx]
+                    )
+                    ar[tdx] += self.X.dot(flux[:, tdx].ravel())[0]
+                    ar[tdx] += grad_ar.dot(flux[:, tdx].ravel())[0]
         else:
             ar = self.X.dot(flux)
-        return ar
+        if self.scale == 1:
+            return ar
+        return downsample(ar, self.scale)
 
 
 class TraceScene(object):
@@ -137,15 +150,17 @@ class TraceScene(object):
         psf: PSF = None,
         shape: Tuple = (400, 80),
         corner: Tuple = (0, 0),
+        scale: int = 1,
     ):
         if locations.shape[1] != 2:
             raise ValueError("`locations` must have shape (n, 2).")
         self.locations = locations
-        self.shape = shape
-        self.corner = corner
         if psf is None:
-            psf = PSF.from_name("nirda")
+            psf = PSF.from_name("nirda", scale=scale)
         self.psf = psf
+        self.scale = self.psf.scale
+        self.shape = tuple(np.asarray(shape) * self.scale)
+        self.corner = tuple(np.asarray(corner) * self.scale)
         if "wavelength" not in self.psf.dimension_names:
             raise ValueError(
                 "Can only create a trace scene if `PSF` has a `'wavelength'` dimension"
@@ -165,11 +180,11 @@ class TraceScene(object):
     def _get_Xs(self):
         rows, cols, datas, grad0s, grad1s = [], [], [], [], []
         for pix, wav in tqdm(
-            zip(self.psf.trace_pixel, self.psf.trace_wavelength),
+            zip(self.psf.trace_pixel * self.scale, self.psf.trace_wavelength),
             total=len(self.psf.trace_wavelength),
         ):
             row, col, data, grad0, grad1 = [], [], [], [], []
-            for location in self.locations:
+            for location in self.locations * self.scale:
                 r, c, ar, g0, g1 = self.psf.prf(
                     row=location[0] + pix.value,
                     column=location[1],
@@ -227,7 +242,6 @@ class TraceScene(object):
         quiet: bool = False,
     ) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets x ntime"""
-
         if spectra.ndim == 1:
             spectra = spectra[:, None, None]
         elif spectra.ndim == 2:
@@ -239,6 +253,7 @@ class TraceScene(object):
         ):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
         if delta_pos is not None:
+            delta_pos = deepcopy(delta_pos) * float(self.scale)
             if delta_pos.ndim == 1:
                 delta_pos = delta_pos[:, None]
             elif delta_pos.ndim != 2:
@@ -247,24 +262,36 @@ class TraceScene(object):
         nt = spectra.shape[2]
         ar = np.zeros((nt, *self.shape))
         if delta_pos is not None:
-            grad_ar = deepcopy(self.dX0)
-        for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
-            if delta_pos is not None:
-#                jitterdec = ((delta_pos[:, tdx] - 0.5) % 1) + 0.5
-#                jitterint = delta_pos[:, tdx] - jitterdec + 1
-#                print(jitterint)
-                jitterdec = delta_pos[:, tdx]
-                grad_ar.subdata = (
-                    self.dX0.subdata * jitterdec[0] + self.dX1.subdata * jitterdec[1]
-                )
-#                grad_ar.translate(tuple(jitterint.astype(int)))
-#                self.X.translate(tuple(jitterint.astype(int)))
-
-                ar[tdx] += self.X.dot(spectra[:, :, tdx].ravel())[0]
-                ar[tdx] += grad_ar.dot(spectra[:, :, tdx].ravel())[0]
-            else:
+            jitterdec = (delta_pos - 0.5) % 1 - 0.5
+            jitterint = np.round(delta_pos - jitterdec).astype(int)  # + 1
+            unique_coordinates, unique_indices = np.unique(
+                jitterint.T, axis=0, return_inverse=True
+            )
+            for index, coord in enumerate(unique_coordinates):
+                self.X.translate(tuple(coord))
+                self.dX0.translate(tuple(coord))
+                self.dX1.translate(tuple(coord))
+                grad_ar = deepcopy(self.dX0)
+                tdxs = np.where(unique_indices == index)[0]
+                for tdx in tqdm(
+                    tdxs,
+                    desc=f"Time index {index + 1}/{len(unique_coordinates)}",
+                    leave=True,
+                    position=0,
+                    disable=quiet,
+                ):
+                    grad_ar.data = (
+                        deepcopy(self.dX0.data) * -jitterdec[0, tdx]
+                        + deepcopy(self.dX1.data) * -jitterdec[1, tdx]
+                    )
+                    ar[tdx] += self.X.dot(spectra[:, :, tdx].ravel())[0]
+                    ar[tdx] += grad_ar.dot(spectra[:, :, tdx].ravel())[0]
+        else:
+            for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
                 ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel())
-        return ar
+        if self.scale == 1:
+            return ar
+        return downsample(ar, self.scale)
 
 
 class SparseWarp3D(sparse.coo_matrix):
@@ -291,6 +318,7 @@ class SparseWarp3D(sparse.coo_matrix):
         self.imshape = imshape
         self.subshape = row.shape
         self.cooshape = (np.prod([*self.imshape[:2]]), self.nvecs)
+        self.coord = (0, 0)
         super().__init__(self.cooshape)
         self._set_data()
 
@@ -337,6 +365,7 @@ class SparseWarp3D(sparse.coo_matrix):
         new_row, new_col = self.index(offset=offset)
         self.row, self.col = new_row[k], new_col[k]
         self.data = np.vstack(deepcopy(self.subdata)).ravel()[k]
+        self.coord = offset
 
     def __repr__(self):
         return (
@@ -352,6 +381,7 @@ class SparseWarp3D(sparse.coo_matrix):
     def reset(self):
         """Reset any translation back to the original data"""
         self._set_data(offset=(0, 0))
+        self.coord = (0, 0)
         return
 
     def clear(self):
@@ -359,6 +389,7 @@ class SparseWarp3D(sparse.coo_matrix):
         self.data = np.asarray([])
         self.row = np.asarray([])
         self.col = np.asarray([])
+        self.coord = (0, 0)
         return
 
     def translate(self, position: Tuple):

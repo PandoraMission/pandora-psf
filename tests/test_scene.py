@@ -11,23 +11,29 @@ from pandorapsf.scene import SparseWarp3D
 
 
 def test_centered():
-    for name in ['gaussian', 'visda', 'nirda']:
-        p = pandorapsf.PSF.from_name(name)
-        locations = np.vstack([np.asarray([0]), np.asarray([0])]).T
-        s = Scene(locations, psf=p, shape=(50, 70), corner=(-25, -35))
-        delta_pos = np.random.normal(0, 3, size=(2, 100))
-        delta_pos[1] *= 2
-        flux = np.ones(delta_pos.shape[1])[None, :]
-        
-        ar = s.model(flux, delta_pos)
-        
-        R, C = np.meshgrid(np.arange(50), np.arange(70), indexing='ij')
-        rmid = np.asarray([np.average(R, weights=ar[tdx]) for tdx in range(ar.shape[0])])
-        cmid = np.asarray([np.average(C, weights=ar[tdx]) for tdx in range(ar.shape[0])])
-        dr = rmid - R.mean() - delta_pos[0]
-        dc = cmid - C.mean() - delta_pos[1]
-        np.allclose(dr - np.mean(dr), 0, atol=0.01)
-        np.allclose(dc - np.mean(dc), 0, atol=0.01)
+    for scale in [1, 2]:
+        for name in ["gaussian", "visda", "nirda"]:
+            p = PSF.from_name(name, scale=scale)
+            locations = np.vstack([np.asarray([0]), np.asarray([0])]).T
+            s = Scene(locations, psf=p, shape=(50, 70), corner=(-25, -35))
+            delta_pos = np.random.normal(0, 3, size=(2, 100))
+            delta_pos[1] *= 2
+            flux = np.ones(delta_pos.shape[1])[None, :]
+
+            ar = s.model(flux, delta_pos, quiet=True)
+
+            R, C = np.meshgrid(np.arange(50), np.arange(70), indexing="ij")
+            rmid = np.asarray(
+                [np.average(R, weights=ar[tdx]) for tdx in range(ar.shape[0])]
+            )
+            cmid = np.asarray(
+                [np.average(C, weights=ar[tdx]) for tdx in range(ar.shape[0])]
+            )
+            dr = rmid - R.mean() - delta_pos[0]
+            dc = cmid - C.mean() - delta_pos[1]
+            assert np.allclose(dr - np.mean(dr), 0, atol=0.01)
+            assert np.allclose(dc - np.mean(dc), 0, atol=0.01)
+
 
 def test_simple_vis_scene():
     row, column = np.meshgrid(
@@ -35,8 +41,8 @@ def test_simple_vis_scene():
     )
     locations = np.vstack([row.ravel(), column.ravel()]).T
     s = Scene(locations=locations, shape=(2048, 2048), corner=(-1024, -1024))
-    assert (s.X.sum(axis=0) <= 1.0 + 1e10).all()
-    img = s.model(np.ones(s.X.shape[1]))
+    assert (s.X.dot(np.ones(s.X.shape[-1])).sum(axis=0) <= 1.0 + 1e10).all()
+    img = s.model(np.ones(s.X.shape[1]), quiet=True)
     assert img.ndim == 3
     fig, ax = plt.subplots()
     ax.imshow(np.log10(img[0]), origin="lower")
@@ -70,7 +76,7 @@ def test_simple_IR_scene():
     locations = np.vstack([row.ravel(), column.ravel()]).T
     p = PSF.from_name("nirda")
     s = Scene(locations=locations, psf=p, shape=(400, 80), corner=(-200, -40))
-    img = s.model(np.ones(s.X.shape[1]))
+    img = s.model(np.ones(s.X.shape[1]), quiet=True)
     assert img.ndim == 3
     fig, ax = plt.subplots()
     ax.imshow(np.log10(img[0]), origin="lower")
@@ -80,36 +86,37 @@ def test_simple_IR_scene():
 
 # Image shapes are wrong here need to fix
 def test_trace_scene():
-    p = PSF.from_name("nirda")
-    locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
-    s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
+    for scale in [2, 1]:
+        p = PSF.from_name("nirda")
+        locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
+        s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
 
-    spectra = np.ones(p.trace_pixel.shape[0])
-    assert (s.X.sum(axis=0) < 4).all()
-    img = s.model(spectra)
-    assert img.ndim == 3
-    assert img.shape == (1, 400, 80)
-    img = s.model(spectra[:, None])
-    assert img.ndim == 3
-    assert img.shape == (1, 400, 80)
-    img = s.model(spectra[:, None, None])
-    assert img.ndim == 3
-    assert img.shape == (1, 400, 80)
+        spectra = np.ones(p.trace_pixel.shape[0])
+        assert (s.X.dot(np.ones(s.X.shape[-1])).sum(axis=0) < 4).all()
+        img = s.model(spectra, quiet=True)
+        assert img.ndim == 3
+        assert img.shape == (1, 400, 80)
+        img = s.model(spectra[:, None], quiet=True)
+        assert img.ndim == 3
+        assert img.shape == (1, 400, 80)
+        img = s.model(spectra[:, None, None], quiet=True)
+        assert img.ndim == 3
+        assert img.shape == (1, 400, 80)
 
-    locations = np.vstack([np.asarray([250, 300]), np.asarray([20, 60])]).T
-    s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
-    spectra = np.ones(s.psf.trace_pixel.shape[0])[:, None] * np.ones(2)
-    spectra[:, 1] *= 0.1
+        locations = np.vstack([np.asarray([250, 300]), np.asarray([20, 60])]).T
+        s = TraceScene(locations=locations, psf=p, shape=(400, 80), corner=(0, 0))
+        spectra = np.ones(s.psf.trace_pixel.shape[0])[:, None] * np.ones(2)
+        spectra[:, 1] *= 0.1
 
-    img = s.model(spectra)
-    assert img.ndim == 3
-    assert img.shape == (1, 400, 80)
+        img = s.model(spectra, quiet=True)
+        assert img.ndim == 3
+        assert img.shape == (1, 400, 80)
 
-    img = s.model(spectra[:, :, None])
-    assert img.ndim == 3
-    assert img.shape == (1, 400, 80)
+        img = s.model(spectra[:, :, None], quiet=True)
+        assert img.ndim == 3
+        assert img.shape == (1, 400, 80)
 
-    assert img[0, :, :40].sum() > 5 * img[0, :, 40:].sum()
+        assert img[0, :, :40].sum() > 5 * img[0, :, 40:].sum()
     fig, ax = plt.subplots()
     ax.imshow(img[0], origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
