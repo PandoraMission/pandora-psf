@@ -211,7 +211,19 @@ def animate(data, step: int = None, interval: int = 200, **plot_args):
 
 
 def save_mp4(
-    data, outfile="out.mp4", step: int = None, interval: int = 200, **plot_args
+    data,
+    outfile="out.mp4",
+    step: int = None,
+    interval: int = 200,
+    instance_name="Frame",
+    **plot_args,
 ):
-    anim = _to_matplotlib_animation(data, step=step, interval=interval, **plot_args)
+    anim = _to_matplotlib_animation(
+        data,
+        step=step,
+        interval=interval,
+        position=[0, 0, 1, 1],
+        instance_name=instance_name,
+        **plot_args,
+    )
     anim.save(outfile, writer=FFMpegWriter(fps=1000 / interval, bitrate=5000), dpi=100)

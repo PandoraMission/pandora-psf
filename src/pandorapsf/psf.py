@@ -335,10 +335,8 @@ class PSF(object):
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
                 setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
-            setattr(
-                p,
-                "trace_sensitivity_correction",
-                hdu[1].header["SENSCORR"] * u.Quantity(1, hdu[1].header["CORRUNIT"]),
+            p.trace_sensitivity *= hdu[1].header["SENSCORR"] * u.Quantity(
+                1, hdu[1].header["CORRUNIT"]
             )
             return p
 
@@ -356,10 +354,8 @@ class PSF(object):
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
                 setattr(p, f"trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
-            setattr(
-                p,
-                "trace_sensitivity_correction",
-                hdu[1].header["SENSCORR"] * u.Quantity(1, hdu[1].header["CORRUNIT"]),
+            p.trace_sensitivity *= hdu[1].header["SENSCORR"] * u.Quantity(
+                1, hdu[1].header["CORRUNIT"]
             )
             return p
         else:

@@ -3,10 +3,150 @@ from datetime import datetime
 
 import astropy.units as u
 import numpy as np
+import pandas as pd
+from astropy.constants import c, h
 from astropy.io import fits
 from scipy.io import loadmat
 
 from . import PACKAGEDIR
+
+
+def make_pixel_files():
+    def photon_energy(wavelength):
+        return ((h * c) / wavelength) * 1 / u.photon
+
+    def sensitivity(wavelength):
+        sed = 1 * u.erg / u.s / u.cm**2 / u.angstrom
+        E = photon_energy(wavelength)
+        telescope_area = np.pi * (mirror_diameter / 2) ** 2
+        photon_flux_density = (telescope_area * sed * throughput(wavelength) / E).to(
+            u.photon / u.second / u.angstrom
+        ) * qe(wavelength)
+        sensitivity = photon_flux_density / sed
+        return sensitivity
+
+    def qe(wavelength):
+        wavelength = np.atleast_1d(wavelength)
+        sw_coeffs = np.array([0.65830, -0.05668, 0.25580, -0.08350])
+        sw_exponential = 100.0
+        sw_wavecut_red = 1.65  # changed from 2.38 for Pandora
+        sw_wavecut_blue = 0.75  # new for Pandora
+        with np.errstate(invalid="ignore", over="ignore"):
+            sw_qe = (
+                sw_coeffs[0]
+                + sw_coeffs[1] * wavelength.to(u.micron).value
+                + sw_coeffs[2] * wavelength.to(u.micron).value ** 2
+                + sw_coeffs[3] * wavelength.to(u.micron).value ** 3
+            )
+
+            sw_qe = np.where(
+                wavelength.to(u.micron).value > sw_wavecut_red,
+                sw_qe
+                * np.exp(
+                    (sw_wavecut_red - wavelength.to(u.micron).value) * sw_exponential
+                ),
+                sw_qe,
+            )
+
+            sw_qe = np.where(
+                wavelength.to(u.micron).value < sw_wavecut_blue,
+                sw_qe
+                * np.exp(
+                    -(sw_wavecut_blue - wavelength.to(u.micron).value)
+                    * (sw_exponential / 1.5)
+                ),
+                sw_qe,
+            )
+        sw_qe[sw_qe < 1e-5] = 0
+        return sw_qe * u.electron / u.photon
+
+    def throughput(wavelength):
+        df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
+        throughput = np.interp(wavelength.to(u.angstrom).value, *np.asarray(df).T)
+        return throughput**2 * 0.71
+
+    mirror_diameter = 0.43 * u.m
+
+    df = pd.read_csv(f"{PACKAGEDIR}/data/pixel_vs_wavelength.csv")
+    pixel = np.round(np.arange(-400, 80, 0.5), 5) * u.pixel
+    wav = np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value) * u.micron
+
+    sens = sensitivity(wav)
+    corr = np.trapz(sens, wav)
+    hdu = fits.TableHDU.from_columns(
+        [
+            fits.Column(
+                name="pixel", format="D", array=pixel.value, unit=pixel.unit.to_string()
+            ),
+            fits.Column(
+                name="wavelength",
+                format="D",
+                array=wav.value,
+                unit=wav.unit.to_string(),
+            ),
+            fits.Column(
+                name="sensitivity",
+                format="D",
+                array=(sens / corr),
+                unit=(sens / corr).unit.to_string(),
+            ),
+        ]
+    )
+    hdu.header.append(
+        fits.Card("SENSCORR", corr.value, "correction to apply to sensitivity")
+    )
+    hdu.header.append(
+        fits.Card("CORRUNIT", corr.unit.to_string(), "units of correction")
+    )
+    hdu.writeto(f"{PACKAGEDIR}/data/nirda-wav-solution.fits", overwrite=True)
+
+    def qe(wavelength):  # noqa: F811
+        df = pd.read_csv(f"{PACKAGEDIR}/data/pandora_visible_qe.csv")
+        wav, transmission = np.asarray(df.Wavelength) * u.angstrom, np.asarray(
+            df.Transmission
+        )
+        return (
+            np.interp(wavelength, wav, transmission, left=0, right=0)
+            * u.electron
+            / u.photon
+        )
+
+    def throughput(wavelength):  # noqa: F811
+        df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
+        throughput = 1 - np.interp(wavelength.to(u.angstrom).value, *np.asarray(df).T)
+        return throughput * 0.752
+
+    wav = np.arange(0.25, 1.3, 0.01) * u.micron
+    pixel = np.zeros(len(wav)) * u.pixel
+    sens = sensitivity(wav)
+    corr = np.trapz(sens, wav)
+
+    hdu = fits.TableHDU.from_columns(
+        [
+            fits.Column(
+                name="pixel", format="D", array=pixel.value, unit=pixel.unit.to_string()
+            ),
+            fits.Column(
+                name="wavelength",
+                format="D",
+                array=wav.value,
+                unit=wav.unit.to_string(),
+            ),
+            fits.Column(
+                name="sensitivity",
+                format="D",
+                array=(sens / corr),
+                unit=(sens / corr).unit.to_string(),
+            ),
+        ]
+    )
+    hdu.header.append(
+        fits.Card("SENSCORR", corr.value, "correction to apply to sensitivity")
+    )
+    hdu.header.append(
+        fits.Card("CORRUNIT", corr.unit.to_string(), "units of correction")
+    )
+    hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
 
 
 def make_vis_PSF_fits_files(dir, nbin=2, suffix=""):

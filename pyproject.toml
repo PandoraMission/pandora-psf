@@ -29,6 +29,7 @@ mkdocstrings = "^0.23.0"
 pytest = "^7.4.2"
 pysynphot = "^2.0.0"
 memory-profiler = "^0.61.0"
+line-profiler = "^4.1.1"
 
 [build-system]
 requires = ["poetry-core"]

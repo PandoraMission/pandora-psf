@@ -9,7 +9,7 @@ from scipy import sparse
 from tqdm import tqdm
 
 from .psf import PSF
-from .utils import downsample
+from .utils import downsample as downsample_array
 
 __all__ = ["Scene", "TraceScene"]
 
@@ -80,6 +80,9 @@ class Scene(object):
             col.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
+        self.X.eliminate_zeros()
+        self.dX0.eliminate_zeros()
+        self.dX1.eliminate_zeros()
         return
 
     def model(
@@ -87,6 +90,7 @@ class Scene(object):
         flux: npt.ArrayLike,
         delta_pos: Optional[npt.ArrayLike] = None,
         quiet: bool = False,
+        downsample: bool = True,
     ) -> npt.ArrayLike:
         """
         Parameters:
@@ -140,7 +144,10 @@ class Scene(object):
             ar = self.X.dot(flux)
         if self.scale == 1:
             return ar
-        return downsample(ar, self.scale)
+        if downsample:
+            return downsample_array(ar, self.scale)
+        else:
+            return ar
 
 
 class TraceScene(object):
@@ -240,6 +247,7 @@ class TraceScene(object):
         spectra: npt.ArrayLike,
         delta_pos: Optional[npt.ArrayLike] = None,
         quiet: bool = False,
+        downsample: bool = True,
     ) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets x ntime"""
         if spectra.ndim == 1:
@@ -291,7 +299,10 @@ class TraceScene(object):
                 ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel())
         if self.scale == 1:
             return ar
-        return downsample(ar, self.scale)
+        if downsample:
+            return downsample_array(ar, self.scale)
+        else:
+            return ar
 
 
 class SparseWarp3D(sparse.coo_matrix):
@@ -320,6 +331,9 @@ class SparseWarp3D(sparse.coo_matrix):
         self.cooshape = (np.prod([*self.imshape[:2]]), self.nvecs)
         self.coord = (0, 0)
         super().__init__(self.cooshape)
+        index0 = (np.vstack(self.subrow)) * self.imshape[1] + (np.vstack(self.subcol))
+        index1 = np.vstack(self.subdepth).ravel()
+        self._index_no_offset = np.vstack([index0.ravel(), index1.ravel()])
         self._set_data()
 
     def __add__(self, other):
@@ -340,14 +354,21 @@ class SparseWarp3D(sparse.coo_matrix):
 
     def index(self, offset=(0, 0)):
         """Get the 2D positions of the data"""
-        # index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[1] + (
-        #     np.vstack(self.subcol) + offset[1]
-        # )
-        index0 = (np.vstack(self.subrow) + offset[0]) * self.imshape[1] + (
-            np.vstack(self.subcol) + offset[1]
+        if offset == (0, 0):
+            return self._index_no_offset
+        index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
+            self._subcol_v + offset[1]
         )
-        index1 = np.vstack(self.subdepth).ravel()
-        return np.vstack([index0.ravel(), index1.ravel()])
+        #        index1 = np.vstack(self.subdepth).ravel()
+        #        return np.vstack([index0.ravel(), index1.ravel()])
+        # index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
+        #     self._subcol_v * offset[1]
+        # )
+        return index0, self._index1
+        # index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
+        #     self._subcol_v * offset[1]
+        # )
+        # return index0, self._index1
 
     def _get_submask(self, offset=(0, 0)):
         # find where the data is within the array bounds
@@ -360,11 +381,18 @@ class SparseWarp3D(sparse.coo_matrix):
         return kr & kc
 
     def _set_data(self, offset=(0, 0)):
-        # find where the data is within the array bounds
-        k = np.vstack(self._get_submask(offset=offset)).ravel()
-        new_row, new_col = self.index(offset=offset)
-        self.row, self.col = new_row[k], new_col[k]
-        self.data = np.vstack(deepcopy(self.subdata)).ravel()[k]
+        if offset == (0, 0):
+            self.row, self.col = self.index((0, 0))
+            self.data = np.vstack(deepcopy(self.subdata)).ravel()
+        else:
+            # find where the data is within the array bounds
+            k = np.vstack(self._get_submask(offset=offset)).ravel()
+            new_row, new_col = self.index(offset=offset)
+            self.row, self.col = new_row[k], new_col[k]
+            self.data = np.vstack(deepcopy(self.subdata)).ravel()[k]
+        self._subrow_v = deepcopy(np.vstack(self.subrow).ravel())
+        self._subcol_v = deepcopy(np.vstack(self.subcol).ravel())
+        self._index1 = np.vstack(self.subdepth).ravel()
         self.coord = offset
 
     def __repr__(self):
