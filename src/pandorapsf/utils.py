@@ -68,7 +68,7 @@ def make_pixel_files():
     mirror_diameter = 0.43 * u.m
 
     df = pd.read_csv(f"{PACKAGEDIR}/data/pixel_vs_wavelength.csv")
-    pixel = np.round(np.arange(-400, 80, 0.5), 5) * u.pixel
+    pixel = np.round(np.arange(-400, 80, 0.25), 5) * u.pixel
     wav = np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value) * u.micron
 
     sens = sensitivity(wav)

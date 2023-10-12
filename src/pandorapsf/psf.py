@@ -310,6 +310,7 @@ class PSF(object):
         name: str,
         transpose: bool = False,
         scale: int = 1,
+        blur_value: Tuple = (0.5 * u.pixel, 0.5 * u.pixel)
     ):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["gauss", "gaussian", "test"]:
@@ -329,7 +330,7 @@ class PSF(object):
                 scale=scale,
             )
             p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=-5 * u.deg_C)
-            p.blur_value = (0.25 * u.pixel, 0.25 * u.pixel)
+            p.blur_value = blur_value
             p._blur(blur_value=p.blur_value)
             hdu = fits.open(f"{PACKAGEDIR}/data/visda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
@@ -348,7 +349,7 @@ class PSF(object):
                 scale=scale,
             )
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
-            p.blur_value = (0.25 * u.pixel, 0.25 * u.pixel)
+            p.blur_value = blur_value
             p._blur(blur_value=p.blur_value)
             hdu = fits.open(f"{PACKAGEDIR}/data/nirda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):

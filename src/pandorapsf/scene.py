@@ -158,6 +158,7 @@ class TraceScene(object):
         shape: Tuple = (400, 80),
         corner: Tuple = (0, 0),
         scale: int = 1,
+        wav_bin:int = 4,
     ):
         if locations.shape[1] != 2:
             raise ValueError("`locations` must have shape (n, 2).")
@@ -176,7 +177,8 @@ class TraceScene(object):
             raise ValueError("No trace parameters, you need to set them.")
         self.ntargets = len(self.locations)
         self.rb, self.cb, self.prf = [], [], []
-        self._get_Xs()
+        self.wav_bin = wav_bin
+        self._get_Xs(nbin=self.wav_bin)
 
     def __repr__(self):
         return f"TraceScene Object [{self.psf.__repr__()}]"
@@ -184,24 +186,34 @@ class TraceScene(object):
     def __len__(self):
         return len(self.locations)
 
-    def _get_Xs(self):
+    def _get_Xs(self, nbin=4):
+        pixs, wavs = self.psf.trace_pixel * self.psf.scale, self.psf.trace_wavelength
+        mask = self.psf.trace_sensitivity/self.psf.trace_sensitivity.max() > 0.0001
+        pixs, wavs = pixs[mask], wavs[mask]
+        dwavs = np.gradient(wavs)
+        pixs, wavs, dwavs = np.array_split(pixs, len(pixs)/nbin), np.array_split(wavs, len(wavs)/nbin), np.array_split(dwavs, len(dwavs)/nbin)
+
+        bounds0 = np.asarray([wav[0].value - dwav[0].value/2 for wav, dwav in zip(wavs, dwavs)])
+        bounds1 = np.hstack([*bounds0[1:], wavs[-1][-1].value + dwavs[-1][-1].value/2])
+        self.bounds = np.asarray([bounds0, bounds1])
+        self.nwav = self.bounds.shape[1]
+        data, grad0, grad1 = np.zeros((3, len(pixs), len(self.locations), *self.shape))
         rows, cols, datas, grad0s, grad1s = [], [], [], [], []
-        for pix, wav in tqdm(
-            zip(self.psf.trace_pixel * self.scale, self.psf.trace_wavelength),
-            total=len(self.psf.trace_wavelength),
-        ):
+        for pix, wav in tqdm(zip(pixs, wavs), total=len(pixs)):
             row, col, data, grad0, grad1 = [], [], [], [], []
-            for location in self.locations * self.scale:
-                r, c, ar, g0, g1 = self.psf.prf(
-                    row=location[0] + pix.value,
-                    column=location[1],
-                    wavelength=wav,
-                    gradients=True,
-                )
+            for location in self.locations * self.psf.scale:
+                for idx in range(len(pix)):
+                    r, c, ar, g0, g1 = self.psf.prf(
+                        row=location[0] + pix.value[idx],
+                        column=location[1],
+                        wavelength=wav[idx],
+                        gradients=True,
+                    )
+                
                 row.append(r[:, None] * np.ones(c.shape[0], int))
                 col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
-                grad0.append(g0)
-                grad1.append(g1)
+                grad0.append(g0 - g0.mean())
+                grad1.append(g1 - g1.mean())
                 data.append(ar)
             data, row, col, grad0, grad1 = (
                 np.asarray(data),
@@ -241,6 +253,65 @@ class TraceScene(object):
             imshape=self.shape,
         )
         return
+    
+
+    # def _get_Xs(self):
+    #     rows, cols, datas, grad0s, grad1s = [], [], [], [], []
+    #     for pix, wav in tqdm(
+    #         zip(self.psf.trace_pixel * self.scale, self.psf.trace_wavelength),
+    #         total=len(self.psf.trace_wavelength),
+    #     ):
+    #         row, col, data, grad0, grad1 = [], [], [], [], []
+    #         for location in self.locations * self.scale:
+    #             r, c, ar, g0, g1 = self.psf.prf(
+    #                 row=location[0] + pix.value,
+    #                 column=location[1],
+    #                 wavelength=wav,
+    #                 gradients=True,
+    #             )
+    #             row.append(r[:, None] * np.ones(c.shape[0], int))
+    #             col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
+    #             grad0.append(g0)
+    #             grad1.append(g1)
+    #             data.append(ar)
+    #         data, row, col, grad0, grad1 = (
+    #             np.asarray(data),
+    #             np.asarray(row),
+    #             np.asarray(col),
+    #             np.asarray(grad0),
+    #             np.asarray(grad1),
+    #         )
+    #         rows.append(row)
+    #         cols.append(col)
+    #         grad0s.append(grad0)
+    #         grad1s.append(grad1)
+    #         datas.append(data)
+    #     rows, cols, datas, grad0s, grad1s = (
+    #         np.vstack(rows),
+    #         np.vstack(cols),
+    #         np.vstack(datas),
+    #         np.vstack(grad0s),
+    #         np.vstack(grad1s),
+    #     )
+    #     self.X = SparseWarp3D(
+    #         datas.transpose([1, 2, 0]),
+    #         rows.transpose([1, 2, 0]) - self.corner[0],
+    #         cols.transpose([1, 2, 0]) - self.corner[1],
+    #         imshape=self.shape,
+    #     )
+    #     self.dX0 = SparseWarp3D(
+    #         grad0s.transpose([1, 2, 0]),
+    #         rows.transpose([1, 2, 0]) - self.corner[0],
+    #         cols.transpose([1, 2, 0]) - self.corner[1],
+    #         imshape=self.shape,
+    #     )
+    #     self.dX1 = SparseWarp3D(
+    #         grad1s.transpose([1, 2, 0]),
+    #         rows.transpose([1, 2, 0]) - self.corner[0],
+    #         cols.transpose([1, 2, 0]) - self.corner[1],
+    #         imshape=self.shape,
+    #     )
+    #     return
 
     def model(
         self,
@@ -256,7 +327,7 @@ class TraceScene(object):
             spectra = spectra[:, :, None]
         elif spectra.ndim != 3:
             raise ValueError("Pass a 3D array for flux (nwav, ntargets, ntime).")
-        if (spectra.shape[0] != self.psf.trace_pixel.shape[0]) | (
+        if (spectra.shape[0] != self.nwav) | (
             spectra.shape[1] != len(self)
         ):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
@@ -267,7 +338,8 @@ class TraceScene(object):
             elif delta_pos.ndim != 2:
                 raise ValueError("Pass 2D array for delta_pos (2, ntime).")
 
-        nt = spectra.shape[2]
+        flux = np.vstack(spectra)
+        nt = flux.shape[1]
         ar = np.zeros((nt, *self.shape))
         if delta_pos is not None:
             jitterdec = (delta_pos - 0.5) % 1 - 0.5
@@ -279,24 +351,27 @@ class TraceScene(object):
                 self.X.translate(tuple(coord))
                 self.dX0.translate(tuple(coord))
                 self.dX1.translate(tuple(coord))
-                grad_ar = deepcopy(self.dX0)
+#                grad_ar = deepcopy(self.dX0)
                 tdxs = np.where(unique_indices == index)[0]
-                for tdx in tqdm(
-                    tdxs,
-                    desc=f"Time index {index + 1}/{len(unique_coordinates)}",
-                    leave=True,
-                    position=0,
-                    disable=quiet,
-                ):
-                    grad_ar.data = (
-                        deepcopy(self.dX0.data) * -jitterdec[0, tdx]
-                        + deepcopy(self.dX1.data) * -jitterdec[1, tdx]
-                    )
-                    ar[tdx] += self.X.dot(spectra[:, :, tdx].ravel())[0]
-                    ar[tdx] += grad_ar.dot(spectra[:, :, tdx].ravel())[0]
+                ar[tdxs] = self.X.dot(flux[:, tdxs])
+                ar[tdxs] += self.dX0.dot(flux[:, tdxs] * jitterdec[0, tdxs]) + self.dX1.dot(flux[:, tdxs] * jitterdec[1, tdxs])
+                # for tdx in tqdm(
+                #     tdxs,
+                #     desc=f"Time index {index + 1}/{len(unique_coordinates)}",
+                #     leave=True,
+                #     position=0,
+                #     disable=quiet,
+                # ):
+                #     grad_ar.data = (
+                #         deepcopy(self.dX0.data) * -jitterdec[0, tdx]
+                #         + deepcopy(self.dX1.data) * -jitterdec[1, tdx]
+                #     )
+                #     ar[tdx] += self.X.dot(spectra[:, :, tdx].ravel())[0]
+                #     ar[tdx] += grad_ar.dot(spectra[:, :, tdx].ravel())[0]
         else:
-            for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
-                ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel())
+            ar = self.X.dot(flux)
+        #     for tdx in tqdm(range(nt), disable=quiet, desc="Time index"):
+        #         ar[tdx, :, :] = self.X.dot(spectra[:, :, tdx].ravel())
         if self.scale == 1:
             return ar
         if downsample:
