@@ -283,10 +283,17 @@ class TraceScene(Scene):
             R, C = np.mgrid[:rshape, :cshape]
             R += corner[0]
             C += corner[1]
-            return R, C, ar / len(dic), dar0 / len(dic), dar1 / len(dic)
+            corr = np.sum(ar)
+
+            return (
+                R,
+                C,
+                ar / corr,
+                (dar0 - dar0.mean()) / corr,
+                (dar1 - dar1.mean()) / corr,
+            )
 
         pixs, wavs = self.psf.trace_pixel * self.psf.scale, self.psf.trace_wavelength
-        pixs, wavs = pixs[mask], wavs[mask]
         dwavs = np.gradient(wavs)
         pixs, wavs, dwavs = (
             np.array_split(pixs, len(pixs) / nbin),
@@ -315,7 +322,7 @@ class TraceScene(Scene):
             R[idx], C[idx], data[idx], grad0[idx], grad1[idx] = collapse(
                 res[key], shape
             )
-
+        data, grad0, grad1 = data, grad0, grad1
         self.X = SparseWarp3D(
             data.transpose([1, 2, 0]),
             R.transpose([1, 2, 0]) - self.corner[0],
