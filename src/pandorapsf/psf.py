@@ -310,7 +310,7 @@ class PSF(object):
         name: str,
         transpose: bool = False,
         scale: int = 1,
-        blur_value: Tuple = (0.5 * u.pixel, 0.5 * u.pixel)
+        blur_value: Tuple = (0.5 * u.pixel, 0.5 * u.pixel),
     ):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["gauss", "gaussian", "test"]:

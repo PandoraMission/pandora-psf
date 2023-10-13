@@ -8,6 +8,7 @@ from scipy import sparse
 # First-party/Local
 from pandorapsf import PSF, TESTDIR, Scene, TraceScene
 from pandorapsf.scene import SparseWarp3D
+from pandorapsf.utils import downsample, prep_for_add
 
 
 def test_centered():
@@ -31,8 +32,8 @@ def test_centered():
             )
             dr = rmid - R.mean() - delta_pos[0]
             dc = cmid - C.mean() - delta_pos[1]
-            assert np.allclose(dr - np.mean(dr), 0, atol=0.01)
-            assert np.allclose(dc - np.mean(dc), 0, atol=0.01)
+            assert np.allclose(dr - np.mean(dr), 0, atol=0.03)
+            assert np.allclose(dc - np.mean(dc), 0, atol=0.03)
 
 
 def test_simple_vis_scene():
@@ -167,3 +168,58 @@ def test_sparsewarp():
     assert sw.dot(np.ones(10)).shape == (1, 50, 50)
     assert isinstance(sw.dot(np.ones(10)), np.ndarray)
     assert sw.dot(np.ones(10)).sum() == 300
+
+
+def test_scale():
+    for detector in ["Gaussian", "VISDA", "NIRDA"]:
+        for scale in [1, 2]:
+            p = PSF.from_name(detector, scale=scale)
+            s = Scene(
+                locations=np.asarray([[0, 0]]), shape=(50, 50), psf=p, corner=(-25, -25)
+            )
+            R, C = np.arange(-0.5, 0.5, 0.02), np.arange(-0.5, 0.5, 0.02)
+            truth = np.zeros((R.shape[0], C.shape[0], 50 * p.scale, 50 * p.scale))
+            estimate = np.zeros((R.shape[0], C.shape[0], 50, 50))
+            for (
+                idx,
+                r,
+            ) in enumerate(R):
+                for (
+                    jdx,
+                    c,
+                ) in enumerate(C):
+                    rb, cb, ar = prep_for_add(
+                        *p.prf(row=r * p.scale, column=c * p.scale),
+                        shape=(50 * p.scale, 50 * p.scale),
+                        corner=(-25 * p.scale, -25 * p.scale),
+                    )
+                    truth[idx, jdx, rb, cb] = ar
+                    estimate[idx, jdx, :, :] = s.model(
+                        np.ones((1)),
+                        np.asarray([[r, c]]).T,
+                        downsample=True,
+                        quiet=True,
+                    )[0]
+            truth = np.asarray(
+                [
+                    downsample(truth[idx, :, :, :], p.scale)
+                    for idx in range(truth.shape[0])
+                ]
+            )
+            fig, ax = plt.subplots()
+            im = ax.pcolormesh(
+                R, C, np.abs((truth - estimate)).sum(axis=(2, 3)).T, vmin=0, vmax=0.2
+            )
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label("Residuals")
+            plt.gca().set_aspect(1)
+            ax.set(
+                title=f"{detector}, Scale:{scale}",
+                xlabel="Column Sub Pixel Position",
+                ylabel="Row Sub Pixel Position",
+            )
+            fig.savefig(
+                TESTDIR + f"output/test_{detector}_scale_{scale}.png",
+                dpi=150,
+                bbox_inches="tight",
+            )

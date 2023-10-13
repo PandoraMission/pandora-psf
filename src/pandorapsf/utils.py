@@ -72,22 +72,26 @@ def make_pixel_files():
     wav = np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value) * u.micron
 
     sens = sensitivity(wav)
+    mask = sens / sens.max() > 0.0001
     corr = np.trapz(sens, wav)
     hdu = fits.TableHDU.from_columns(
         [
             fits.Column(
-                name="pixel", format="D", array=pixel.value, unit=pixel.unit.to_string()
+                name="pixel",
+                format="D",
+                array=pixel.value[mask],
+                unit=pixel.unit.to_string(),
             ),
             fits.Column(
                 name="wavelength",
                 format="D",
-                array=wav.value,
+                array=wav.value[mask],
                 unit=wav.unit.to_string(),
             ),
             fits.Column(
                 name="sensitivity",
                 format="D",
-                array=(sens / corr),
+                array=(sens[mask] / corr),
                 unit=(sens / corr).unit.to_string(),
             ),
         ]

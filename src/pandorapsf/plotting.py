@@ -7,6 +7,7 @@ import numpy as np
 from IPython.display import HTML
 from matplotlib import animation as mplanimation
 from matplotlib.animation import FFMpegWriter
+from PIL import Image
 
 
 def _get_v(kwargs, image_type):
@@ -216,6 +217,7 @@ def save_mp4(
     step: int = None,
     interval: int = 200,
     instance_name="Frame",
+    dpi=100,
     **plot_args,
 ):
     anim = _to_matplotlib_animation(
@@ -226,4 +228,30 @@ def save_mp4(
         instance_name=instance_name,
         **plot_args,
     )
-    anim.save(outfile, writer=FFMpegWriter(fps=1000 / interval, bitrate=5000), dpi=100)
+    anim.save(outfile, writer=FFMpegWriter(fps=1000 / interval, bitrate=5000), dpi=dpi)
+
+
+def save_gif(
+    data,
+    outfile="out.gif",
+    step: int = 1,
+    duration: int = 50,
+    scale: int = 1,
+    vmin=-50,
+    vmax=50,
+):
+    imgs = (
+        (
+            np.min([np.max([data, data**0 + vmin], axis=0), data**0 + vmax], axis=0)
+            - vmin
+        )
+        * 255
+        / (vmax - vmin)
+    )
+    imgs = imgs.astype(np.int32)[::step]
+    imgs = np.repeat(np.repeat(imgs, scale, axis=1), scale, axis=2)
+    imgs = imgs // 16 * 16
+    imgs = [Image.fromarray(img) for img in imgs]
+    imgs[0].save(
+        outfile, save_all=True, append_images=imgs[1:], duration=duration, loop=0
+    )
