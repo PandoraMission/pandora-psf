@@ -250,7 +250,7 @@ def save_gif(
     )
     imgs = imgs.astype(np.int32)[::step]
     imgs = np.repeat(np.repeat(imgs, scale, axis=1), scale, axis=2)
-    imgs = imgs // 16 * 16
+    imgs = imgs // 2 * 2
     imgs = [Image.fromarray(img) for img in imgs]
     imgs[0].save(
         outfile, save_all=True, append_images=imgs[1:], duration=duration, loop=0

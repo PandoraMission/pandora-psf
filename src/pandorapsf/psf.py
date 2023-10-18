@@ -1,14 +1,12 @@
 """Defines the PSF class"""
 
 # Standard library
-from copy import deepcopy
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Union
 
 # Third-party
 import astropy.units as u
 import numpy as np
 import numpy.typing as npt
-from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.io import fits
 
 from . import PACKAGEDIR
@@ -30,7 +28,7 @@ class PSF(object):
         sub_pixel_size: u.Quantity,
         transpose: bool = False,
         freeze_dictionary: Dict = {},
-        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
+        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         check_bounds: bool = True,
         extrapolate: bool = False,
         scale: int = 1,
@@ -62,18 +60,18 @@ class PSF(object):
         extrapolate : bool
             Whether to allow the PSF to be evaluated outside of the bounds (i.e. will extrapolate)
         """
-        self._psf_flux = psf_flux
+        self.psf_flux = psf_flux
         self.transpose = transpose
         if self.transpose:
-            self._psf_flux = self._psf_flux.transpose(
-                [1, 0, *np.arange(2, self._psf_flux.ndim)]
+            self.psf_flux = self.psf_flux.transpose(
+                [1, 0, *np.arange(2, self.psf_flux.ndim)]
             )
         self.dimension_names = dimension_names
         self.dimension_units = dimension_units
         self.pixel_size = pixel_size
         self.sub_pixel_size = sub_pixel_size
         self.freeze_dictionary = freeze_dictionary
-        self.blur_value = blur_value
+        #        self.blur_value = blur_value
         self.check_bounds = check_bounds
         self.extrapolate = extrapolate
         self.scale = scale
@@ -84,7 +82,7 @@ class PSF(object):
 
     def _validate(self):
         """Method that finishes the set up of the PSF"""
-        self.shape = self._psf_flux.shape[:2]
+        self.shape = self.psf_flux.shape[:2]
         self.ndims = len(self.dimension_names)
         # Set up 1D arrays
         if self.ndims == 1:
@@ -114,7 +112,8 @@ class PSF(object):
                 deshape = [
                     np.where(reshape == idx)[0][0] for idx in range(len(reshape))
                 ]
-                self._psf_flux = self._psf_flux.transpose(reshape)[s].transpose(deshape)
+                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(deshape)
+
                 midpoint = getattr(self, self.dimension_names[dim] + "1d")
                 midpoint = midpoint[len(midpoint) // 2]
                 setattr(self, self.dimension_names[dim] + "0d", midpoint)
@@ -146,66 +145,68 @@ class PSF(object):
             lp = getattr(self, self.dimension_names[dim])
             setattr(self, p + "_bounds", [lp.min(), lp.max()])
         #        self._psf_flux_jitter = np.zeros_like(self._psf_flux)
-        self._blur(self.blur_value)
+
+    #        self._blur(self.blur_value)
 
     #       self.psf_flux = self._psf_flux_blur #+ self._psf_flux_jitter
 
-    def _blur(self, blur_value: Tuple):
-        """Blurs the PSF using a Gaussian Kernel. Will update `self._psf_flux_blur` and `self._psf_flux_blur_grad`.
+    # def _blur(self, blur_value: Tuple):
+    #     """Blurs the PSF using a Gaussian Kernel. Will update `self._psf_flux_blur` and `self._psf_flux_blur_grad`.
 
-        Parameters:
-        -----------
-        blur_value: tuple of astropy quantities, must be in units of pixels
-        """
-        xstd, ystd = blur_value
-        xstd, ystd = u.Quantity(xstd, "pixel"), u.Quantity(ystd, "pixel")
+    #     Parameters:
+    #     -----------
+    #     blur_value: tuple of astropy quantities, must be in units of pixels
+    #     """
+    #     xstd, ystd = blur_value
+    #     xstd, ystd = u.Quantity(xstd, "pixel"), u.Quantity(ystd, "pixel")
 
-        xstd = ((self.pixel_size * xstd) / self.sub_pixel_size).value
-        ystd = ((self.pixel_size * ystd) / self.sub_pixel_size).value
-        a = deepcopy(self._psf_flux)
-        if (xstd == 0) & (ystd == 0):
-            self._psf_flux_blur = deepcopy(self._psf_flux)
-            self._psf_flux_blur_grad = (
-                np.asarray(
-                    np.gradient(
-                        self._psf_flux_blur,
-                        np.median(np.diff(self.psf_row)).value / self.scale,
-                        axis=(0, 1),
-                    )
-                )
-                * (self.sub_pixel_size / self.pixel_size).value
-            )
-            self.psf_flux = deepcopy(self._psf_flux)
-            return
-        s = a.shape
-        a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
-        b = np.asarray(
-            [
-                convolve(
-                    a[:, :, idx],
-                    Gaussian2DKernel(
-                        xstd,
-                        ystd,
-                    ),
-                )
-                for idx in range(a.shape[2])
-            ]
-        ).transpose([1, 2, 0])
-        b = b.reshape(s)
-        b /= b.sum(axis=(0, 1))[None, None]
-        self._psf_flux_blur = b
-        self._psf_flux_blur_grad = (
-            np.asarray(
-                np.gradient(
-                    self._psf_flux_blur,
-                    np.median(np.diff(self.psf_row)).value / self.scale,
-                    axis=(0, 1),
-                )
-            )
-            * (self.sub_pixel_size / self.pixel_size).value
-        )
-        self.psf_flux = self._psf_flux_blur  # + self._psf_flux_jitter
-        return
+    #     xstd = ((self.pixel_size * xstd) / self.sub_pixel_size).value
+    #     ystd = ((self.pixel_size * ystd) / self.sub_pixel_size).value
+    #     a = deepcopy(self._psf_flux)
+    #     if (xstd == 0) & (ystd == 0):
+    #         print('christina')
+    #         self._psf_flux_blur = deepcopy(self._psf_flux)
+    #         self._psf_flux_blur_grad = (
+    #             np.asarray(
+    #                 np.gradient(
+    #                     self._psf_flux_blur,
+    #                     np.median(np.diff(self.psf_row)).value / self.scale,
+    #                     axis=(0, 1),
+    #                 )
+    #             )
+    #             * (self.sub_pixel_size / self.pixel_size).value
+    #         )
+    #         self.psf_flux = deepcopy(self._psf_flux)
+    #         return
+    #     s = a.shape
+    #     a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
+    #     b = np.asarray(
+    #         [
+    #             convolve(
+    #                 a[:, :, idx],
+    #                 Gaussian2DKernel(
+    #                     xstd,
+    #                     ystd,
+    #                 ),
+    #             )
+    #             for idx in range(a.shape[2])
+    #         ]
+    #     ).transpose([1, 2, 0])
+    #     b = b.reshape(s)
+    #     b /= b.sum(axis=(0, 1))[None, None]
+    #     self._psf_flux_blur = b
+    #     self._psf_flux_blur_grad = (
+    #         np.asarray(
+    #             np.gradient(
+    #                 self._psf_flux_blur,
+    #                 np.median(np.diff(self.psf_row)).value / self.scale,
+    #                 axis=(0, 1),
+    #             )
+    #         )
+    #         * (self.sub_pixel_size / self.pixel_size).value
+    #     )
+    #     self.psf_flux = self._psf_flux_blur  # + self._psf_flux_jitter
+    #     return
 
     # def _jitter(self, row: npt.ArrayLike, column: npt.ArrayLike):
     #     """Jitters the PSF using gradients. Will update `self`
@@ -256,7 +257,7 @@ class PSF(object):
         """Drop a dimension of the PSF model"""
         dnms = self.dimension_names.copy()
         duns = self.dimension_units.copy()
-        PSF0 = self._psf_flux.copy()
+        PSF0 = self.psf_flux.copy()
         for key, point in kwargs.items():
             dim = np.where(np.in1d(dnms, key))[0][0]
             PSF0 = interpfunc(
@@ -284,7 +285,7 @@ class PSF(object):
             self.pixel_size,
             self.sub_pixel_size,
             freeze_dictionary=kwargs.copy(),
-            blur_value=self.blur_value,
+            #            blur_value=self.blur_value,
             extrapolate=self.extrapolate,
             scale=self.scale,
         )
@@ -310,7 +311,7 @@ class PSF(object):
         name: str,
         transpose: bool = False,
         scale: int = 1,
-        blur_value: Tuple = (0.5 * u.pixel, 0.5 * u.pixel),
+        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
     ):
         """Open a PSF file based on the detector name"""
         if name.lower() in ["gauss", "gaussian", "test"]:
@@ -330,8 +331,8 @@ class PSF(object):
                 scale=scale,
             )
             p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=-5 * u.deg_C)
-            p.blur_value = blur_value
-            p._blur(blur_value=p.blur_value)
+            #            p.blur_value = blur_value
+            #            p._blur(blur_value=p.blur_value)
             hdu = fits.open(f"{PACKAGEDIR}/data/visda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
@@ -343,14 +344,14 @@ class PSF(object):
 
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
-                f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
+                f"{PACKAGEDIR}/data/pandora_nir_hr_20220506.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
             )
             p = p.freeze_dimension(temperature=-5 * u.deg_C)
-            p.blur_value = blur_value
-            p._blur(blur_value=p.blur_value)
+            #            p.blur_value = blur_value
+            #            p._blur(blur_value=p.blur_value)
             hdu = fits.open(f"{PACKAGEDIR}/data/nirda-wav-solution.fits")
             for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
                 name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
@@ -366,7 +367,7 @@ class PSF(object):
     def from_file(
         filename: str = f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
         transpose: bool = False,
-        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
+        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         extrapolate: bool = False,
         scale: int = 1,
     ):
@@ -423,7 +424,7 @@ class PSF(object):
             pixel_size,
             sub_pixel_size,
             transpose=transpose,
-            blur_value=blur_value,
+            #            blur_value=blur_value,
             extrapolate=extrapolate,
             scale=scale,
         )
@@ -484,8 +485,19 @@ class PSF(object):
         d = kwargs.copy()
         PSF0 = self.psf_flux
         if gradients:
-            dPSF0 = self._psf_flux_blur_grad[0]
-            dPSF1 = self._psf_flux_blur_grad[1]
+            if not hasattr(self, "psf_flux_grad"):
+                self.psf_flux_grad = (
+                    np.asarray(
+                        np.gradient(
+                            self.psf_flux,
+                            np.median(np.diff(self.psf_row)).value / self.scale,
+                            axis=(0, 1),
+                        )
+                    )
+                    * (self.sub_pixel_size / self.pixel_size).value
+                )
+            dPSF0 = self.psf_flux_grad[0]
+            dPSF1 = self.psf_flux_grad[1]
         for key in self.dimension_names:
             value = d.pop(key, getattr(self, key + "0d"))
             PSF0 = interpfunc(

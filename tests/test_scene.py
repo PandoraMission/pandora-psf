@@ -32,8 +32,8 @@ def test_centered():
             )
             dr = rmid - R.mean() - delta_pos[0]
             dc = cmid - C.mean() - delta_pos[1]
-            assert np.allclose(dr - np.mean(dr), 0, atol=0.03)
-            assert np.allclose(dc - np.mean(dc), 0, atol=0.03)
+            assert np.allclose(dr - np.median(dr), 0, atol=0.05)
+            assert np.allclose(dc - np.median(dc), 0, atol=0.05)
 
 
 def test_simple_vis_scene():
@@ -94,9 +94,9 @@ def test_trace_scene():
 
         spectra = np.ones(s.nwav)
         assert (s.X.dot(np.ones(s.X.shape[-1])).sum(axis=0) < 4).all()
-#        img = s.model(spectra, quiet=True)
-#        assert img.ndim == 3
-#        assert img.shape == (1, 400, 80)
+        #        img = s.model(spectra, quiet=True)
+        #        assert img.ndim == 3
+        #        assert img.shape == (1, 400, 80)
         img = s.model(spectra[:, None], quiet=True)
         assert img.ndim == 3
         assert img.shape == (1, 400, 80)

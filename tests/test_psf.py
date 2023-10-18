@@ -77,10 +77,9 @@ def test_gaussian():
 
 def test_vis_psf_init():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
-        blur_value=(0.25 * u.pixel, 0.25 * u.pixel),
+        filename=f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
     )
-    assert p.shape == (128, 128)
+    assert p.shape == (512, 512)
     assert p.ndims == 4
 
     # jittering does something...
@@ -89,7 +88,7 @@ def test_vis_psf_init():
 
     # freeze some dimensions
     p = p.freeze_dimension(wavelength=p.wavelength0d, temperature=p.temperature0d)
-    assert p.shape == (128, 128)
+    assert p.shape == (512, 512)
     assert p.ndims == 2
     assert (
         p.__repr__()
@@ -99,10 +98,9 @@ def test_vis_psf_init():
 
 def test_nir_psf_init():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
-        blur_value=(0.25 * u.pixel, 0.25 * u.pixel),
+        filename=f"{PACKAGEDIR}/data/pandora_nir_hr_20220506.fits",
     )
-    assert p.shape == (128, 128)
+    assert p.shape == (512, 512)
     assert p.ndims == 2
 
     # jittering does something...
@@ -111,15 +109,14 @@ def test_nir_psf_init():
 
     # freeze some dimensions
     p = p.freeze_dimension(temperature=p.temperature0d)
-    assert p.shape == (128, 128)
+    assert p.shape == (512, 512)
     assert p.ndims == 1
     assert p.__repr__() == "1D PSF Model [wavelength] (Frozen: temperature: 30.0 deg_C)"
 
 
 def test_vis_psf():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_vis_20220506.fits",
-        blur_value=(0.25 * u.pixel, 0.25 * u.pixel),
+        filename=f"{PACKAGEDIR}/data/pandora_vis_hr_20220506.fits",
     )
     # Should raise out of bounds
     with pytest.raises(OutOfBoundsError):
@@ -229,8 +226,7 @@ def test_vis_psf():
 
 def test_nir_psf():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_nir_20220506.fits",
-        blur_value=(0.25 * u.pixel, 0.25 * u.pixel),
+        filename=f"{PACKAGEDIR}/data/pandora_nir_hr_20220506.fits",
     )
     # Should raise out of bounds
     with pytest.raises(OutOfBoundsError):

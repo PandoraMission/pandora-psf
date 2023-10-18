@@ -7,6 +7,7 @@ import pandas as pd
 from astropy.constants import c, h
 from astropy.io import fits
 from scipy.io import loadmat
+from scipy.ndimage import gaussian_filter
 
 from . import PACKAGEDIR
 
@@ -153,17 +154,17 @@ def make_pixel_files():
     hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
 
 
-def make_vis_PSF_fits_files(dir, nbin=2, suffix=""):
+def make_vis_PSF_fits_files(dir, nbin=1, suffix="_hr"):
     d = loadmat(dir + "pandora_vis_20220506_hot_PSF_512.mat")
 
-    PSF_hot = d["PSF"][:-1, :-1, :][128:384, 128:384]
+    PSF_hot = d["PSF"][:-1, :-1, :]#[128:384, 128:384]
     PSF_hot = np.asarray(
         [[PSF_hot[idx::nbin, jdx::nbin] for idx in range(nbin)] for jdx in range(nbin)]
     ).mean(axis=(0, 1))
     PSF_hot = PSF_hot.reshape((*PSF_hot.shape[:2], 9, 9, 5))
     d = loadmat(dir + "pandora_vis_20220506_cold_PSF_512.mat")
 
-    PSF_cold = d["PSF"][:-1, :-1, :][128:384, 128:384]
+    PSF_cold = d["PSF"][:-1, :-1, :]#[128:384, 128:384]
     PSF_cold = np.asarray(
         [[PSF_cold[idx::nbin, jdx::nbin] for idx in range(nbin)] for jdx in range(nbin)]
     ).mean(axis=(0, 1))
@@ -180,6 +181,22 @@ def make_vis_PSF_fits_files(dir, nbin=2, suffix=""):
     PSF = np.asarray([PSF_cold, PSF_hot]).transpose([1, 2, 3, 4, 5, 0])
     PSF /= PSF.sum(axis=(0, 1))[None, None]
 
+    PSF = np.asarray(
+        [
+            [
+                [
+                    [
+                        gaussian_filter(PSF[:, :, idx, jdx, kdx, ldx], 6)
+                        for idx in range(PSF.shape[2])
+                    ]
+                    for jdx in range(PSF.shape[3])
+                ]
+                for kdx in range(PSF.shape[4])
+            ]
+            for ldx in range(PSF.shape[5])
+        ]
+    )
+    PSF = PSF.transpose([4, 5, 3, 2, 1, 0])
     x = x[:, :, :, None] * np.ones(len(temp))
     y = y[:, :, :, None] * np.ones(len(temp))
     wvl = wvl[:, :, :, None] * np.ones(len(temp))
@@ -226,12 +243,12 @@ def make_vis_PSF_fits_files(dir, nbin=2, suffix=""):
     )
 
 
-def make_nir_PSF_fits_files(dir, nbin=2, suffix=""):
+def make_nir_PSF_fits_files(dir, nbin=1, suffix="_hr"):
     # NIR PSF with thermal info
     # -----------------------------------#
 
     d = loadmat(dir + "pandora_nir_20220506_thin_prism_hot_PSF_512.mat")
-    PSF_hot = d["PSF"][:-1, :-1, :-1]  # [128:384, 128:384]
+    PSF_hot = d["PSF"][:-1, :-1, :-1][128:384, 128:384]
     PSF_hot = np.asarray(
         [[PSF_hot[idx::nbin, jdx::nbin] for idx in range(nbin)] for jdx in range(nbin)]
     ).mean(axis=(0, 1))
@@ -265,8 +282,15 @@ def make_nir_PSF_fits_files(dir, nbin=2, suffix=""):
     temp = temp[None, :] * np.ones(wvl.shape)
 
     PSF = np.asarray([PSF_cold, PSF_hot]).transpose([1, 2, 3, 0])
-
     PSF /= PSF.sum(axis=(0, 1))
+
+    PSF = np.asarray(
+        [
+            [gaussian_filter(PSF[:, :, idx, jdx], 3) for idx in range(PSF.shape[2])]
+            for jdx in range(PSF.shape[3])
+        ]
+    )
+    PSF = PSF.transpose([2, 3, 1, 0])
 
     hdr = fits.Header(
         [
