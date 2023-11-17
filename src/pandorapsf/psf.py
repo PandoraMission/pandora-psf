@@ -551,17 +551,17 @@ class PSF(object):
                 )
         row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
         if "row" in self.dimension_names:
-            # if gradients:
-            #     psf0, dpsf0, dpsf1 = self.psf(
-            #         row=row, column=column, gradients=True, **kwargs
-            #     )
-            # else:
-            psf0 = self.psf(row=row, column=column, **kwargs)
+            if gradients:
+                psf0, dpsf0, dpsf1 = self.psf(
+                    row=row, column=column, gradients=True, **kwargs
+                )
+            else:
+             psf0 = self.psf(row=row, column=column, **kwargs)
         else:
-            # if gradients:
-            #     psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
-            # else:
-            psf0 = self.psf(**kwargs)
+            if gradients:
+                psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
+            else:
+                psf0 = self.psf(**kwargs)
         rb, cb, psfb = bin_prf(
             psf0,
             self.psf_row.value,
@@ -569,16 +569,16 @@ class PSF(object):
             (row.value, column.value),
             normalize=False,
         )
-        psfb /= np.sum(psfb)
+        integral = np.sum(psfb)
         if gradients:
-            # # _, _, dpsf0b = bin_prf(dpsf0, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
-            # # _, _, dpsf1b = bin_prf(dpsf1, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
+            _, _, dpsf0b = bin_prf(dpsf0, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
+            _, _, dpsf1b = bin_prf(dpsf1, self.psf_row.value, self.psf_column.value, (row.value, column.value), normalize=False)
             # return rb, cb, psfb/integral, (dpsf0b - dpsf0b.mean())/integral, (dpsf1b - dpsf1b.mean())/integral
-            dpsf0, dpsf1 = np.gradient(psfb)
-            dpsf0 -= dpsf0.mean()
-            dpsf1 -= dpsf1.mean()
-            return rb, cb, psfb, dpsf0, dpsf1
-        return rb, cb, psfb
+            # dpsf0, dpsf1 = np.gradient(psfb)
+            dpsf0b -= dpsf0b.mean()
+            dpsf1b -= dpsf1b.mean()
+            return rb, cb, psfb/integral, dpsf0b/integral, dpsf1b/integral
+        return rb, cb, psfb/integral
 
     # def _bin_prf(self, psf0, row, column, normalize=True):
     #     mod = (self.psf_column.value + column.value) % 1

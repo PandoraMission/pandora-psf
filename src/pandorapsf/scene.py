@@ -75,23 +75,25 @@ class Scene(object):
         return len(self.locations)
 
     def _get_X(self):
-        row, col, data, grad0, grad1 = [], [], [], [], []
-        for location in self.locations * self.scale:
+        row, col = np.meshgrid(np.arange(self.shape[0]), np.arange(self.shape[1]), indexing="ij")
+        row += self.corner[0]
+        col += self.corner[1]
+
+        row = row[None, :, :] * np.ones((len(self.locations),*self.shape))
+        col = col[None, :, :] * np.ones((len(self.locations),*self.shape))
+        data, grad0, grad1 = np.zeros((3, len(self.locations),*self.shape))
+        for idx, location in enumerate(self.locations * self.scale):
             r, c, ar, g0, g1 = self.psf.prf(
                 row=location[0], column=location[1], gradients=True
             )
-            row.append(r[:, None] * np.ones(c.shape[0], int))
-            col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
-            grad0.append(g0)
-            grad1.append(g1)
-            data.append(ar)
-        data, row, col, grad0, grad1 = (
-            np.asarray(data),
-            np.asarray(row),
-            np.asarray(col),
-            np.asarray(grad0),
-            np.asarray(grad1),
-        )
+            _, _, g0 = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
+            _, _, g1 = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
+            r, c, ar = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
+
+            grad0[idx, r, c] = g0
+            grad1[idx, r, c] = g1
+            data[idx, r, c] = ar
+
         self.X = SparseWarp3D(
             data.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],

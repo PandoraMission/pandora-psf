@@ -208,7 +208,7 @@ def test_scale():
             )
             fig, ax = plt.subplots()
             im = ax.pcolormesh(
-                R, C, np.abs((truth - estimate)).sum(axis=(2, 3)).T, vmin=0, vmax=0.2
+                R, C, np.abs((truth - estimate)).sum(axis=(2, 3)).T, vmin=0, vmax=0.01
             )
             cbar = plt.colorbar(im, ax=ax)
             cbar.set_label("Residuals")
