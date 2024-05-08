@@ -221,7 +221,6 @@ class Scene(object):
             return w[:-2], werr[:-2], w[-2:], werr[-2:]
         return w, werr, np.asarray([0, 0]), np.asarray([0, 0])
     
-
 class ROIScene(Scene):
     def __init__(self,
         locations: npt.ArrayLike,
@@ -275,9 +274,85 @@ class ROIScene(Scene):
         )
         return
 
+    def _get_ar(self, flux, delta_pos=None, quiet=True):
+        nt = flux.shape[1]
+        ar = np.zeros((self.nROIs, nt, *self.ROI_size))
+        if delta_pos is not None:
+            jitterdec = (delta_pos - 0.5) % 1 - 0.5
+            jitterint = np.round(delta_pos - jitterdec).astype(int)  # + 1
+            unique_coordinates, unique_indices = np.unique(
+                jitterint.T, axis=0, return_inverse=True
+            )
+            for index, coord in tqdm(
+                enumerate(unique_coordinates),
+                total=len(unique_coordinates),
+                leave=True,
+                position=0,
+                desc="Modeling Pixel Positions",
+                disable=quiet,
+            ):
+                self.X.translate(tuple(coord))
+                self.dX0.translate(tuple(coord))
+                self.dX1.translate(tuple(coord))
+                tdxs = np.where(unique_indices == index)[0]
+                ar[:, tdxs] = self.X.dot(flux[:, tdxs])
+                ar[:, tdxs] += self.dX0.dot(
+                    flux[:, tdxs] * -jitterdec[0, tdxs]
+                ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
+        else:
+            ar = self.X.dot(flux)
+        return ar
+
+    
+    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
+        """Fit a stack of images with the PRF model"""
+        if imgs.ndim == 3:
+            imgs = imgs[:, None, :, :]
+        if imgs.ndim != 4:
+            raise ValueError("Must supply 4D data.")
+        if imgs.shape[2:] != self.ROI_size:
+            raise ValueError(f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}.")
+        if imgs.shape[0] != self.nROIs:
+            raise ValueError(f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}.")
+        sparse_imgs = []
+        R, C = np.meshgrid(np.arange(0, self.ROI_size[0]), np.arange(0, self.ROI_size[1]), indexing='ij')
+        row = np.asarray([R + corner[0] for corner in self.ROI_corners]).transpose([1, 2, 0])
+        column = np.asarray([C + corner[1] for corner in self.ROI_corners]).transpose([1, 2, 0])
+        
+        for img in imgs.transpose([1, 0, 2, 3]):
+            data = img.transpose([1, 2, 0])
+            d = SparseWarp3D(data=data, row=row, col=column, imshape=self.shape)
+            d = d.tocsr()
+            sparse_imgs.append(d.max(axis=1))
+        y = sparse.hstack(sparse_imgs)
+
+        A = self.X.tocsr()
+        if prior_mu is not None:
+            pm = prior_mu.copy()
+        else:
+            pm = np.zeros(A.shape[1])
+        if prior_sigma is not None:
+            ps = prior_sigma.copy()
+        else:
+            ps = np.ones(A.shape[1]) * np.inf
+        if fit_shifts:
+            if prior_mu is None:
+                raise ValueError("You can only fit shifts if a flux estimate is provided via `prior_mu`.")
+            A = sparse.hstack([A, -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T), -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T)])
+            pm = np.hstack([pm, 0, 0])
+            ps = np.hstack([ps, np.inf, np.inf])
+        sigma_w_inv = A.T.dot(A).toarray()
+        
+        B = A.T.dot(y).toarray()
+        w = np.linalg.solve(sigma_w_inv + np.diag(1/ps**2), B + pm[:, None]/ps[:, None]**2)
+        werr = np.linalg.inv(sigma_w_inv).diagonal()**0.5
+        if fit_shifts:
+            return w[:-2], werr[:-2], w[-2:], werr[-2:]
+        return w, werr, np.asarray([0, 0]), np.asarray([0, 0])
+    
+    
     def __repr__(self):
         return f"ROIScene Object [{self.psf.__repr__()}] Detector Size: {self.shape}, ntargets: {self.ntargets}, nROIs: {self.nROIs}"
-
 
 
 class TraceScene(Scene):
