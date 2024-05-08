@@ -40,4 +40,6 @@ if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_nir_20220506.fits"):
     log.warning(f"NIR PSF downloaded to {PACKAGEDIR}/data/pandora_nir_20220506.fits.")
 
 from .psf import PSF  # noqa: F401, E402
+from .sparsewarp import SparseWarp3D, ROISparseWarp3D   # noqa: F401, E402
 from .scene import Scene, TraceScene  # noqa: F401, E402
+

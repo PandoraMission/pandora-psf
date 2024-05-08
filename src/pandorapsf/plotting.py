@@ -38,6 +38,7 @@ def plot_spatial(psf, n=3, image_type="PSF", **kwargs):
             continue
         locdict[dnm] = getattr(psf, dnm + "0d")
     vmin, vmax = _get_v(kwargs, image_type)
+    cmap = kwargs.pop("cmap", "viridis")
     fig, ax = plt.subplots(n, n, figsize=(n * 2, n * 2))
     for x1, y1 in (
         np.asarray(((np.mgrid[:n, :n] - n // 2) * (600 / (n // 2))))
@@ -78,10 +79,17 @@ def plot_spatial(psf, n=3, image_type="PSF", **kwargs):
             f,
             vmin=vmin,
             vmax=vmax,
+            cmap=cmap,
         )
-    ax[n // 2, 0].set(ylabel="Y Pixel")
-    ax[n - 1, n // 2].set(xlabel="X Pixel")
+        ax[idx, jdx].set(xticks=[], yticks=[])
+        if idx == n - 1:
+            ax[idx, jdx].set(xlabel=f"{x1.astype(int)} Pix")
+        if jdx == 0:
+            ax[idx, jdx].set(ylabel=f"{y1.astype(int)} Pix")
+    # ax[n // 2, 0].set(ylabel="Y Pixel")
+    # ax[n - 1, n // 2].set(xlabel="X Pixel")
     ax[0, n // 2].set(title=image_type.upper())
+    plt.subplots_adjust(hspace=0.051, wspace=0.051)
     return fig
 
 

@@ -9,6 +9,7 @@ from scipy import sparse
 from tqdm import tqdm
 
 from .psf import PSF
+from .sparsewarp import SparseWarp3D
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
 
@@ -69,31 +70,29 @@ class Scene(object):
         return ar
 
     def __repr__(self):
-        return f"Scene Object [{self.psf.__repr__()}]"
+        return f"Scene Object [{self.psf.__repr__()}] Detector Size: {self.shape}, ntargets: {self.ntargets}"
 
     def __len__(self):
         return len(self.locations)
 
     def _get_X(self):
-        row, col = np.meshgrid(np.arange(self.shape[0]), np.arange(self.shape[1]), indexing="ij")
-        row += self.corner[0]
-        col += self.corner[1]
-
-        row = row[None, :, :] * np.ones((len(self.locations),*self.shape))
-        col = col[None, :, :] * np.ones((len(self.locations),*self.shape))
-        data, grad0, grad1 = np.zeros((3, len(self.locations),*self.shape))
-        for idx, location in enumerate(self.locations * self.scale):
+        row, col, data, grad0, grad1 = [], [], [], [], []
+        for location in self.locations * self.scale:
             r, c, ar, g0, g1 = self.psf.prf(
                 row=location[0], column=location[1], gradients=True
             )
-            _, _, g0 = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
-            _, _, g1 = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
-            r, c, ar = prep_for_add(r, c, ar, shape=self.shape, corner=self.corner)
-
-            grad0[idx, r, c] = g0
-            grad1[idx, r, c] = g1
-            data[idx, r, c] = ar
-
+            row.append(r[:, None] * np.ones(c.shape[0], int))
+            col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
+            grad0.append(g0)
+            grad1.append(g1)
+            data.append(ar)
+        data, row, col, grad0, grad1 = (
+            np.asarray(data),
+            np.asarray(row),
+            np.asarray(col),
+            np.asarray(grad0),
+            np.asarray(grad1),
+        )
         self.X = SparseWarp3D(
             data.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
@@ -180,6 +179,105 @@ class Scene(object):
             return downsample_array(ar, self.scale)
         else:
             return ar
+
+    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
+        """Fit a stack of images with the PRF model"""
+        if imgs.ndim == 2:
+            imgs = imgs[None, :, :]
+        if imgs.shape[1:] != self.shape:
+            raise ValueError(f"Must supply an image with shape {self.shape}.")
+
+        sparse_imgs = []
+        for img in imgs:
+            data = img[self.X.subrow.ravel() % self.shape[0], self.X.subcol.ravel() % self.shape[1]].reshape(self.X.subrow.shape)
+            bad = (self.X.subrow < 0) | (self.X.subcol < 0) | (self.X.subrow > self.shape[0]) | (self.X.subrow > self.shape[1])
+            data[bad] = 0
+            d = SparseWarp3D(data, self.X.subrow, self.X.subcol, self.X.imshape)
+            d = d.tocsr()
+            sparse_imgs.append(d.max(axis=1))
+        y = sparse.hstack(sparse_imgs)
+        
+        A = self.X.tocsr()
+        if prior_mu is not None:
+            pm = prior_mu.copy()
+        else:
+            pm = np.zeros(A.shape[1])
+        if prior_sigma is not None:
+            ps = prior_sigma.copy()
+        else:
+            ps = np.ones(A.shape[1]) * np.inf
+        if fit_shifts:
+            if prior_mu is None:
+                raise ValueError("You can only fit shifts if a flux estimate is provided via `prior_mu`.")
+            A = sparse.hstack([A, -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T), -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T)])
+            pm = np.hstack([pm, 0, 0])
+            ps = np.hstack([ps, np.inf, np.inf])
+        sigma_w_inv = A.T.dot(A).toarray()
+        
+        B = A.T.dot(y).toarray()
+        w = np.linalg.solve(sigma_w_inv + np.diag(1/ps**2), B + pm[:, None]/ps[:, None]**2)
+        werr = np.linalg.inv(sigma_w_inv).diagonal()**0.5
+        if fit_shifts:
+            return w[:-2], werr[:-2], w[-2:], werr[-2:]
+        return w, werr, np.asarray([0, 0]), np.asarray([0, 0])
+    
+
+class ROIScene(Scene):
+    def __init__(self,
+        locations: npt.ArrayLike,
+        psf: PSF = None,
+        shape: Tuple = (100, 100),
+        corner: Tuple = (0, 0),
+        scale: int = 1, nROIs=1, ROI_size=(10, 10), ROI_corners=[(0, 0)]):
+
+        self.nROIs = nROIs
+        self.ROI_size = ROI_size
+        self.ROI_corners = ROI_corners
+        super().__init__(locations=locations, psf=psf, shape=shape, corner=corner, scale=scale)
+
+
+
+    def _get_X(self):
+        row, col, data, grad0, grad1 = [], [], [], [], []
+        for location in self.locations * self.scale:
+            r, c, ar, g0, g1 = self.psf.prf(
+                row=location[0], column=location[1], gradients=True
+            )
+            row.append(r[:, None] * np.ones(c.shape[0], int))
+            col.append(c[None, :] * np.ones(r.shape[0], int)[:, None])
+            grad0.append(g0)
+            grad1.append(g1)
+            data.append(ar)
+        data, row, col, grad0, grad1 = (
+            np.asarray(data),
+            np.asarray(row),
+            np.asarray(col),
+            np.asarray(grad0),
+            np.asarray(grad1),
+        )
+        self.X = ROISparseWarp3D(
+            data.transpose([1, 2, 0]),
+            row.transpose([1, 2, 0]) - self.corner[0],
+            col.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+        )
+        self.dX0 = ROISparseWarp3D(
+            grad0.transpose([1, 2, 0]),
+            row.transpose([1, 2, 0]) - self.corner[0],
+            col.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+        )
+        self.dX1 = ROISparseWarp3D(
+            grad1.transpose([1, 2, 0]),
+            row.transpose([1, 2, 0]) - self.corner[0],
+            col.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+        )
+        return
+
+    def __repr__(self):
+        return f"ROIScene Object [{self.psf.__repr__()}] Detector Size: {self.shape}, ntargets: {self.ntargets}, nROIs: {self.nROIs}"
+
 
 
 class TraceScene(Scene):
@@ -345,6 +443,7 @@ class TraceScene(Scene):
             C.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
+        self.wavelength = wavs
 
     # def _get_Xs(self, nbin=4):
     #     pixs, wavs = self.psf.trace_pixel * self.psf.scale, self.psf.trace_wavelength
@@ -553,142 +652,3 @@ class TraceScene(Scene):
             return downsample_array(ar, self.scale)
         else:
             return ar
-
-
-class SparseWarp3D(sparse.coo_matrix):
-    """Special class for working with stacks of sparse 3D images"""
-
-    def __init__(self, data, row, col, imshape):
-        if not np.all([row.ndim == 3, col.ndim == 3, data.ndim == 3]):
-            raise ValueError("Pass a 3D array (nrow, ncol, nvecs)")
-        self.nvecs = data.shape[-1]
-        if not np.all(
-            [
-                row.shape[-1] == self.nvecs,
-                col.shape[-1] == self.nvecs,
-            ]
-        ):
-            raise ValueError("Must have the same 3rd dimension (nvecs).")
-        self.subrow = row.astype(int)
-        self.subcol = col.astype(int)
-        self.subdepth = (
-            np.arange(row.shape[-1], dtype=int)[None, None, :]
-            * np.ones(row.shape, dtype=int)[:, :, None]
-        )
-        self.subdata = data
-        self._kz = self.subdata != 0
-
-        self.imshape = imshape
-        self.subshape = row.shape
-        self.cooshape = (np.prod([*self.imshape[:2]]), self.nvecs)
-        self.coord = (0, 0)
-        super().__init__(self.cooshape)
-        index0 = (np.vstack(self.subrow)) * self.imshape[1] + (np.vstack(self.subcol))
-        index1 = np.vstack(self.subdepth).ravel()
-        self._index_no_offset = np.vstack([index0.ravel(), index1.ravel()])
-        self._submask_no_offset = np.vstack(self._get_submask(offset=(0, 0))).ravel()
-        self._subrow_v = deepcopy(np.vstack(self.subrow).ravel())
-        self._subcol_v = deepcopy(np.vstack(self.subcol).ravel())
-        self._subdata_v = deepcopy(np.vstack(deepcopy(self.subdata)).ravel())
-        self._index1 = np.vstack(self.subdepth).ravel()
-
-        self._set_data()
-
-    def __add__(self, other):
-        if isinstance(other, SparseWarp3D):
-            data = deepcopy(self.subdata + other.subdata)
-            if (
-                (self.subcol != other.subcol)
-                | (self.subrow != other.subrow)
-                | (self.imshape != other.imshape)
-                | (self.subshape != other.subshape)
-            ):
-                raise ValueError("Must have same base indicies.")
-            return SparseWarp3D(
-                data=data, row=self.subrow, col=self.subcol, imshape=self.imshape
-            )
-        else:
-            return super(sparse.coo_matrix, self).__add__(other)
-
-    def tocoo(self):
-        return sparse.coo_matrix((self.data, (self.row, self.col)), shape=self.cooshape)
-
-    def index(self, offset=(0, 0)):
-        """Get the 2D positions of the data"""
-        if offset == (0, 0):
-            return self._index_no_offset
-        index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
-            self._subcol_v + offset[1]
-        )
-        #        index1 = np.vstack(self.subdepth).ravel()
-        #        return np.vstack([index0.ravel(), index1.ravel()])
-        # index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
-        #     self._subcol_v * offset[1]
-        # )
-        return index0, self._index1
-        # index0 = (self._subrow_v + offset[0]) * self.imshape[1] + (
-        #     self._subcol_v * offset[1]
-        # )
-        # return index0, self._index1
-
-    def _get_submask(self, offset=(0, 0)):
-        # find where the data is within the array bounds
-        kr = ((self.subrow + offset[0]) < self.imshape[0]) & (
-            (self.subrow + offset[0]) >= 0
-        )
-        kc = ((self.subcol + offset[1]) < self.imshape[1]) & (
-            (self.subcol + offset[1]) >= 0
-        )
-        return kr & kc & self._kz
-
-    def _set_data(self, offset=(0, 0)):
-        if offset == (0, 0):
-            index0, index1 = self.index((0, 0))
-            self.row, self.col = (
-                index0[self._submask_no_offset],
-                index1[self._submask_no_offset],
-            )
-            self.data = self._subdata_v[self._submask_no_offset]
-        else:
-            # find where the data is within the array bounds
-            k = self._get_submask(offset=offset)
-            k = np.vstack(k).ravel()
-            new_row, new_col = self.index(offset=offset)
-            self.row, self.col = new_row[k], new_col[k]
-            self.data = self._subdata_v[k]
-        self.coord = offset
-
-    def __repr__(self):
-        return (
-            f"<{(*self.imshape, self.nvecs)} SparseWarp3D array of type {self.dtype}>"
-        )
-
-    def dot(self, other):
-        if other.ndim == 1:
-            other = other[:, None]
-        nt = other.shape[1]
-        return super().dot(other).reshape((*self.imshape, nt)).transpose([2, 0, 1])
-
-    def reset(self):
-        """Reset any translation back to the original data"""
-        self._set_data(offset=(0, 0))
-        self.coord = (0, 0)
-        return
-
-    def clear(self):
-        """Clear data in the array"""
-        self.data = np.asarray([])
-        self.row = np.asarray([])
-        self.col = np.asarray([])
-        self.coord = (0, 0)
-        return
-
-    def translate(self, position: Tuple):
-        """Translate the data in the array by `position` in (row, column)"""
-        self.reset()
-        # If translating to (0, 0), do nothing
-        if position == (0, 0):
-            return
-        self.clear()
-        self._set_data(position)
-        return
