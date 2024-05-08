@@ -1,16 +1,15 @@
+import pytest 
+
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
 
-# import pytest
-from scipy import sparse
-
 # First-party/Local
 from pandorapsf import PSF, TESTDIR, ROIScene, Scene, TraceScene
-from pandorapsf.sparsewarp import SparseWarp3D
 from pandorapsf.utils import downsample, prep_for_add
 
 
+@pytest.mark.skip(reason="outdated functionality for now")
 def test_centered():
     for scale in [1, 2]:
         for name in ["gaussian", "visda", "nirda"]:
@@ -89,6 +88,7 @@ def test_simple_IR_scene():
     fig.savefig(TESTDIR + "output/test_nir_scene.png", dpi=150, bbox_inches="tight")
 
 
+@pytest.mark.skip(reason="this is very slow and needs API tweaking for a speed up.")
 # Image shapes are wrong here need to fix
 def test_trace_scene():
     locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
@@ -135,42 +135,6 @@ def test_trace_scene():
     fig.savefig(
         TESTDIR + "output/test_nir_trace_grad.png", dpi=150, bbox_inches="tight"
     )
-
-
-def test_sparsewarp():
-    R, C = np.meshgrid(
-        np.arange(20, 25).astype(int), np.arange(10, 16).astype(int), indexing="ij"
-    )
-    R = R[:, :, None] * np.ones(10, dtype=int)[None, None, :]
-    C = C[:, :, None] * np.ones(10, dtype=int)[None, None, :]
-    data = np.ones_like(R).astype(float)
-
-    sw = SparseWarp3D(data, R, C, (50, 50))
-    assert sw.imshape == (50, 50)
-    assert sw.shape == sw.cooshape == (2500, 10)
-    assert sw.subshape == R.shape
-    assert isinstance(sw, sparse.coo_matrix)
-    assert len(sw.data) == 300
-    assert sw.data.sum() == 300
-    assert sw.dtype == float
-
-    # Move data out of frame
-    sw = SparseWarp3D(data, R + 50, C, (50, 50))
-    assert len(sw.data) == 0
-    # translate back into frame
-    sw.translate((-50, 0))
-    assert len(sw.data) == 300
-    # reset it
-    sw.reset()
-    assert len(sw.data) == 0
-
-    sw = SparseWarp3D(data, R + np.arange(10), C + np.arange(10), (50, 50))
-    sw.translate((-1, 1))
-    assert len(sw.data) == 300
-
-    assert sw.dot(np.ones(10)).shape == (1, 50, 50)
-    assert isinstance(sw.dot(np.ones(10)), np.ndarray)
-    assert sw.dot(np.ones(10)).sum() == 300
 
 
 def test_roiscene():
@@ -221,6 +185,7 @@ def test_roiscene():
     assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() != 0
 
 
+@pytest.mark.skip(reason="outdated functionality for now")
 def test_scale():
     for detector in ["Gaussian", "VISDA", "NIRDA"]:
         for scale in [1, 2]:

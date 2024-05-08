@@ -183,7 +183,7 @@ class ROISparseWarp3D(SparseWarp3D):
         return get_ROI_masks
 
     def __repr__(self):
-        return f"<{(*self.imshape, self.nvecs)} ROISparseWarp3D array of type {self.dtype}>"
+        return f"<{(*self.imshape, self.nvecs)} ROISparseWarp3D array of type {self.dtype}, {self.nROIs} Regions of Interest>"
 
     def _get_submask(self, offset=(0, 0)):
         # find where the data is within the array bounds

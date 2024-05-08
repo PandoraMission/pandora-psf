@@ -154,11 +154,10 @@ def make_pixel_files():
     hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
 
 
-def _open_LLNL_file(filename):
+def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
     """This opens the newest file format from LLNL. They might change it, so watch out."""
     d = loadmat(filename)
     subpixel_size = d["dx"][0][0] * u.micron / u.pix
-    pixel_size = 6.5 * u.micron / u.pix
 
     wvl = np.unique(d["wvl"]) * u.micron
     nwav = wvl.shape[0]
@@ -229,6 +228,40 @@ def _open_LLNL_file(filename):
     subpixel_column = ((sC[0] - sC.shape[0] / 2) * u.pixel * subpixel_size)[
         None
     ] * np.ones(d["PSF"].shape[:2])
+
+    if downsample is not None:
+        n = downsample
+        PSF = np.sum(
+            [PSF[idx::n, jdx::n] for idx in range(n) for jdx in range(n)], axis=0
+        )
+        subpixel_column = (
+            np.mean(
+                [
+                    subpixel_column.value[idx::n, jdx::n]
+                    for idx in range(n)
+                    for jdx in range(n)
+                ],
+                axis=0,
+            )
+            * subpixel_column.unit
+        )
+        subpixel_row = (
+            np.mean(
+                [
+                    subpixel_row.value[idx::n, jdx::n]
+                    for idx in range(n)
+                    for jdx in range(n)
+                ],
+                axis=0,
+            )
+            * subpixel_row.unit
+        )
+
+    if trim is not None:
+        PSF = PSF[trim:-trim, trim:-trim]
+        subpixel_column = subpixel_column[trim:-trim, trim:-trim]
+        subpixel_row = subpixel_row[trim:-trim, trim:-trim]
+
     return (
         subpixel_size,
         subpixel_row,
@@ -241,7 +274,7 @@ def _open_LLNL_file(filename):
     )
 
 
-def make_PSF_fits_files(filename, suffix, pixel_size):
+def make_PSF_fits_files(filename, suffix, pixel_size, downsample=None, trim=None):
     (
         subpixel_size,
         subpixel_row,
@@ -251,7 +284,7 @@ def make_PSF_fits_files(filename, suffix, pixel_size):
         wavelength,
         PSF,
         created_on,
-    ) = _open_LLNL_file(filename)
+    ) = _open_LLNL_file(filename, pixel_size, downsample=downsample, trim=trim)
     pixel_size = u.Quantity(pixel_size, u.micron / u.pixel)
     subpixel_row, subpixel_column, row, column = (
         (subpixel_row / pixel_size).to(u.pixel),
@@ -284,10 +317,10 @@ def make_PSF_fits_files(filename, suffix, pixel_size):
     hdu = fits.HDUList(
         [
             primaryhdu,
-            fits.ImageHDU(PSF, name="PSF"),
-            fits.ImageHDU(row.value, name="ROW"),
-            fits.ImageHDU(column.value, name="COLUMN"),
-            fits.ImageHDU(wavelength.value, name="WAVELENGTH"),
+            fits.ImageHDU(PSF.astype(np.float32), name="PSF"),
+            fits.ImageHDU(row.value.astype(np.float32), name="ROW"),
+            fits.ImageHDU(column.value.astype(np.float32), name="COLUMN"),
+            fits.ImageHDU(wavelength.value.astype(np.float32), name="WAVELENGTH"),
         ]
     )
     hdu[2].header["UNIT"] = row.unit.to_string()

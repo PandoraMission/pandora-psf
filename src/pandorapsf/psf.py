@@ -438,7 +438,7 @@ class PSF(object):
 
     def __repr__(self):
         freeze_dictionary = (
-            f" (Frozen: {', '.join([f'{key}: {item}' for key, item in self.freeze_dictionary.items()])})"
+            f" (Frozen: {', '.join([f'{key}: {item:.3f}' for key, item in self.freeze_dictionary.items()])})"
             if len(self.freeze_dictionary) != 0
             else ""
         )

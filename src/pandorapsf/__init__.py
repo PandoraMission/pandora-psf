@@ -1,4 +1,4 @@
-__version__ = "0.2.0"
+__version__ = "0.2.3"
 # Standard library
 import os  # noqa
 
@@ -11,7 +11,6 @@ import logging  # noqa: E402
 import shutil  # noqa: E402
 
 # Third-party
-from astropy.utils.data import download_file  # noqa: E402
 from rich.logging import RichHandler  # noqa: E402
 
 logging.basicConfig()
@@ -20,20 +19,24 @@ log.addHandler(RichHandler(markup=True))
 log.setLevel("INFO")
 
 if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_vis_20220506.fits"):
+    from astropy.utils.data import download_file  # noqa: E402
+
     # Download vis PSF
-    log.warning("No PSF file found. Downloading 100MB VIS PSF file.")
+    log.warning("No PSF file found. Downloading 2GB VIS PSF file.")
     p = download_file(
-        "https://zenodo.org/record/7596336/files/pandora_vis_20220506.fits?download=1",
+        "https://zenodo.org/records/11153153/files/pandora_vis_2024-05.fits?download=1",
         pkgname="pandora-psf",
     )
     shutil.move(p, f"{PACKAGEDIR}/data/pandora_vis_20220506.fits")
     log.warning(f"VIS PSF downloaded to {PACKAGEDIR}/data/pandora_vis_20220506.fits.")
 
 if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_nir_20220506.fits"):
+    from astropy.utils.data import download_file  # noqa: E402
+
     # Download nir PSF
-    log.warning("No PSF file found. Downloading 10MB NIR PSF")
+    log.warning("No PSF file found. Downloading 2GB NIR PSF")
     p = download_file(
-        "https://zenodo.org/record/7596336/files/pandora_nir_20220506.fits?download=1",
+        "https://zenodo.org/records/11153153/files/pandora_nir_2024-05.fits?download=1",
         pkgname="pandora-psf",
     )
     shutil.move(p, f"{PACKAGEDIR}/data/pandora_nir_20220506.fits")
