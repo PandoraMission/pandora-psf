@@ -9,11 +9,11 @@ from scipy import sparse
 from tqdm import tqdm
 
 from .psf import PSF
-from .sparsewarp import SparseWarp3D
+from .sparsewarp import SparseWarp3D, ROISparseWarp3D
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
 
-__all__ = ["Scene", "TraceScene"]
+__all__ = ["ROIScene", "Scene", "TraceScene"]
 
 
 class Scene(object):
