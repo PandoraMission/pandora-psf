@@ -9,7 +9,7 @@ from scipy import sparse
 from tqdm import tqdm
 
 from .psf import PSF
-from .sparsewarp import SparseWarp3D, ROISparseWarp3D
+from .sparsewarp import ROISparseWarp3D, SparseWarp3D
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
 
@@ -189,14 +189,22 @@ class Scene(object):
 
         sparse_imgs = []
         for img in imgs:
-            data = img[self.X.subrow.ravel() % self.shape[0], self.X.subcol.ravel() % self.shape[1]].reshape(self.X.subrow.shape)
-            bad = (self.X.subrow < 0) | (self.X.subcol < 0) | (self.X.subrow > self.shape[0]) | (self.X.subrow > self.shape[1])
+            data = img[
+                self.X.subrow.ravel() % self.shape[0],
+                self.X.subcol.ravel() % self.shape[1],
+            ].reshape(self.X.subrow.shape)
+            bad = (
+                (self.X.subrow < 0)
+                | (self.X.subcol < 0)
+                | (self.X.subrow > self.shape[0])
+                | (self.X.subrow > self.shape[1])
+            )
             data[bad] = 0
             d = SparseWarp3D(data, self.X.subrow, self.X.subcol, self.X.imshape)
             d = d.tocsr()
             sparse_imgs.append(d.max(axis=1))
         y = sparse.hstack(sparse_imgs)
-        
+
         A = self.X.tocsr()
         if prior_mu is not None:
             pm = prior_mu.copy()
@@ -208,33 +216,48 @@ class Scene(object):
             ps = np.ones(A.shape[1]) * np.inf
         if fit_shifts:
             if prior_mu is None:
-                raise ValueError("You can only fit shifts if a flux estimate is provided via `prior_mu`.")
-            A = sparse.hstack([A, -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T), -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T)])
+                raise ValueError(
+                    "You can only fit shifts if a flux estimate is provided via `prior_mu`."
+                )
+            A = sparse.hstack(
+                [
+                    A,
+                    -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T),
+                    -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T),
+                ]
+            )
             pm = np.hstack([pm, 0, 0])
             ps = np.hstack([ps, np.inf, np.inf])
         sigma_w_inv = A.T.dot(A).toarray()
-        
+
         B = A.T.dot(y).toarray()
-        w = np.linalg.solve(sigma_w_inv + np.diag(1/ps**2), B + pm[:, None]/ps[:, None]**2)
-        werr = np.linalg.inv(sigma_w_inv).diagonal()**0.5
+        w = np.linalg.solve(
+            sigma_w_inv + np.diag(1 / ps**2), B + pm[:, None] / ps[:, None] ** 2
+        )
+        werr = np.linalg.inv(sigma_w_inv).diagonal() ** 0.5
         if fit_shifts:
             return w[:-2], werr[:-2], w[-2:], werr[-2:]
         return w, werr, np.asarray([0, 0]), np.asarray([0, 0])
-    
+
+
 class ROIScene(Scene):
-    def __init__(self,
+    def __init__(
+        self,
         locations: npt.ArrayLike,
         psf: PSF = None,
         shape: Tuple = (100, 100),
         corner: Tuple = (0, 0),
-        scale: int = 1, nROIs=1, ROI_size=(10, 10), ROI_corners=[(0, 0)]):
-
+        scale: int = 1,
+        nROIs=1,
+        ROI_size=(10, 10),
+        ROI_corners=[(0, 0)],
+    ):
         self.nROIs = nROIs
         self.ROI_size = ROI_size
         self.ROI_corners = ROI_corners
-        super().__init__(locations=locations, psf=psf, shape=shape, corner=corner, scale=scale)
-
-
+        super().__init__(
+            locations=locations, psf=psf, shape=shape, corner=corner, scale=scale
+        )
 
     def _get_X(self):
         row, col, data, grad0, grad1 = [], [], [], [], []
@@ -258,19 +281,28 @@ class ROIScene(Scene):
             data.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
-            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+            imshape=self.shape,
+            nROIs=self.nROIs,
+            ROI_size=self.ROI_size,
+            ROI_corners=self.ROI_corners,
         )
         self.dX0 = ROISparseWarp3D(
             grad0.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
-            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+            imshape=self.shape,
+            nROIs=self.nROIs,
+            ROI_size=self.ROI_size,
+            ROI_corners=self.ROI_corners,
         )
         self.dX1 = ROISparseWarp3D(
             grad1.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
-            imshape=self.shape, nROIs=self.nROIs, ROI_size=self.ROI_size, ROI_corners=self.ROI_corners,
+            imshape=self.shape,
+            nROIs=self.nROIs,
+            ROI_size=self.ROI_size,
+            ROI_corners=self.ROI_corners,
         )
         return
 
@@ -303,7 +335,6 @@ class ROIScene(Scene):
             ar = self.X.dot(flux)
         return ar
 
-    
     def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
         """Fit a stack of images with the PRF model"""
         if imgs.ndim == 3:
@@ -311,14 +342,26 @@ class ROIScene(Scene):
         if imgs.ndim != 4:
             raise ValueError("Must supply 4D data.")
         if imgs.shape[2:] != self.ROI_size:
-            raise ValueError(f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}.")
+            raise ValueError(
+                f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}."
+            )
         if imgs.shape[0] != self.nROIs:
-            raise ValueError(f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}.")
+            raise ValueError(
+                f"Must supply a images with shape (nROIs, ntimes, *ROI_size), at least {(self.nROIs, 1, *self.ROI_size)}."
+            )
         sparse_imgs = []
-        R, C = np.meshgrid(np.arange(0, self.ROI_size[0]), np.arange(0, self.ROI_size[1]), indexing='ij')
-        row = np.asarray([R + corner[0] for corner in self.ROI_corners]).transpose([1, 2, 0])
-        column = np.asarray([C + corner[1] for corner in self.ROI_corners]).transpose([1, 2, 0])
-        
+        R, C = np.meshgrid(
+            np.arange(0, self.ROI_size[0]),
+            np.arange(0, self.ROI_size[1]),
+            indexing="ij",
+        )
+        row = np.asarray([R + corner[0] for corner in self.ROI_corners]).transpose(
+            [1, 2, 0]
+        )
+        column = np.asarray([C + corner[1] for corner in self.ROI_corners]).transpose(
+            [1, 2, 0]
+        )
+
         for img in imgs.transpose([1, 0, 2, 3]):
             data = img.transpose([1, 2, 0])
             d = SparseWarp3D(data=data, row=row, col=column, imshape=self.shape)
@@ -337,20 +380,29 @@ class ROIScene(Scene):
             ps = np.ones(A.shape[1]) * np.inf
         if fit_shifts:
             if prior_mu is None:
-                raise ValueError("You can only fit shifts if a flux estimate is provided via `prior_mu`.")
-            A = sparse.hstack([A, -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T), -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T)])
+                raise ValueError(
+                    "You can only fit shifts if a flux estimate is provided via `prior_mu`."
+                )
+            A = sparse.hstack(
+                [
+                    A,
+                    -self.dX0.tocsr().dot(sparse.csr_matrix(prior_mu).T),
+                    -self.dX1.tocsr().dot(sparse.csr_matrix(prior_mu).T),
+                ]
+            )
             pm = np.hstack([pm, 0, 0])
             ps = np.hstack([ps, np.inf, np.inf])
         sigma_w_inv = A.T.dot(A).toarray()
-        
+
         B = A.T.dot(y).toarray()
-        w = np.linalg.solve(sigma_w_inv + np.diag(1/ps**2), B + pm[:, None]/ps[:, None]**2)
-        werr = np.linalg.inv(sigma_w_inv).diagonal()**0.5
+        w = np.linalg.solve(
+            sigma_w_inv + np.diag(1 / ps**2), B + pm[:, None] / ps[:, None] ** 2
+        )
+        werr = np.linalg.inv(sigma_w_inv).diagonal() ** 0.5
         if fit_shifts:
             return w[:-2], werr[:-2], w[-2:], werr[-2:]
         return w, werr, np.asarray([0, 0]), np.asarray([0, 0])
-    
-    
+
     def __repr__(self):
         return f"ROIScene Object [{self.psf.__repr__()}] Detector Size: {self.shape}, ntargets: {self.ntargets}, nROIs: {self.nROIs}"
 

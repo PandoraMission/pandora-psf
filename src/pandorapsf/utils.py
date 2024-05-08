@@ -578,8 +578,13 @@ def prep_for_add(row, column, prf, shape=(100, 100), corner=(-50, -50)):
 
 
 def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
-    df = pd.DataFrame(psf0, index=psf_row + location[0], columns=psf_column + location[1])
-    int_location = int(location[0] - (location[0] % 1)), int(location[1] - (location[1] % 1)), 
+    df = pd.DataFrame(
+        psf0, index=psf_row + location[0], columns=psf_column + location[1]
+    )
+    int_location = (
+        int(location[0] - (location[0] % 1)),
+        int(location[1] - (location[1] % 1)),
+    )
     irange, crange = (
         np.floor(psf_row.min()).astype(int) - 1 + int_location[0],
         np.ceil(psf_row.max()).astype(int) + 2 + int_location[0],
@@ -597,7 +602,7 @@ def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
     )
     if normalize:
         df2 /= df2.sum().sum()
-#    import pdb;pdb.set_trace()
+    #    import pdb;pdb.set_trace()
     return np.asarray(list(df2.index)), np.asarray(list(df2.columns)), df2.values
 
 

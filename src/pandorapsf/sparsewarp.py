@@ -5,8 +5,8 @@ from typing import Tuple
 import numpy as np
 from scipy import sparse
 
-
 __all__ = ["SparseWarp3D", "ROISparseWarp3D"]
+
 
 class SparseWarp3D(sparse.coo_matrix):
     """Special class for working with stacks of sparse 3D images"""
@@ -118,7 +118,9 @@ class SparseWarp3D(sparse.coo_matrix):
 
     def dot(self, other):
         if not isinstance(other, np.ndarray):
-            raise NotImplementedError(f"dot products with type {type(other)} are not implemented.")
+            raise NotImplementedError(
+                f"dot products with type {type(other)} are not implemented."
+            )
         if other.ndim == 1:
             other = other[:, None]
         nt = other.shape[1]
@@ -152,39 +154,36 @@ class SparseWarp3D(sparse.coo_matrix):
         return deepcopy(self)
 
 
-class ROISparseWarp3D(SparseWarp3D):    
+class ROISparseWarp3D(SparseWarp3D):
     """Special version of a SparseWarp3D matrix which only populates and works with data within Regions of Interest."""
+
     def __init__(self, data, row, col, imshape, nROIs, ROI_size, ROI_corners):
         self.nROIs = nROIs
         self.ROI_size = ROI_size
         self.ROI_corners = ROI_corners
         self.get_ROI_mask = self.parse_ROIS(nROIs, ROI_size, ROI_corners)
         super().__init__(data=data, row=row, col=col, imshape=imshape)
-        
 
-    def parse_ROIS(self, nROIs:int,
-                ROI_size:tuple,
-                ROI_corners:list):
+    def parse_ROIS(self, nROIs: int, ROI_size: tuple, ROI_corners: list):
         if not len(ROI_corners) == nROIs:
             raise ValueError("Must pass corners for all ROIs.")
         if not np.all([isinstance(corner, tuple) for corner in ROI_corners]):
             raise ValueError("Pass corners as tuples.")
-    
+
         def get_ROI_masks(row, column):
             mask = []
             for roi in range(nROIs):
                 rmin, cmin = ROI_corners[roi]
                 rmax, cmax = rmin + ROI_size[0], cmin + ROI_size[1]
-                mask.append((row >= rmin) & (row < rmax) & (column >= cmin) & (column < cmax))
+                mask.append(
+                    (row >= rmin) & (row < rmax) & (column >= cmin) & (column < cmax)
+                )
             return np.asarray(mask)
-            
+
         return get_ROI_masks
-        
-    
+
     def __repr__(self):
-        return (
-            f"<{(*self.imshape, self.nvecs)} ROISparseWarp3D array of type {self.dtype}>"
-        )
+        return f"<{(*self.imshape, self.nvecs)} ROISparseWarp3D array of type {self.dtype}>"
 
     def _get_submask(self, offset=(0, 0)):
         # find where the data is within the array bounds
@@ -194,9 +193,10 @@ class ROISparseWarp3D(SparseWarp3D):
         kc = ((self.subcol + offset[1]) < self.imshape[1]) & (
             (self.subcol + offset[1]) >= 0
         )
-        kroi = self.get_ROI_mask(self.subrow + offset[0], self.subcol + offset[0]).any(axis=0)
+        kroi = self.get_ROI_mask(self.subrow + offset[0], self.subcol + offset[0]).any(
+            axis=0
+        )
         return kr & kc & kroi & self._kz
-
 
     def dot(self, other):
         if isinstance(other, np.ndarray):
@@ -206,14 +206,20 @@ class ROISparseWarp3D(SparseWarp3D):
         if not other.shape[0] == self.nvecs:
             if other.shape[1] == self.nvecs:
                 other = other.T
-            else:   
+            else:
                 raise ValueError(f"Must pass {(self.nvecs, 1)} shape object.")
         sparse_array = super().tocsr().dot(other)
 
-        R, C = np.meshgrid(np.arange(0, self.ROI_size[0]), np.arange(0, self.ROI_size[1]), indexing='ij')
+        R, C = np.meshgrid(
+            np.arange(0, self.ROI_size[0]),
+            np.arange(0, self.ROI_size[1]),
+            indexing="ij",
+        )
         array = np.zeros((self.nROIs, other.shape[1], *self.ROI_size))
         for rdx, c in enumerate(self.ROI_corners):
             idx = (R.ravel() + c[0]) * self.imshape[1] + (C.ravel() + c[1])
             k = (idx >= 0) & (idx < self.shape[0])
-            array[rdx, :, k.reshape(self.ROI_size)] = (sparse_array[idx[k]].toarray())#).reshape(self.ROI_size))
+            array[rdx, :, k.reshape(self.ROI_size)] = sparse_array[
+                idx[k]
+            ].toarray()  # ).reshape(self.ROI_size))
         return array

@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 
 # First-party/Local
-from pandorapsf import PSF, TESTDIR, Scene, TraceScene, ROIScene
+from pandorapsf import PSF, TESTDIR, ROIScene, Scene, TraceScene
 from pandorapsf.sparsewarp import SparseWarp3D
 from pandorapsf.utils import downsample, prep_for_add
 
@@ -172,23 +172,49 @@ def test_sparsewarp():
     assert isinstance(sw.dot(np.ones(10)), np.ndarray)
     assert sw.dot(np.ones(10)).sum() == 300
 
+
 def test_roiscene():
     ntimes = 20
     roi_size = (30, 30)
     corners = [(0, 0), (0, 70), (30, 30)]
-    locations = np.vstack([np.vstack([np.random.uniform(10, roi_size[0]-10, size=3),
-                    np.random.uniform(10, roi_size[1]-10, size=3)]).T + np.asarray(corner) for corner in corners])
-    true_fluxes = 10**np.random.uniform(1, 3, size=(locations.shape[0]))[:, None] * np.ones(ntimes)[None, :]
-    s = ROIScene(locations=locations, shape=(100, 100), corner=(0, 0), psf=pv, nROIs=len(corners), ROI_size=roi_size, ROI_corners=corners)
+    locations = np.vstack(
+        [
+            np.vstack(
+                [
+                    np.random.uniform(10, roi_size[0] - 10, size=3),
+                    np.random.uniform(10, roi_size[1] - 10, size=3),
+                ]
+            ).T
+            + np.asarray(corner)
+            for corner in corners
+        ]
+    )
+    true_fluxes = (
+        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
+        * np.ones(ntimes)[None, :]
+    )
+    s = ROIScene(
+        locations=locations,
+        shape=(100, 100),
+        corner=(0, 0),
+        psf=pv,
+        nROIs=len(corners),
+        ROI_size=roi_size,
+        ROI_corners=corners,
+    )
     roi_data = s.model(true_fluxes)
     assert roi_data.shape == (len(corners), ntimes, *roi_size)
     assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() == 0
 
-
-    true_fluxes = 10**np.random.uniform(1, 3, size=(locations.shape[0]))[:, None] * np.ones(ntimes)[None, :]
-    shot_noise = np.random.normal(0, true_fluxes[:, 0]**0.5, size=(ntimes, s.ntargets)).T
+    true_fluxes = (
+        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
+        * np.ones(ntimes)[None, :]
+    )
+    shot_noise = np.random.normal(
+        0, true_fluxes[:, 0] ** 0.5, size=(ntimes, s.ntargets)
+    ).T
     true_fluxes += shot_noise
-    true_shift = np.random.normal(0, 0.1, size=(2, ntimes)) 
+    true_shift = np.random.normal(0, 0.1, size=(2, ntimes))
 
     roi_data = s.model(true_fluxes, true_shift)
     assert roi_data.shape == (len(corners), ntimes, *roi_size)
