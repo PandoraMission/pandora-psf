@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandorapsf"
-version = "0.2.3"
+version = "0.2.4"
 description = ""
 authors = ["Christina Hedges <christina.l.hedges@nasa.gov>"]
 readme = "README.md"
@@ -8,7 +8,7 @@ packages = [{include = "pandorapsf", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-pandorasat = ">=0.5.10"
+pandorasat = ">=0.5.11"
 
 [build-system]
 requires = ["poetry-core"]

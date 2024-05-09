@@ -5,7 +5,7 @@ import numpy as np
 from scipy import sparse
 
 # First-party/Local
-from pandorapsf.sparsewarp import SparseWarp3D, ROISparseWarp3D
+from pandorapsf.sparsewarp import ROISparseWarp3D, SparseWarp3D
 
 
 def test_sparsewarp():
@@ -44,13 +44,23 @@ def test_sparsewarp():
     assert sw.dot(np.ones(10)).sum() == 300
 
 
-
 def test_roisparsewarp():
-    R, C = np.mgrid[:20, :20]    
-    R, C = R + np.arange(2, 48, 5)[:, None, None], C + np.arange(2, 48, 5)[:, None, None]
-    data = np.random.normal(0, 1, size=R.shape)**0
-    
-    sw = ROISparseWarp3D(data, R, C, imshape=(50, 50), nROIs=3, ROI_size=(10, 10), ROI_corners=[(0, 0), (10, 40), (40, 41)])
+    R, C = np.mgrid[:20, :20]
+    R, C = (
+        R + np.arange(2, 48, 5)[:, None, None],
+        C + np.arange(2, 48, 5)[:, None, None],
+    )
+    data = np.random.normal(0, 1, size=R.shape) ** 0
+
+    sw = ROISparseWarp3D(
+        data,
+        R,
+        C,
+        imshape=(50, 50),
+        nROIs=3,
+        ROI_size=(10, 10),
+        ROI_corners=[(0, 0), (10, 40), (40, 41)],
+    )
     assert sw.imshape == (50, 50)
     assert sw.ROI_size == (10, 10)
     assert sw.shape == sw.cooshape == (2500, 20)

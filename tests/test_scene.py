@@ -1,8 +1,7 @@
-import pytest 
-
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 # First-party/Local
 from pandorapsf import PSF, TESTDIR, ROIScene, Scene, TraceScene
