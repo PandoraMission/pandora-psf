@@ -193,10 +193,10 @@ class ROISparseWarp3D(SparseWarp3D):
         kc = ((self.subcol + offset[1]) < self.imshape[1]) & (
             (self.subcol + offset[1]) >= 0
         )
-        kroi = self.get_ROI_mask(self.subrow + offset[0], self.subcol + offset[0]).any(
-            axis=0
-        )
-        return kr & kc & kroi & self._kz
+        # kroi = self.get_ROI_mask(self.subrow + offset[0], self.subcol + offset[0]).any(
+        #     axis=0
+        # )
+        return kr & kc & self._kz  # & kroi
 
     def dot(self, other):
         if isinstance(other, np.ndarray):
