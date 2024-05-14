@@ -12,7 +12,7 @@ from pandorapsf.utils import prep_for_add
 
 
 def test_version():
-    assert __version__ == "0.2.7"
+    assert __version__ == "0.2.8"
 
 
 @pytest.mark.skip(reason="outdated functionality")

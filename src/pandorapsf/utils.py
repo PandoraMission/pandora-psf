@@ -256,6 +256,7 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
             )
             * subpixel_row.unit
         )
+        subpixel_size *= downsample
 
     if trim is not None:
         PSF = PSF[trim:-trim, trim:-trim]

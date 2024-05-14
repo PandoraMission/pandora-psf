@@ -1,18 +1,17 @@
 """Defines the PSF class"""
 
 # Standard library
-import os
 from typing import Dict, List, Union
 
 # Third-party
 import astropy.units as u
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+import pandorasat as ps
 from astropy.io import fits
 from pandorasat.utils import get_phoenix_model
 
-from . import PACKAGEDIR, PANDORASTYLE
+from . import PACKAGEDIR
 from .utils import bin_prf
 
 __all__ = ["PSF"]
@@ -407,35 +406,6 @@ class PSF(object):
         )
         return psf2
 
-    def plot_sensitivity(self, ax=None):
-        if ax is None:
-            _, ax = plt.subplots()
-        with plt.style.context(PANDORASTYLE):
-            ax.plot(self.trace_wavelength.value, self.trace_sensitivity.value, c="k")
-            ax.set(
-                xticks=np.linspace(*ax.get_xlim(), 9),
-                xlabel=f"Wavelength [{self.trace_wavelength.unit.to_string('latex')}]",
-                ylabel=f"Sensitivity [{self.trace_sensitivity.unit.to_string('latex')}]",
-                title=self.name.upper(),
-            )
-            ax.spines[["right", "top"]].set_visible(True)
-            if (self.trace_pixel.value != 0).any():
-                ax_p = ax.twiny()
-                ax_p.set(xticks=ax.get_xticks(), xlim=ax.get_xlim())
-                ax_p.set_xlabel(xlabel="$\delta$ Pixel Position", color="grey")
-                ax_p.set_xticklabels(
-                    labels=list(
-                        np.interp(
-                            ax.get_xticks(),
-                            self.trace_wavelength.value,
-                            self.trace_pixel.value,
-                        ).astype(int)
-                    ),
-                    rotation=45,
-                    color="grey",
-                )
-        return ax
-
     def __repr__(self):
         freeze_dictionary = (
             f" (Frozen: {', '.join([f'{key}: {item:.3f}' for key, item in self.freeze_dictionary.items()])})"
@@ -497,15 +467,16 @@ class PSF(object):
             raise ValueError(f"No such PSF as `{name}`")
 
     def _add_trace_params(self):
-        fname = f"{PACKAGEDIR}/data/{self.name.lower()}-wav-solution.fits"
-        if not os.path.isfile(fname):
-            raise ValueError(f"No wavelength solutions for `{self.name}`.")
-        hdu = fits.open(fname)
-        for idx in np.arange(1, hdu[1].header["TFIELDS"] + 1):
-            name, unit = hdu[1].header[f"TTYPE{idx}"], hdu[1].header[f"TUNIT{idx}"]
-            setattr(self, f"_trace_{name}", hdu[1].data[name] * u.Quantity(1, unit))
-        self._trace_sensitivity *= hdu[1].header["SENSCORR"] * u.Quantity(
-            1, hdu[1].header["CORRUNIT"]
+        if self.name == "visda":
+            detector = ps.VisibleDetector()
+        elif self.name == "nirda":
+            detector = ps.NIRDetector()
+        else:
+            raise ValueError(f"Can not parse name {self.name}.")
+        self._trace_sensitivity, self._trace_pixel, self._trace_wavelength = (
+            detector.trace_sensitivity,
+            detector.trace_pixel,
+            detector.trace_wavelength,
         )
 
     @property

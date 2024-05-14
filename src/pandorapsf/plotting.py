@@ -93,13 +93,11 @@ def plot_spatial(psf, n=3, image_type="PSF", **kwargs):
     return fig
 
 
-def plot_spectral(
-    psf,
-    var="wavelength",
-    n=5,
-    npixels=20,
-    image_type="psf",
-):
+def plot_spectral(psf, var="wavelength", n=5, npixels=20, image_type="psf", **kwargs):
+
+    vmin, vmax = _get_v(kwargs, image_type)
+    cmap = kwargs.pop("cmap", "viridis")
+
     wavs = np.linspace(
         getattr(psf, var + "1d").min(), getattr(psf, var + "1d").max(), n
     )
@@ -135,8 +133,9 @@ def plot_spectral(
             x,
             y,
             f,
-            vmin=0,
-            vmax=[0.1 if image_type.lower() == "prf" else 0.01][0],
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
         )
         ax[ndx].set(
             xlim=(-m, m),
