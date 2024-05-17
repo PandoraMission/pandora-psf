@@ -442,7 +442,7 @@ class TraceScene(Scene):
 
     def _get_Xs(self, nbin=4):
         def get_chunked_data(locations, pixels, waves):
-            """Loops through pixel trave groups and gets each PRF element into a dictionary"""
+            """Loops through pixel trace groups and gets each PRF element into a dictionary"""
             res = {}
             for pdx in range(len(pixels)):
                 for location in locations:
@@ -534,12 +534,12 @@ class TraceScene(Scene):
         bounds1 = np.hstack(
             [*bounds0[1:], wavs[-1][-1].value + dwavs[-1][-1].value / 2]
         )
+        self.pixs = pixs
+        self.wavs = wavs
         self.bounds = np.asarray([bounds0, bounds1])
         self.nwav = self.bounds.shape[1]
         data, grad0, grad1 = np.zeros((3, len(pixs), len(self.locations), *self.shape))
-
         res = get_chunked_data(self.locations * self.psf.scale, pixs, wavs)
-
         r = np.asarray([item["r"] for _, item in res.items()])
         c = np.asarray([item["c"] for _, item in res.items()])
         shape = np.max(r[:, 1] - r[:, 0]), np.max(c[:, 1] - c[:, 0])
@@ -549,7 +549,8 @@ class TraceScene(Scene):
             R[idx], C[idx], data[idx], grad0[idx], grad1[idx] = collapse(
                 res[key], shape
             )
-        data, grad0, grad1 = data, grad0, grad1
+        self.data = data
+        # data, grad0, grad1 = data, grad0, grad1
         self.X = SparseWarp3D(
             data.transpose([1, 2, 0]),
             R.transpose([1, 2, 0]) - self.corner[0],
