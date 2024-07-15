@@ -10,9 +10,10 @@ import numpy.typing as npt
 import pandorasat as ps
 from astropy.io import fits
 from pandorasat.utils import get_phoenix_model
+from scipy import optimize
 
 from . import PACKAGEDIR
-from .utils import bin_prf
+from .utils import bin_prf, gaussian, calc_distance
 
 __all__ = ["PSF"]
 
@@ -735,6 +736,62 @@ class PSF(object):
     #     if normalize:
     #         psf2 /= psf2.sum()
     #     return rowbin.astype(int), colbin.astype(int), psf2
+
+    def calc_prf_maxima(self, sample_factor=32):
+        """
+        Calculates the maxima of the PRF of a source located at each detector positon and
+        fits an axisymmetric Gaussian function centered on the origin to the PRF maxima.
+
+        Parameters
+        ----------
+        sample_factor : int
+            Factor with which to downsample the PRF. Must be a multiple of 2048.
+
+        Returns
+        -------
+        prf_maxima : np.ndarray
+            2D array containing the maxima of the PRF of the source located at each detector location.
+            If sample_factor is not 1, the array is padded to match the detector shape in pixels.
+        A_gauss : float
+            Amplitude of the Gaussian fit to the PRF maxima centered at the origin.
+        sigma_gauss : float
+            Standard deviation of the Gaussian fit to the PRF maxima centered at the origin.
+        """
+        if 2048 % sample_factor != 0:
+            raise ValueError("sample_factor must be a factor of 2048!")
+
+        arr_size = 2048 // sample_factor
+        self.prf_maxima = np.zeros((arr_size, arr_size))
+
+        for i, row in enumerate(range(-1024, 1024)[0::sample_factor]):
+            for j, col in enumerate(range(-1024, 1024)[0::sample_factor]):
+                # print(str(i) + ' ' + str(j), end='\r')
+                _, _, fout = self.prf(row, col)
+                self.prf_maxima[i, j] += np.amax(fout)
+
+        self.prf_maxima = np.repeat(
+            np.repeat(self.prf_maxima, sample_factor, axis=1), sample_factor, axis=0
+        )
+
+        col = np.linspace(-1024, 1024, 2048)
+        row = np.linspace(-1024, 1024, 2048)
+        col, row = np.meshgrid(col, row)
+
+        col_flat = col.ravel()
+        row_flat = row.ravel()
+        prf_maxima_flat = self.prf_maxima.ravel()
+
+        initial_guess = [np.amax(self.prf_maxima), 500]
+        popt, pcov = optimize.curve_fit(
+            lambda r, A, sigma: gaussian(r, A, sigma),
+            calc_distance(col_flat, row_flat, (0, 0)),
+            prf_maxima_flat,
+            p0=initial_guess,
+        )
+
+        self.A_gauss, self.sigma_gauss = popt
+
+        return self.prf_maxima, self.A_gauss, self.sigma_gauss
 
 
 def interpfunc(l, lp, PSF0):
