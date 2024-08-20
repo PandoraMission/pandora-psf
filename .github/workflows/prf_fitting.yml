@@ -1,0 +1,38 @@
+name: prf_fitting
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    generate-file:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: '3.9'
+            - name: Cache Poetry dependencies
+              uses: actions/cache@v3
+              with:
+                path: ~/.cache/pypoetry
+                key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+                restore-keys: |
+                  ${{ runner.os }}-poetry-
+            - name: Install dependencies
+              run: |
+                python -m pip install --upgrade pip
+                python -m pip install poetry
+                poetry install
+                git lfs pull
+            - name: Run output PRF fitting script
+              run: python ../src/pandorapsf/fit_prf.py
+            - name: Commit and push changes
+              run: |
+                    git config --local user.email "action@github.com"
+                    git config --local user.name "GitHub Action"
+                    git add ../src/pandorapsf/data/prf_gauss_params.csv
+                    git commit -m "Generated prf_gauss_params.csv by GitHub Action" || echo "No changes to commit"
+                    git push origin main
