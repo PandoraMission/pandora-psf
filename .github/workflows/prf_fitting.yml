@@ -28,7 +28,7 @@ jobs:
                 poetry install
                 git lfs pull
             - name: Run output PRF fitting script
-              run: python src/pandorapsf/fit_prf.py
+              run: poetry run python src/pandorapsf/fit_prf.py
             - name: Commit and push changes
               run: |
                     git config --local user.email "action@github.com"
