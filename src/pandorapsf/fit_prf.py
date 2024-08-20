@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .psf import PSF
+from pandorapsf.psf import PSF
 
 _, A_fit, sigma_fit = PSF.from_name("visda").calc_prf_maxima()
 
