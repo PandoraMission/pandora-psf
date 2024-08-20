@@ -13,7 +13,7 @@ from pandorasat.utils import get_phoenix_model
 from scipy import optimize
 
 from . import PACKAGEDIR
-from .utils import bin_prf, gaussian, calc_distance
+from .utils import bin_prf
 
 __all__ = ["PSF"]
 
@@ -780,6 +780,16 @@ class PSF(object):
         col_flat = col.ravel()
         row_flat = row.ravel()
         prf_maxima_flat = self.prf_maxima.ravel()
+
+        def gaussian(r, A, sigma):
+            """Function defining an axisymmetric Gaussian centered on the origin"""
+            val = A * np.exp(-(r**2) / (2 * sigma**2))
+            return val
+
+        def calc_distance(x, y, origin):
+            """Calculates the distance of coordinates from a given origin in the Cartesian plane."""
+            distance = np.sqrt((x - origin[0]) ** 2 + (y - origin[1]) ** 2)
+            return distance
 
         initial_guess = [np.amax(self.prf_maxima), 500]
         popt, pcov = optimize.curve_fit(
