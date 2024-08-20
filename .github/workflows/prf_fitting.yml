@@ -28,11 +28,11 @@ jobs:
                 poetry install
                 git lfs pull
             - name: Run output PRF fitting script
-              run: python ../src/pandorapsf/fit_prf.py
+              run: python src/pandorapsf/fit_prf.py
             - name: Commit and push changes
               run: |
                     git config --local user.email "action@github.com"
                     git config --local user.name "GitHub Action"
-                    git add ../src/pandorapsf/data/prf_gauss_params.csv
+                    git add src/pandorapsf/data/prf_gauss_params.csv
                     git commit -m "Generated prf_gauss_params.csv by GitHub Action" || echo "No changes to commit"
                     git push origin main
