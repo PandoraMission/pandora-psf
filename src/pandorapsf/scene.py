@@ -6,10 +6,10 @@ from typing import Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
+from sparse3d import ROISparse3D, Sparse3D
 from tqdm import tqdm
 
 from .psf import PSF
-from .sparsewarp import ROISparseWarp3D, SparseWarp3D
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
 
@@ -93,19 +93,19 @@ class Scene(object):
             np.asarray(grad0),
             np.asarray(grad1),
         )
-        self.X = SparseWarp3D(
+        self.X = Sparse3D(
             data.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
-        self.dX0 = SparseWarp3D(
+        self.dX0 = Sparse3D(
             grad0.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
-        self.dX1 = SparseWarp3D(
+        self.dX1 = Sparse3D(
             grad1.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
@@ -200,7 +200,7 @@ class Scene(object):
                 | (self.X.subrow > self.shape[1])
             )
             data[bad] = 0
-            d = SparseWarp3D(data, self.X.subrow, self.X.subcol, self.X.imshape)
+            d = Sparse3D(data, self.X.subrow, self.X.subcol, self.X.imshape)
             d = d.tocsr()
             sparse_imgs.append(d.max(axis=1))
         y = sparse.hstack(sparse_imgs)
@@ -277,7 +277,7 @@ class ROIScene(Scene):
             np.asarray(grad0),
             np.asarray(grad1),
         )
-        self.X = ROISparseWarp3D(
+        self.X = ROISparse3D(
             data.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
@@ -286,7 +286,7 @@ class ROIScene(Scene):
             ROI_size=self.ROI_size,
             ROI_corners=self.ROI_corners,
         )
-        self.dX0 = ROISparseWarp3D(
+        self.dX0 = ROISparse3D(
             grad0.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
@@ -295,7 +295,7 @@ class ROIScene(Scene):
             ROI_size=self.ROI_size,
             ROI_corners=self.ROI_corners,
         )
-        self.dX1 = ROISparseWarp3D(
+        self.dX1 = ROISparse3D(
             grad1.transpose([1, 2, 0]),
             row.transpose([1, 2, 0]) - self.corner[0],
             col.transpose([1, 2, 0]) - self.corner[1],
@@ -364,7 +364,7 @@ class ROIScene(Scene):
 
         for img in imgs.transpose([1, 0, 2, 3]):
             data = img.transpose([1, 2, 0])
-            d = SparseWarp3D(data=data, row=row, col=column, imshape=self.shape)
+            d = Sparse3D(data=data, row=row, col=column, imshape=self.shape)
             d = d.tocsr()
             sparse_imgs.append(d.max(axis=1))
         y = sparse.hstack(sparse_imgs)
@@ -551,21 +551,21 @@ class TraceScene(Scene):
             )
         self.data = data
         # data, grad0, grad1 = data, grad0, grad1
-        self.X = SparseWarp3D(
+        self.X = Sparse3D(
             data.transpose([1, 2, 0]),
             R.transpose([1, 2, 0]) - self.corner[0],
             C.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
 
-        self.dX0 = SparseWarp3D(
+        self.dX0 = Sparse3D(
             grad0.transpose([1, 2, 0]),
             R.transpose([1, 2, 0]) - self.corner[0],
             C.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
 
-        self.dX1 = SparseWarp3D(
+        self.dX1 = Sparse3D(
             grad1.transpose([1, 2, 0]),
             R.transpose([1, 2, 0]) - self.corner[0],
             C.transpose([1, 2, 0]) - self.corner[1],
@@ -605,19 +605,19 @@ class TraceScene(Scene):
     #     R, C = np.meshgrid(np.arange(self.shape[0]), np.arange(self.shape[1]), indexing='ij')
     #     R, C = R[None, :, :] * np.ones(data.shape) - self.corner[0], C[None, :, :] * np.ones(data.shape) - self.corner[1]
 
-    #     self.X = SparseWarp3D(
+    #     self.X = Sparse3D(
     #                 data.transpose([1, 2, 0]),
     #                 R.transpose([1, 2, 0]),
     #                 C.transpose([1, 2, 0]),
     #                 imshape=self.shape,
     #     )
-    #     self.dX0 = SparseWarp3D(
+    #     self.dX0 = Sparse3D(
     #                 grad0.transpose([1, 2, 0]),
     #                 R.transpose([1, 2, 0]),
     #                 C.transpose([1, 2, 0]),
     #         imshape=self.shape,
     #     )
-    #     self.dX1 = SparseWarp3D(
+    #     self.dX1 = Sparse3D(
     #                 grad1.transpose([1, 2, 0]),
     #                 R.transpose([1, 2, 0]),
     #                 C.transpose([1, 2, 0]),
@@ -671,19 +671,19 @@ class TraceScene(Scene):
     #     np.vstack(grad0s),
     #     np.vstack(grad1s),
     # )
-    # self.X = SparseWarp3D(
+    # self.X = Sparse3D(
     #     datas.transpose([1, 2, 0]),
     #     rows.transpose([1, 2, 0]) - self.corner[0],
     #     cols.transpose([1, 2, 0]) - self.corner[1],
     #     imshape=self.shape,
     # )
-    # self.dX0 = SparseWarp3D(
+    # self.dX0 = Sparse3D(
     #     grad0s.transpose([1, 2, 0]),
     #     rows.transpose([1, 2, 0]) - self.corner[0],
     #     cols.transpose([1, 2, 0]) - self.corner[1],
     #     imshape=self.shape,
     # )
-    # self.dX1 = SparseWarp3D(
+    # self.dX1 = Sparse3D(
     #     grad1s.transpose([1, 2, 0]),
     #     rows.transpose([1, 2, 0]) - self.corner[0],
     #     cols.transpose([1, 2, 0]) - self.corner[1],
@@ -729,19 +729,19 @@ class TraceScene(Scene):
     #         np.vstack(grad0s),
     #         np.vstack(grad1s),
     #     )
-    #     self.X = SparseWarp3D(
+    #     self.X = Sparse3D(
     #         datas.transpose([1, 2, 0]),
     #         rows.transpose([1, 2, 0]) - self.corner[0],
     #         cols.transpose([1, 2, 0]) - self.corner[1],
     #         imshape=self.shape,
     #     )
-    #     self.dX0 = SparseWarp3D(
+    #     self.dX0 = Sparse3D(
     #         grad0s.transpose([1, 2, 0]),
     #         rows.transpose([1, 2, 0]) - self.corner[0],
     #         cols.transpose([1, 2, 0]) - self.corner[1],
     #         imshape=self.shape,
     #     )
-    #     self.dX1 = SparseWarp3D(
+    #     self.dX1 = Sparse3D(
     #         grad1s.transpose([1, 2, 0]),
     #         rows.transpose([1, 2, 0]) - self.corner[0],
     #         cols.transpose([1, 2, 0]) - self.corner[1],

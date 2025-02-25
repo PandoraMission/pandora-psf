@@ -5,14 +5,10 @@ import numpy as np
 import pytest
 
 # First-party/Local
-from pandorapsf import PACKAGEDIR, PSF, TESTDIR, __version__
+from pandorapsf import PACKAGEDIR, PSF, TESTDIR
 from pandorapsf.plotting import plot_spatial, plot_spectral
 from pandorapsf.psf import OutOfBoundsError
 from pandorapsf.utils import prep_for_add
-
-
-def test_version():
-    assert __version__ == "0.2.11"
 
 
 @pytest.mark.skip(reason="outdated functionality")

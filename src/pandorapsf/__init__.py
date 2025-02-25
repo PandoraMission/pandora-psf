@@ -1,6 +1,16 @@
-__version__ = "0.2.11"
 # Standard library
 import os  # noqa
+from importlib.metadata import PackageNotFoundError, version  # noqa
+
+
+def get_version():
+    try:
+        return version("pandorapsf")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+__version__ = get_version()
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 TESTDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/tests/"
@@ -39,4 +49,3 @@ if not os.path.isfile(f"{PACKAGEDIR}/data/pandora_nir_2024-05.fits"):
 
 from .psf import PSF  # noqa: F401, E402
 from .scene import ROIScene, Scene, TraceScene  # noqa: F401, E402
-from .sparsewarp import ROISparseWarp3D, SparseWarp3D  # noqa: F401, E402

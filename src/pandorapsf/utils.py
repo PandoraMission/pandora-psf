@@ -1,4 +1,5 @@
 """Handy utilities for PSFs"""
+
 from datetime import datetime
 
 import astropy.units as u
@@ -107,8 +108,9 @@ def make_pixel_files():
 
     def qe(wavelength):  # noqa: F811
         df = pd.read_csv(f"{PACKAGEDIR}/data/pandora_visible_qe.csv")
-        wav, transmission = np.asarray(df.Wavelength) * u.angstrom, np.asarray(
-            df.Transmission
+        wav, transmission = (
+            np.asarray(df.Wavelength) * u.angstrom,
+            np.asarray(df.Transmission),
         )
         return (
             np.interp(wavelength, wav, transmission, left=0, right=0)
@@ -154,8 +156,11 @@ def make_pixel_files():
     hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
 
 
-def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
-    """This opens the newest file format from LLNL. They might change it, so watch out."""
+def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None, jitter_width=0.5):
+    """This opens the newest file format from LLNL. They might change it, so watch out.
+
+    jitter_width is in pixel space
+    """
     d = loadmat(filename)
     subpixel_size = d["dx"][0][0] * u.micron / u.pix
 
@@ -181,8 +186,9 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
     for idx in range(nwav):
         C[idx, mask] = d["x"][0][idx::nwav]
         R[idx, mask] = d["y"][0][idx::nwav]
-    row1d, column1d = R[:, C.shape[2] // 2].mean(axis=0), C[:, :, C.shape[2] // 2].mean(
-        axis=0
+    row1d, column1d = (
+        R[:, C.shape[2] // 2].mean(axis=0),
+        C[:, :, C.shape[2] // 2].mean(axis=0),
     )
 
     PSF = np.zeros((*d["PSF"].shape[:2], *TR.shape, wvl.shape[0]))
@@ -202,7 +208,7 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
     PSF /= PSF.sum(axis=(0, 1))[None, None]
 
     # Gaussian blur with std dev of 0.5 detector pixels
-    blur_width = ((pixel_size * 0.5 * u.pix) / subpixel_size).value
+    blur_width = ((pixel_size * jitter_width * u.pix) / subpixel_size).value
 
     PSF = np.asarray(
         [
@@ -275,7 +281,9 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None):
     )
 
 
-def make_PSF_fits_files(filename, suffix, pixel_size, downsample=None, trim=None):
+def make_PSF_fits_files(
+    filename, suffix, pixel_size, downsample=None, trim=None, jitter_width=0.5
+):
     (
         subpixel_size,
         subpixel_row,
@@ -285,7 +293,13 @@ def make_PSF_fits_files(filename, suffix, pixel_size, downsample=None, trim=None
         wavelength,
         PSF,
         created_on,
-    ) = _open_LLNL_file(filename, pixel_size, downsample=downsample, trim=trim)
+    ) = _open_LLNL_file(
+        filename,
+        pixel_size,
+        downsample=downsample,
+        trim=trim,
+        jitter_width=jitter_width,
+    )
     pixel_size = u.Quantity(pixel_size, u.micron / u.pixel)
     subpixel_row, subpixel_column, row, column = (
         (subpixel_row / pixel_size).to(u.pixel),
@@ -312,6 +326,7 @@ def make_PSF_fits_files(filename, suffix, pixel_size, downsample=None, trim=None
                 subpixel_size.value,
                 f"PSF sub pixel size in {subpixel_size.unit.to_string()}",
             ),
+            ("JITTERW", jitter_width),
         ]
     )
     primaryhdu = fits.PrimaryHDU(header=hdr)
@@ -620,17 +635,20 @@ def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
         int(location[1] - (location[1] % 1)),
     )
     irange, crange = (
-        np.floor(psf_row.min()).astype(int) - 1 + int_location[0],
-        np.ceil(psf_row.max()).astype(int) + 2 + int_location[0],
-    ), (
-        np.floor(psf_column.min()).astype(int) - 1 + int_location[1],
-        np.ceil(psf_column.max()).astype(int) + 2 + int_location[1],
+        (
+            np.floor(psf_row.min()).astype(int) - 1 + int_location[0],
+            np.ceil(psf_row.max()).astype(int) + 2 + int_location[0],
+        ),
+        (
+            np.floor(psf_column.min()).astype(int) - 1 + int_location[1],
+            np.ceil(psf_column.max()).astype(int) + 2 + int_location[1],
+        ),
     )
     df2 = (
         df.groupby(by=df.index - (df.index % 1))
-        .sum()
+        .mean()
         .T.groupby(by=df.columns - (df.columns % 1))
-        .sum()
+        .mean()
         .reindex(range(*crange), fill_value=0)
         .T.reindex(range(*irange), fill_value=0)
     )
