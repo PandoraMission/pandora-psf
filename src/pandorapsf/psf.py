@@ -11,7 +11,8 @@ import pandorasat as ps
 from astropy.io import fits
 from pandorasat.utils import get_phoenix_model
 
-from . import PACKAGEDIR
+from . import PACKAGEDIR, STORAGEDIR
+from .plotting import plot_spatial, plot_spectral
 from .utils import bin_prf
 
 __all__ = ["PSF"]
@@ -323,9 +324,10 @@ class PSF(object):
         if wavelength_grid is None:
             wavelength_grid = self.trace_wavelength.to(wavelength.unit)
         dwavs = np.gradient(wavelength_grid.to(wavelength.unit))
-        bounds0, bounds1 = (wavelength_grid.to(wavelength.unit) - dwavs / 2).value, (
-            wavelength_grid.to(wavelength.unit) + dwavs / 2
-        ).value
+        bounds0, bounds1 = (
+            (wavelength_grid.to(wavelength.unit) - dwavs / 2).value,
+            (wavelength_grid.to(wavelength.unit) + dwavs / 2).value,
+        )
         sens = np.interp(
             wavelength,
             self.trace_wavelength.to(wavelength.unit),
@@ -437,7 +439,7 @@ class PSF(object):
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
                 "visda",
-                f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits",
+                f"{STORAGEDIR}/pandora_vis_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -451,7 +453,7 @@ class PSF(object):
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
                 "nirda",
-                f"{PACKAGEDIR}/data/pandora_nir_2024-05.fits",
+                f"{STORAGEDIR}/pandora_nir_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -718,6 +720,16 @@ class PSF(object):
             dpsf1b -= dpsf1b.mean()
             return rb, cb, psfb / integral, dpsf0b / integral, dpsf1b / integral
         return rb, cb, psfb / integral
+
+    def plot_spatial(self, n=3, image_type="PSF", **kwargs):
+        plot_spatial(self, n=n, image_type=image_type, **kwargs)
+
+    def plot_spectral(
+        self, var="wavelength", n=5, npixels=20, image_type="psf", **kwargs
+    ):
+        plot_spectral(
+            self, var=var, n=n, npixels=npixels, image_type=image_type, **kwargs
+        )
 
     # def _bin_prf(self, psf0, row, column, normalize=True):
     #     mod = (self.psf_column.value + column.value) % 1
