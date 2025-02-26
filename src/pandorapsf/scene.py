@@ -1,8 +1,10 @@
 """Class to deal with scenes?"""
 
+# Standard library
 from copy import deepcopy
 from typing import Optional, Tuple
 
+# Third-party
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
@@ -131,7 +133,9 @@ class Scene(object):
         if flux.ndim == 1:
             flux = flux[:, None]
         if flux.shape[0] != self.ntargets:
-            raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
+            raise ValueError(
+                "`flux` must be an array with shape (ntargets x ntimes)."
+            )
         # nt = flux.shape[1]
         if delta_pos is not None:
             delta_pos = deepcopy(delta_pos) * float(self.scale)
@@ -180,7 +184,9 @@ class Scene(object):
         else:
             return ar
 
-    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
+    def fit_images(
+        self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False
+    ):
         """Fit a stack of images with the PRF model"""
         if imgs.ndim == 2:
             imgs = imgs[None, :, :]
@@ -232,7 +238,8 @@ class Scene(object):
 
         B = A.T.dot(y).toarray()
         w = np.linalg.solve(
-            sigma_w_inv + np.diag(1 / ps**2), B + pm[:, None] / ps[:, None] ** 2
+            sigma_w_inv + np.diag(1 / ps**2),
+            B + pm[:, None] / ps[:, None] ** 2,
         )
         werr = np.linalg.inv(sigma_w_inv).diagonal() ** 0.5
         if fit_shifts:
@@ -256,7 +263,11 @@ class ROIScene(Scene):
         self.ROI_size = ROI_size
         self.ROI_corners = ROI_corners
         super().__init__(
-            locations=locations, psf=psf, shape=shape, corner=corner, scale=scale
+            locations=locations,
+            psf=psf,
+            shape=shape,
+            corner=corner,
+            scale=scale,
         )
 
     def _get_X(self):
@@ -335,7 +346,9 @@ class ROIScene(Scene):
             ar = self.X.dot(flux)
         return ar
 
-    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
+    def fit_images(
+        self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False
+    ):
         """Fit a stack of images with the PRF model"""
         if imgs.ndim == 3:
             imgs = imgs[:, None, :, :]
@@ -355,12 +368,12 @@ class ROIScene(Scene):
             np.arange(0, self.ROI_size[1]),
             indexing="ij",
         )
-        row = np.asarray([R + corner[0] for corner in self.ROI_corners]).transpose(
-            [1, 2, 0]
-        )
-        column = np.asarray([C + corner[1] for corner in self.ROI_corners]).transpose(
-            [1, 2, 0]
-        )
+        row = np.asarray(
+            [R + corner[0] for corner in self.ROI_corners]
+        ).transpose([1, 2, 0])
+        column = np.asarray(
+            [C + corner[1] for corner in self.ROI_corners]
+        ).transpose([1, 2, 0])
 
         for img in imgs.transpose([1, 0, 2, 3]):
             data = img.transpose([1, 2, 0])
@@ -396,7 +409,8 @@ class ROIScene(Scene):
 
         B = A.T.dot(y).toarray()
         w = np.linalg.solve(
-            sigma_w_inv + np.diag(1 / ps**2), B + pm[:, None] / ps[:, None] ** 2
+            sigma_w_inv + np.diag(1 / ps**2),
+            B + pm[:, None] / ps[:, None] ** 2,
         )
         werr = np.linalg.inv(sigma_w_inv).diagonal() ** 0.5
         if fit_shifts:
@@ -520,7 +534,10 @@ class TraceScene(Scene):
                 (dar1 - dar1.mean()) / corr,
             )
 
-        pixs, wavs = self.psf.trace_pixel * self.psf.scale, self.psf.trace_wavelength
+        pixs, wavs = (
+            self.psf.trace_pixel * self.psf.scale,
+            self.psf.trace_wavelength,
+        )
         dwavs = np.gradient(wavs)
         pixs, wavs, dwavs = (
             np.array_split(pixs, len(pixs) / nbin),
@@ -529,7 +546,10 @@ class TraceScene(Scene):
         )
 
         bounds0 = np.asarray(
-            [wav[0].value - dwav[0].value / 2 for wav, dwav in zip(wavs, dwavs)]
+            [
+                wav[0].value - dwav[0].value / 2
+                for wav, dwav in zip(wavs, dwavs)
+            ]
         )
         bounds1 = np.hstack(
             [*bounds0[1:], wavs[-1][-1].value + dwavs[-1][-1].value / 2]
@@ -538,7 +558,9 @@ class TraceScene(Scene):
         self.wavs = wavs
         self.bounds = np.asarray([bounds0, bounds1])
         self.nwav = self.bounds.shape[1]
-        data, grad0, grad1 = np.zeros((3, len(pixs), len(self.locations), *self.shape))
+        data, grad0, grad1 = np.zeros(
+            (3, len(pixs), len(self.locations), *self.shape)
+        )
         res = get_chunked_data(self.locations * self.psf.scale, pixs, wavs)
         r = np.asarray([item["r"] for _, item in res.items()])
         c = np.asarray([item["c"] for _, item in res.items()])
@@ -762,7 +784,9 @@ class TraceScene(Scene):
         elif spectra.ndim == 2:
             spectra = spectra[:, :, None]
         elif spectra.ndim != 3:
-            raise ValueError("Pass a 3D array for flux (nwav, ntargets, ntime).")
+            raise ValueError(
+                "Pass a 3D array for flux (nwav, ntargets, ntime)."
+            )
         if (spectra.shape[0] != self.nwav) | (spectra.shape[1] != len(self)):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
         if delta_pos is not None:
@@ -772,7 +796,9 @@ class TraceScene(Scene):
             elif delta_pos.ndim != 2:
                 raise ValueError("Pass 2D array for delta_pos (2, ntime).")
 
-        ar = self._get_ar(flux=np.vstack(spectra), delta_pos=delta_pos, quiet=quiet)
+        ar = self._get_ar(
+            flux=np.vstack(spectra), delta_pos=delta_pos, quiet=quiet
+        )
 
         if self.scale == 1:
             return ar

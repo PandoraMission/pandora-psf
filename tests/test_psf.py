@@ -18,7 +18,9 @@ def test_gaussian():
     psf, dx, dy = p.psf(
         row=p.row1d[0].value, column=p.column1d[0].value, gradients=True
     )
-    R, C = np.meshgrid(np.arange(psf.shape[0]), np.arange(psf.shape[1]), indexing="ij")
+    R, C = np.meshgrid(
+        np.arange(psf.shape[0]), np.arange(psf.shape[1]), indexing="ij"
+    )
     original_shape = psf.shape
     binning_factor = 4
 
@@ -45,30 +47,44 @@ def test_gaussian():
     arb = psfb + dxb * 0.1 + dyb * 0.2
 
     assert np.isclose(
-        (np.average(R, weights=psf) - np.average(R, weights=ar)), 0.1, rtol=1e-4
+        (np.average(R, weights=psf) - np.average(R, weights=ar)),
+        0.1,
+        rtol=1e-4,
     )
     assert np.isclose(
-        (np.average(C, weights=psf) - np.average(C, weights=ar)), 0.2, rtol=1e-4
+        (np.average(C, weights=psf) - np.average(C, weights=ar)),
+        0.2,
+        rtol=1e-4,
     )
 
     assert np.isclose(
-        (np.average(Rb, weights=psfb) - np.average(Rb, weights=arb)), 0.1, rtol=1e-4
+        (np.average(Rb, weights=psfb) - np.average(Rb, weights=arb)),
+        0.1,
+        rtol=1e-4,
     )
     assert np.isclose(
-        (np.average(Cb, weights=psfb) - np.average(Cb, weights=arb)), 0.2, rtol=1e-4
+        (np.average(Cb, weights=psfb) - np.average(Cb, weights=arb)),
+        0.2,
+        rtol=1e-4,
     )
 
     rb, cb, prf, dx, dy = p.prf(row=0, column=0, gradients=True)
 
-    R, C = np.meshgrid(np.arange(prf.shape[0]), np.arange(prf.shape[1]), indexing="ij")
+    R, C = np.meshgrid(
+        np.arange(prf.shape[0]), np.arange(prf.shape[1]), indexing="ij"
+    )
 
     ar = prf + dx * 0.1 + dy * 0.2
 
     assert np.isclose(
-        (np.average(R, weights=prf) - np.average(R, weights=ar)), 0.1, rtol=1e-4
+        (np.average(R, weights=prf) - np.average(R, weights=ar)),
+        0.1,
+        rtol=1e-4,
     )
     assert np.isclose(
-        (np.average(C, weights=prf) - np.average(C, weights=ar)), 0.2, rtol=1e-4
+        (np.average(C, weights=prf) - np.average(C, weights=ar)),
+        0.2,
+        rtol=1e-4,
     )
 
 
@@ -84,7 +100,8 @@ def test_vis_psf_init():
     assert p.shape == (256, 256)
     assert p.ndims == 2
     assert (
-        p.__repr__() == "2D PSF Model [row, column] (Frozen: wavelength: 0.525 micron)"
+        p.__repr__()
+        == "2D PSF Model [row, column] (Frozen: wavelength: 0.525 micron)"
     )
 
 
@@ -144,14 +161,22 @@ def test_vis_psf():
     assert np.isclose(cb.mean(), 0, atol=1)
 
     fig = plot_spatial(p, n=3, image_type="PSF")
-    fig.savefig(TESTDIR + "output/test_vis_psf.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_psf.png", dpi=150, bbox_inches="tight"
+    )
     fig = plot_spatial(p, n=3, image_type="PRF")
-    fig.savefig(TESTDIR + "output/test_vis_prf.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_prf.png", dpi=150, bbox_inches="tight"
+    )
 
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PSF")
-    fig.savefig(TESTDIR + "output/test_vis_psf_wav.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_psf_wav.png", dpi=150, bbox_inches="tight"
+    )
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PRF")
-    fig.savefig(TESTDIR + "output/test_vis_prf_wav.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_prf_wav.png", dpi=150, bbox_inches="tight"
+    )
 
     # Can't check bounds of a dropped dimension
     p = p.freeze_dimension(wavelength=p.wavelength0d)
@@ -165,7 +190,9 @@ def test_vis_psf():
     ar2 = np.zeros((100, 100))
     for r0, c0 in np.random.uniform(-50, 50, size=(10, 2)):
         rb, cb, ar = p.prf(row=r0 * u.pixel, column=c0 * u.pixel)
-        row1, col1, prf1 = prep_for_add(rb, cb, ar, ar2.shape, corner=(-50, -50))
+        row1, col1, prf1 = prep_for_add(
+            rb, cb, ar, ar2.shape, corner=(-50, -50)
+        )
         ar2[row1, col1] += prf1
     fig, ax = plt.subplots()
     ax.imshow(ar2, origin="lower")
@@ -182,7 +209,9 @@ def test_vis_psf():
     ar2 = np.zeros((100, 100))
     for r0, c0 in np.random.uniform(-50, 50, size=(10, 2)):
         rb, cb, ar = p.prf(row=r0 * u.pixel, column=c0 * u.pixel)
-        row1, col1, prf1 = prep_for_add(rb, cb, ar, ar2.shape, corner=(-50, -50))
+        row1, col1, prf1 = prep_for_add(
+            rb, cb, ar, ar2.shape, corner=(-50, -50)
+        )
         ar2[row1, col1] += prf1
     fig, ax = plt.subplots()
     ax.imshow(ar2, origin="lower")
@@ -225,11 +254,17 @@ def test_nir_psf():
     assert np.isclose(cb.mean(), 0, atol=1)
 
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PSF")
-    fig.savefig(TESTDIR + "output/test_nir_psf.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_nir_psf.png", dpi=150, bbox_inches="tight"
+    )
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PRF")
-    fig.savefig(TESTDIR + "output/test_nir_prf.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_nir_prf.png", dpi=150, bbox_inches="tight"
+    )
 
-    rb, cb, ar = p.prf(row=0 * u.pixel, column=0 * u.pixel, wavelength=1 * u.micron)
+    rb, cb, ar = p.prf(
+        row=0 * u.pixel, column=0 * u.pixel, wavelength=1 * u.micron
+    )
     assert np.isclose(rb.mean(), 0, atol=1)
     assert np.isclose(cb.mean(), 0, atol=1)
     rb, cb, ar = p.prf(row=200, column=-200, wavelength=1.0 * u.micron)

@@ -43,14 +43,18 @@ def test_simple_vis_scene():
         np.arange(-1024, 1024, 100), np.arange(-1024, 1024, 100), indexing="ij"
     )
     locations = np.vstack([row.ravel(), column.ravel()]).T
-    s = Scene(locations=locations, shape=(2048, 2048), corner=(-1024, -1024), psf=pv)
+    s = Scene(
+        locations=locations, shape=(2048, 2048), corner=(-1024, -1024), psf=pv
+    )
     assert (s.X.dot(np.ones(s.X.shape[-1])).sum(axis=0) <= 1.0 + 1e10).all()
     img = s.model(np.ones(s.X.shape[1]), quiet=True)
     assert img.ndim == 3
     fig, ax = plt.subplots()
     ax.imshow(np.log10(img[0]), origin="lower")
     ax.set(title="Simple Visible Scene Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(TESTDIR + "output/test_vis_scene.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_vis_scene.png", dpi=150, bbox_inches="tight"
+    )
 
 
 def test_vis_grad_scene():
@@ -84,13 +88,19 @@ def test_simple_IR_scene():
     fig, ax = plt.subplots()
     ax.imshow(np.log10(img[0]), origin="lower")
     ax.set(title="Simple IR Scene Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(TESTDIR + "output/test_nir_scene.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_nir_scene.png", dpi=150, bbox_inches="tight"
+    )
 
 
-@pytest.mark.skip(reason="this is very slow and needs API tweaking for a speed up.")
+@pytest.mark.skip(
+    reason="this is very slow and needs API tweaking for a speed up."
+)
 # Image shapes are wrong here need to fix
 def test_trace_scene():
-    locations = np.vstack([np.asarray([250])[:, None], np.asarray([40])[:, None]]).T
+    locations = np.vstack(
+        [np.asarray([250])[:, None], np.asarray([40])[:, None]]
+    ).T
     s = TraceScene(locations=locations, psf=pn, shape=(400, 80), corner=(0, 0))
 
     spectra = np.ones(s.nwav)
@@ -123,7 +133,9 @@ def test_trace_scene():
     fig, ax = plt.subplots()
     ax.imshow(img[0], origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight")
+    fig.savefig(
+        TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight"
+    )
 
     fig, ax = plt.subplots()
     img0 = s.dX0.dot(spectra.ravel())
@@ -132,7 +144,9 @@ def test_trace_scene():
     ax.imshow(img[0], origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_nir_trace_grad.png", dpi=150, bbox_inches="tight"
+        TESTDIR + "output/test_nir_trace_grad.png",
+        dpi=150,
+        bbox_inches="tight",
     )
 
 
@@ -190,10 +204,15 @@ def test_scale():
         for scale in [1, 2]:
             p = PSF.from_name(detector, scale=scale)
             s = Scene(
-                locations=np.asarray([[0, 0]]), shape=(50, 50), psf=p, corner=(-25, -25)
+                locations=np.asarray([[0, 0]]),
+                shape=(50, 50),
+                psf=p,
+                corner=(-25, -25),
             )
             R, C = np.arange(-0.5, 0.5, 0.02), np.arange(-0.5, 0.5, 0.02)
-            truth = np.zeros((R.shape[0], C.shape[0], 50 * p.scale, 50 * p.scale))
+            truth = np.zeros(
+                (R.shape[0], C.shape[0], 50 * p.scale, 50 * p.scale)
+            )
             estimate = np.zeros((R.shape[0], C.shape[0], 50, 50))
             for (
                 idx,
@@ -223,7 +242,11 @@ def test_scale():
             )
             fig, ax = plt.subplots()
             im = ax.pcolormesh(
-                R, C, np.abs((truth - estimate)).sum(axis=(2, 3)).T, vmin=0, vmax=0.01
+                R,
+                C,
+                np.abs((truth - estimate)).sum(axis=(2, 3)).T,
+                vmin=0,
+                vmax=0.01,
             )
             cbar = plt.colorbar(im, ax=ax)
             cbar.set_label("Residuals")

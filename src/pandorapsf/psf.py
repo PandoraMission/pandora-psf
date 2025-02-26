@@ -11,7 +11,7 @@ import pandorasat as ps
 from astropy.io import fits
 from pandorasat.utils import get_phoenix_model
 
-from . import PACKAGEDIR, STORAGEDIR
+from . import DATADIR, PACKAGEDIR
 from .plotting import plot_spatial, plot_spectral
 from .utils import bin_prf, verify_psf_files
 
@@ -140,9 +140,12 @@ class PSF(object):
                     [np.hstack([dim, list(dims - set([dim]))]) + 2, 0, 1]
                 )
                 deshape = [
-                    np.where(reshape == idx)[0][0] for idx in range(len(reshape))
+                    np.where(reshape == idx)[0][0]
+                    for idx in range(len(reshape))
                 ]
-                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(deshape)
+                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(
+                    deshape
+                )
 
                 midpoint = getattr(self, self.dimension_names[dim] + "1d")
                 midpoint = midpoint[len(midpoint) // 2]
@@ -304,7 +307,9 @@ class PSF(object):
             dim = np.where(np.in1d(dnms2, key))[0][0]
             for dnm in dnms:
                 X[dnm] = X[dnm].transpose(
-                    np.hstack([dim, list(set(np.arange(len(dnms2))) - set([dim]))])
+                    np.hstack(
+                        [dim, list(set(np.arange(len(dnms2))) - set([dim]))]
+                    )
                 )[0]
             dnms2.pop(dim)
         psf2 = PSF(
@@ -352,7 +357,13 @@ class PSF(object):
             x = np.linspace(bounds0[idx], bounds1[idx], 100)
             integrated_flux[idx] = np.trapz(
                 np.hstack(
-                    [0, *np.interp(x, wavelength.value, spectrum.value * sens.value), 0]
+                    [
+                        0,
+                        *np.interp(
+                            x, wavelength.value, spectrum.value * sens.value
+                        ),
+                        0,
+                    ]
                 ),
                 np.hstack([x[0] - 1e-10, *x, x[-1] + 1e-10]),
             )
@@ -441,7 +452,7 @@ class PSF(object):
         if name.lower() in ["vis", "visda", "visible"]:
             p = PSF.from_file(
                 "visda",
-                f"{STORAGEDIR}/pandora_vis_psf.fits",
+                f"{DATADIR}/pandora_vis_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -455,7 +466,7 @@ class PSF(object):
         elif name.lower() in ["nir", "nirda", "ir"]:
             p = PSF.from_file(
                 "nirda",
-                f"{STORAGEDIR}/pandora_nir_psf.fits",
+                f"{DATADIR}/pandora_nir_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -536,7 +547,9 @@ class PSF(object):
         # This should make the array ROW-major
         replace = {"x": "column", "y": "row"}
         dimension_names = [
-            replace[i.name.lower()] if i.name.lower() in replace else i.name.lower()
+            replace[i.name.lower()]
+            if i.name.lower() in replace
+            else i.name.lower()
             for i in hdu[2:]
         ]
 
@@ -554,7 +567,10 @@ class PSF(object):
         psf_flux = hdu[1].data.transpose(np.hstack([1, 0, *l + 2]))
         dimension_names = [dimension_names[l1] for l1 in l]
         dimension_units = [u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
-        X = [hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
+        X = [
+            hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"])
+            for l1 in l + 2
+        ]
 
         return PSF(
             name,
@@ -596,7 +612,9 @@ class PSF(object):
             dim = np.where(l)[0][0]
             value = u.Quantity(value, self.dimension_units[dim])
             bounds = getattr(self, self.dimension_names[dim] + "_bounds")
-            if (value.value < bounds[0].value) | (value.value > bounds[1].value):
+            if (value.value < bounds[0].value) | (
+                value.value > bounds[1].value
+            ):
                 if not self.extrapolate:
                     raise OutOfBoundsError(
                         f"Point ({value}) out of {self.dimension_names[dim]} bounds."
@@ -720,7 +738,13 @@ class PSF(object):
             # dpsf0, dpsf1 = np.gradient(psfb)
             dpsf0b -= dpsf0b.mean()
             dpsf1b -= dpsf1b.mean()
-            return rb, cb, psfb / integral, dpsf0b / integral, dpsf1b / integral
+            return (
+                rb,
+                cb,
+                psfb / integral,
+                dpsf0b / integral,
+                dpsf1b / integral,
+            )
         return rb, cb, psfb / integral
 
     def plot_spatial(self, n=3, image_type="PSF", **kwargs):
@@ -730,7 +754,12 @@ class PSF(object):
         self, var="wavelength", n=5, npixels=20, image_type="psf", **kwargs
     ):
         plot_spectral(
-            self, var=var, n=n, npixels=npixels, image_type=image_type, **kwargs
+            self,
+            var=var,
+            n=n,
+            npixels=npixels,
+            image_type=image_type,
+            **kwargs,
         )
 
     # def _bin_prf(self, psf0, row, column, normalize=True):

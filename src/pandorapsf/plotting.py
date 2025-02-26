@@ -1,4 +1,5 @@
 """Functions to plot up PSFs"""
+# Third-party
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -86,7 +87,9 @@ def plot_spatial(psf, n=3, image_type="PSF", **kwargs):
     return fig
 
 
-def plot_spectral(psf, var="wavelength", n=5, npixels=20, image_type="psf", **kwargs):
+def plot_spectral(
+    psf, var="wavelength", n=5, npixels=20, image_type="psf", **kwargs
+):
 
     vmin, vmax = _get_v(kwargs, image_type)
     cmap = kwargs.pop("cmap", "viridis")
@@ -120,7 +123,9 @@ def plot_spectral(psf, var="wavelength", n=5, npixels=20, image_type="psf", **kw
             )
         elif image_type.lower() == "prf":
             y, x, f = psf.prf(
-                row=kwargs.pop("row", 0), column=kwargs.pop("column", 0), **kwargs
+                row=kwargs.pop("row", 0),
+                column=kwargs.pop("column", 0),
+                **kwargs,
             )
         im = ax[ndx].pcolormesh(
             x,

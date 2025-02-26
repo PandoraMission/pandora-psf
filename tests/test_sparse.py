@@ -3,14 +3,14 @@ import numpy as np
 
 # import pytest
 from scipy import sparse
-
-# First-party/Local
 from sparse3d import ROISparse3D, Sparse3D
 
 
 def test_sparse():
     R, C = np.meshgrid(
-        np.arange(20, 25).astype(int), np.arange(10, 16).astype(int), indexing="ij"
+        np.arange(20, 25).astype(int),
+        np.arange(10, 16).astype(int),
+        indexing="ij",
     )
     R = R[:, :, None] * np.ones(10, dtype=int)[None, None, :]
     C = C[:, :, None] * np.ones(10, dtype=int)[None, None, :]

@@ -1,12 +1,12 @@
 """Handy utilities for PSFs"""
 
-import os
-
 # Standard library
+import os
 import shutil  # noqa: E402
 from datetime import datetime
 from functools import lru_cache
 
+# Third-party
 import astropy.units as u
 import numpy as np
 import pandas as pd
@@ -15,13 +15,14 @@ from astropy.io import fits
 from scipy.io import loadmat
 from scipy.ndimage import gaussian_filter
 
-from . import PACKAGEDIR, STORAGEDIR, config, logger
+from . import DATADIR, PACKAGEDIR, config, logger
 
 
 @lru_cache()
 def verify_psf_files():
     """Check that the PSF files exist, and have the right times in them."""
-    if not os.path.isfile(f"{STORAGEDIR}/pandora_vis_psf.fits"):
+    if not os.path.isfile(f"{DATADIR}/pandora_vis_psf.fits"):
+        # Third-party
         from astropy.utils.data import download_file  # noqa: E402
 
         # Download vis PSF
@@ -30,10 +31,13 @@ def verify_psf_files():
             config["SETTINGS"]["vis_psf_download_location"],
             pkgname="pandora-psf",
         )
-        shutil.move(p, f"{STORAGEDIR}/pandora_vis_psf.fits")
-        logger.warning(f"VIS PSF downloaded to {STORAGEDIR}/pandora_vis_psf.fits.")
+        shutil.move(p, f"{DATADIR}/pandora_vis_psf.fits")
+        logger.warning(
+            f"VIS PSF downloaded to {DATADIR}/pandora_vis_psf.fits."
+        )
 
-    if not os.path.isfile(f"{STORAGEDIR}/pandora_nir_psf.fits"):
+    if not os.path.isfile(f"{DATADIR}/pandora_nir_psf.fits"):
+        # Third-party
         from astropy.utils.data import download_file  # noqa: E402
 
         # Download nir PSF
@@ -42,17 +46,25 @@ def verify_psf_files():
             config["SETTINGS"]["nir_psf_download_location"],
             pkgname="pandora-psf",
         )
-        shutil.move(p, f"{STORAGEDIR}/pandora_nir_psf.fits")
-        logger.warning(f"NIR PSF downloaded to {STORAGEDIR}/pandora_nir_psf.fits.")
+        shutil.move(p, f"{DATADIR}/pandora_nir_psf.fits")
+        logger.warning(
+            f"NIR PSF downloaded to {DATADIR}/pandora_nir_psf.fits."
+        )
 
-    hdulist = fits.open(STORAGEDIR + "/pandora_vis_psf.fits")
+    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
     hdulist.verify("exception")
-    if not (hdulist[0].header["DATE"] == config["SETTINGS"]["vis_psf_creation_date"]):
+    if not (
+        hdulist[0].header["DATE"]
+        == config["SETTINGS"]["vis_psf_creation_date"]
+    ):
         raise ValueError("Out of date visible PRF file.")
 
-    hdulist = fits.open(STORAGEDIR + "/pandora_nir_psf.fits")
+    hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
     hdulist.verify("exception")
-    if not (hdulist[0].header["DATE"] == config["SETTINGS"]["nir_psf_creation_date"]):
+    if not (
+        hdulist[0].header["DATE"]
+        == config["SETTINGS"]["nir_psf_creation_date"]
+    ):
         raise ValueError("Out of date NIR PRF file.")
 
 
@@ -64,9 +76,9 @@ def make_pixel_files():
         sed = 1 * u.erg / u.s / u.cm**2 / u.angstrom
         E = photon_energy(wavelength)
         telescope_area = np.pi * (mirror_diameter / 2) ** 2
-        photon_flux_density = (telescope_area * sed * throughput(wavelength) / E).to(
-            u.photon / u.second / u.angstrom
-        ) * qe(wavelength)
+        photon_flux_density = (
+            telescope_area * sed * throughput(wavelength) / E
+        ).to(u.photon / u.second / u.angstrom) * qe(wavelength)
         sensitivity = photon_flux_density / sed
         return sensitivity
 
@@ -88,7 +100,8 @@ def make_pixel_files():
                 wavelength.to(u.micron).value > sw_wavecut_red,
                 sw_qe
                 * np.exp(
-                    (sw_wavecut_red - wavelength.to(u.micron).value) * sw_exponential
+                    (sw_wavecut_red - wavelength.to(u.micron).value)
+                    * sw_exponential
                 ),
                 sw_qe,
             )
@@ -107,14 +120,19 @@ def make_pixel_files():
 
     def throughput(wavelength):
         df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
-        throughput = np.interp(wavelength.to(u.angstrom).value, *np.asarray(df).T)
+        throughput = np.interp(
+            wavelength.to(u.angstrom).value, *np.asarray(df).T
+        )
         return throughput**2 * 0.71
 
     mirror_diameter = 0.43 * u.m
 
     df = pd.read_csv(f"{PACKAGEDIR}/data/pixel_vs_wavelength.csv")
     pixel = np.round(np.arange(-400, 80, 0.25), 5) * u.pixel
-    wav = np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value) * u.micron
+    wav = (
+        np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value)
+        * u.micron
+    )
 
     sens = sensitivity(wav)
     mask = sens / sens.max() > 0.0001
@@ -163,7 +181,9 @@ def make_pixel_files():
 
     def throughput(wavelength):  # noqa: F811
         df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
-        throughput = 1 - np.interp(wavelength.to(u.angstrom).value, *np.asarray(df).T)
+        throughput = 1 - np.interp(
+            wavelength.to(u.angstrom).value, *np.asarray(df).T
+        )
         return throughput * 0.752
 
     wav = np.arange(0.25, 1.3, 0.01) * u.micron
@@ -174,7 +194,10 @@ def make_pixel_files():
     hdu = fits.TableHDU.from_columns(
         [
             fits.Column(
-                name="pixel", format="D", array=pixel.value, unit=pixel.unit.to_string()
+                name="pixel",
+                format="D",
+                array=pixel.value,
+                unit=pixel.unit.to_string(),
             ),
             fits.Column(
                 name="wavelength",
@@ -199,7 +222,9 @@ def make_pixel_files():
     hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
 
 
-def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None, jitter_width=0.5):
+def _open_LLNL_file(
+    filename, pixel_size, downsample=None, trim=None, jitter_width=0.5
+):
     """This opens the newest file format from LLNL. They might change it, so watch out.
 
     jitter_width is in pixel space
@@ -212,10 +237,14 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None, jitter_wid
     #    npoints = int(d["x"].shape[1] / nwav)
 
     TC, TR = np.meshgrid(
-        np.unique(d["Tx"][0, ::nwav]), np.unique(d["Ty"][0, ::nwav]), indexing="xy"
+        np.unique(d["Tx"][0, ::nwav]),
+        np.unique(d["Ty"][0, ::nwav]),
+        indexing="xy",
     )
     sC, sR = np.meshgrid(
-        np.arange(d["PSF"].shape[0]), np.arange(d["PSF"].shape[1]), indexing="xy"
+        np.arange(d["PSF"].shape[0]),
+        np.arange(d["PSF"].shape[1]),
+        indexing="xy",
     )
     mask = np.any(
         [
@@ -281,7 +310,8 @@ def _open_LLNL_file(filename, pixel_size, downsample=None, trim=None, jitter_wid
     if downsample is not None:
         n = downsample
         PSF = np.sum(
-            [PSF[idx::n, jdx::n] for idx in range(n) for jdx in range(n)], axis=0
+            [PSF[idx::n, jdx::n] for idx in range(n) for jdx in range(n)],
+            axis=0,
         )
         subpixel_column = (
             np.mean(
@@ -379,7 +409,9 @@ def make_PSF_fits_files(
             fits.ImageHDU(PSF.astype(np.float32), name="PSF"),
             fits.ImageHDU(row.value.astype(np.float32), name="ROW"),
             fits.ImageHDU(column.value.astype(np.float32), name="COLUMN"),
-            fits.ImageHDU(wavelength.value.astype(np.float32), name="WAVELENGTH"),
+            fits.ImageHDU(
+                wavelength.value.astype(np.float32), name="WAVELENGTH"
+            ),
         ]
     )
     hdu[2].header["UNIT"] = row.unit.to_string()
@@ -698,7 +730,11 @@ def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
     if normalize:
         df2 /= df2.sum().sum()
     #    import pdb;pdb.set_trace()
-    return np.asarray(list(df2.index)), np.asarray(list(df2.columns)), df2.values
+    return (
+        np.asarray(list(df2.index)),
+        np.asarray(list(df2.columns)),
+        df2.values,
+    )
 
 
 def downsample(ar, n=2):
