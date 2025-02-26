@@ -1,6 +1,11 @@
 """Handy utilities for PSFs"""
 
+import os
+
+# Standard library
+import shutil  # noqa: E402
 from datetime import datetime
+from functools import lru_cache
 
 import astropy.units as u
 import numpy as np
@@ -10,7 +15,45 @@ from astropy.io import fits
 from scipy.io import loadmat
 from scipy.ndimage import gaussian_filter
 
-from . import PACKAGEDIR
+from . import PACKAGEDIR, STORAGEDIR, config, logger
+
+
+@lru_cache()
+def verify_psf_files():
+    """Check that the PSF files exist, and have the right times in them."""
+    if not os.path.isfile(f"{STORAGEDIR}/pandora_vis_psf.fits"):
+        from astropy.utils.data import download_file  # noqa: E402
+
+        # Download vis PSF
+        logger.warning("No PSF file found. Downloading 200MB VIS PSF file.")
+        p = download_file(
+            config["SETTINGS"]["vis_psf_download_location"],
+            pkgname="pandora-psf",
+        )
+        shutil.move(p, f"{STORAGEDIR}/pandora_vis_psf.fits")
+        logger.warning(f"VIS PSF downloaded to {STORAGEDIR}/pandora_vis_psf.fits.")
+
+    if not os.path.isfile(f"{STORAGEDIR}/pandora_nir_psf.fits"):
+        from astropy.utils.data import download_file  # noqa: E402
+
+        # Download nir PSF
+        logger.warning("No PSF file found. Downloading 200MB NIR PSF")
+        p = download_file(
+            config["SETTINGS"]["nir_psf_download_location"],
+            pkgname="pandora-psf",
+        )
+        shutil.move(p, f"{STORAGEDIR}/pandora_nir_psf.fits")
+        logger.warning(f"NIR PSF downloaded to {STORAGEDIR}/pandora_nir_psf.fits.")
+
+    hdulist = fits.open(STORAGEDIR + "/pandora_vis_psf.fits")
+    hdulist.verify("exception")
+    if not (hdulist[0].header["DATE"] == config["SETTINGS"]["vis_psf_creation_date"]):
+        raise ValueError("Out of date visible PRF file.")
+
+    hdulist = fits.open(STORAGEDIR + "/pandora_nir_psf.fits")
+    hdulist.verify("exception")
+    if not (hdulist[0].header["DATE"] == config["SETTINGS"]["nir_psf_creation_date"]):
+        raise ValueError("Out of date NIR PRF file.")
 
 
 def make_pixel_files():

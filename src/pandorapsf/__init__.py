@@ -3,8 +3,9 @@ import configparser  # noqa: E402
 import os  # noqa
 from importlib.metadata import PackageNotFoundError, version  # noqa
 
+import numpy as np
+import pandas as pd
 from appdirs import user_config_dir, user_data_dir  # noqa: E402
-from astropy.io import fits
 
 
 def get_version():
@@ -31,6 +32,10 @@ def reset_config():
     config["SETTINGS"] = {
         "storage_dir": user_data_dir("pandorapsf"),
         "log_level": "INFO",
+        "vis_psf_download_location": "https://zenodo.org/records/11228523/files/pandora_vis_2024-05.fits?download=1",
+        "nir_psf_download_location": "https://zenodo.org/records/11153153/files/pandora_nir_2024-05.fits?download=1",
+        "vis_psf_creation_date": "2024-05-14T11:38:14.755119",
+        "nir_psf_creation_date": "2024-05-08T15:02:58.461202",
     }
 
     with open(CONFIGPATH, "w") as configfile:
@@ -73,6 +78,20 @@ def save_config(config: configparser.ConfigParser) -> None:
 
 config = load_config()
 
+
+def display_config() -> pd.DataFrame:
+    dfs = []
+    for section in config.sections():
+        df = pd.DataFrame(
+            np.asarray([(key, value) for key, value in dict(config[section]).items()])
+        )
+        df["section"] = section
+        df.columns = ["key", "value", "section"]
+        df = df.set_index(["section", "key"])
+        dfs.append(df)
+    return pd.concat(dfs)
+
+
 STORAGEDIR = config["SETTINGS"]["storage_dir"]
 os.makedirs(STORAGEDIR, exist_ok=True)
 
@@ -80,45 +99,6 @@ from pandorasat import get_logger  # noqa: E402
 
 logger = get_logger("pandorapsf")
 logger.setLevel(config["SETTINGS"]["log_level"])
-
-
-# Standard library
-import shutil  # noqa: E402
-
-if not os.path.isfile(f"{STORAGEDIR}/pandora_vis_psf.fits"):
-    from astropy.utils.data import download_file  # noqa: E402
-
-    # Download vis PSF
-    logger.warning("No PSF file found. Downloading 200MB VIS PSF file.")
-    p = download_file(
-        "https://zenodo.org/records/11228523/files/pandora_vis_2024-05.fits?download=1",
-        pkgname="pandora-psf",
-    )
-    shutil.move(p, f"{STORAGEDIR}/pandora_vis_psf.fits")
-    logger.warning(f"VIS PSF downloaded to {STORAGEDIR}/pandora_vis_psf.fits.")
-
-if not os.path.isfile(f"{STORAGEDIR}/pandora_nir_psf.fits"):
-    from astropy.utils.data import download_file  # noqa: E402
-
-    # Download nir PSF
-    logger.warning("No PSF file found. Downloading 200MB NIR PSF")
-    p = download_file(
-        "https://zenodo.org/records/11153153/files/pandora_nir_2024-05.fits?download=1",
-        pkgname="pandora-psf",
-    )
-    shutil.move(p, f"{STORAGEDIR}/pandora_nir_psf.fits")
-    logger.warning(f"NIR PSF downloaded to {STORAGEDIR}/pandora_nir_psf.fits.")
-
-hdulist = fits.open(STORAGEDIR + "/pandora_vis_psf.fits")
-hdulist.verify("exception")
-if not (hdulist[0].header["DATE"] == "2024-05-14T11:38:14.755119"):
-    raise ValueError("Out of date visible PRF file.")
-
-hdulist = fits.open(STORAGEDIR + "/pandora_nir_psf.fits")
-hdulist.verify("exception")
-if not (hdulist[0].header["DATE"] == "2024-05-08T15:02:58.461202"):
-    raise ValueError("Out of date NIR PRF file.")
-
 
 from .psf import PSF  # noqa: F401, E402
 from .scene import ROIScene, Scene, TraceScene  # noqa: F401, E402

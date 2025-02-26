@@ -13,7 +13,7 @@ from pandorasat.utils import get_phoenix_model
 
 from . import PACKAGEDIR, STORAGEDIR
 from .plotting import plot_spatial, plot_spectral
-from .utils import bin_prf
+from .utils import bin_prf, verify_psf_files
 
 __all__ = ["PSF"]
 
@@ -65,6 +65,8 @@ class PSF(object):
         extrapolate : bool
             Whether to allow the PSF to be evaluated outside of the bounds (i.e. will extrapolate)
         """
+        # Check that files are downloaded and current.
+        verify_psf_files()
         if bin == 1:
             self.psf_flux = psf_flux
         elif bin >= 1:
