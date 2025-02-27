@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 # First-party/Local
-from pandorapsf import PACKAGEDIR, PSF, TESTDIR
+from pandorapsf import DOCSDIR, PACKAGEDIR, PSF
 from pandorapsf.plotting import plot_spatial, plot_spectral
 from pandorapsf.psf import OutOfBoundsError
 from pandorapsf.utils import prep_for_add
@@ -162,20 +162,20 @@ def test_vis_psf():
 
     fig = plot_spatial(p, n=3, image_type="PSF")
     fig.savefig(
-        TESTDIR + "output/test_vis_psf.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_vis_psf.png", dpi=150, bbox_inches="tight"
     )
     fig = plot_spatial(p, n=3, image_type="PRF")
     fig.savefig(
-        TESTDIR + "output/test_vis_prf.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_vis_prf.png", dpi=150, bbox_inches="tight"
     )
 
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PSF")
     fig.savefig(
-        TESTDIR + "output/test_vis_psf_wav.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_vis_psf_wav.png", dpi=150, bbox_inches="tight"
     )
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PRF")
     fig.savefig(
-        TESTDIR + "output/test_vis_prf_wav.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_vis_prf_wav.png", dpi=150, bbox_inches="tight"
     )
 
     # Can't check bounds of a dropped dimension
@@ -196,7 +196,7 @@ def test_vis_psf():
         ar2[row1, col1] += prf1
     fig, ax = plt.subplots()
     ax.imshow(ar2, origin="lower")
-    fig.savefig(TESTDIR + "output/test.png", dpi=150, bbox_inches="tight")
+    fig.savefig(DOCSDIR + "images/test.png", dpi=150, bbox_inches="tight")
 
     rb, cb, ar = p.prf(row=600, column=-600)
     assert np.isclose(rb.mean(), 600, atol=1)
@@ -215,7 +215,7 @@ def test_vis_psf():
         ar2[row1, col1] += prf1
     fig, ax = plt.subplots()
     ax.imshow(ar2, origin="lower")
-    fig.savefig(TESTDIR + "output/test.png", dpi=150, bbox_inches="tight")
+    fig.savefig(DOCSDIR + "images/test.png", dpi=150, bbox_inches="tight")
 
     p = PSF.from_name("visda")
     assert p.psf().shape == p.shape
@@ -255,11 +255,11 @@ def test_nir_psf():
 
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PSF")
     fig.savefig(
-        TESTDIR + "output/test_nir_psf.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_nir_psf.png", dpi=150, bbox_inches="tight"
     )
     fig = plot_spectral(p, var="wavelength", n=7, image_type="PRF")
     fig.savefig(
-        TESTDIR + "output/test_nir_prf.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_nir_prf.png", dpi=150, bbox_inches="tight"
     )
 
     rb, cb, ar = p.prf(

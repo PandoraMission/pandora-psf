@@ -20,6 +20,7 @@ __version__ = get_version()
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 TESTDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/tests/"
+DOCSDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/docs/"
 PANDORASTYLE = "{}/data/pandora.mplstyle".format(PACKAGEDIR)
 
 # Third-party

@@ -294,7 +294,7 @@ class PSF(object):
         for key, point in kwargs.items():
             dim = np.where(np.in1d(dnms, key))[0][0]
             PSF0 = interpfunc(
-                point.to(duns[dim]).value,
+                u.Quantity(point, duns[dim]).value,
                 getattr(self, dnms[dim] + "1d").value,
                 reorder(PSF0, dim),
             )
@@ -547,9 +547,11 @@ class PSF(object):
         # This should make the array ROW-major
         replace = {"x": "column", "y": "row"}
         dimension_names = [
-            replace[i.name.lower()]
-            if i.name.lower() in replace
-            else i.name.lower()
+            (
+                replace[i.name.lower()]
+                if i.name.lower() in replace
+                else i.name.lower()
+            )
             for i in hdu[2:]
         ]
 

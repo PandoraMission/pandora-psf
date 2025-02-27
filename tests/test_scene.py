@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 # First-party/Local
-from pandorapsf import PSF, TESTDIR, ROIScene, Scene, TraceScene
+from pandorapsf import DOCSDIR, PSF, ROIScene, Scene, TraceScene
 from pandorapsf.utils import downsample, prep_for_add
 
 
@@ -53,7 +53,7 @@ def test_simple_vis_scene():
     ax.imshow(np.log10(img[0]), origin="lower")
     ax.set(title="Simple Visible Scene Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_vis_scene.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_vis_scene.png", dpi=150, bbox_inches="tight"
     )
 
 
@@ -70,7 +70,7 @@ def test_vis_grad_scene():
     ax.imshow(img, origin="lower")
     ax.set(title="Simple Visible Grad Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_vis_grad_scene.png",
+        DOCSDIR + "images/test_vis_grad_scene.png",
         dpi=150,
         bbox_inches="tight",
     )
@@ -89,7 +89,7 @@ def test_simple_IR_scene():
     ax.imshow(np.log10(img[0]), origin="lower")
     ax.set(title="Simple IR Scene Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_nir_scene.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_nir_scene.png", dpi=150, bbox_inches="tight"
     )
 
 
@@ -134,7 +134,7 @@ def test_trace_scene():
     ax.imshow(img[0], origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_nir_trace.png", dpi=150, bbox_inches="tight"
+        DOCSDIR + "images/test_nir_trace.png", dpi=150, bbox_inches="tight"
     )
 
     fig, ax = plt.subplots()
@@ -144,7 +144,7 @@ def test_trace_scene():
     ax.imshow(img[0], origin="lower")
     ax.set(title="IR Trace Test", xlabel="Pixels", ylabel="Pixels")
     fig.savefig(
-        TESTDIR + "output/test_nir_trace_grad.png",
+        DOCSDIR + "images/test_nir_trace_grad.png",
         dpi=150,
         bbox_inches="tight",
     )
@@ -257,7 +257,7 @@ def test_scale():
                 ylabel="Row Sub Pixel Position",
             )
             fig.savefig(
-                TESTDIR + f"output/test_{detector}_scale_{scale}.png",
+                DOCSDIR + f"images/test_{detector}_scale_{scale}.png",
                 dpi=150,
                 bbox_inches="tight",
             )

@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "pandorapsf"
-version = "0.3.2"
+version = "0.3.3"
 description = ""
 authors = ["Christina Hedges <christina.l.hedges@nasa.gov>"]
-readme = "README.md"
+readme = "docs/README.md"
 packages = [{include = "pandorapsf", from = "src"}]
 
 [tool.poetry.dependencies]
