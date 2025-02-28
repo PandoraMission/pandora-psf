@@ -1,0 +1,8 @@
+# Changelog
+
+## v0.3.3
+
+- Fixed sparse3d bug that broke ROISparse
+- Fixed TraceScene to accept user defined wavelength grid
+- Added TraceScene integrate_spectrum method
+- Added documentation

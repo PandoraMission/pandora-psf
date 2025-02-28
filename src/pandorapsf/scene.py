@@ -1,10 +1,11 @@
-"""Class to deal with scenes?"""
+"""Classes to deal with scenes"""
 
 # Standard library
 from copy import deepcopy
 from typing import Optional, Tuple
 
 # Third-party
+import astropy.units as u
 import numpy as np
 import numpy.typing as npt
 from scipy import sparse
@@ -69,6 +70,8 @@ class Scene(object):
                 ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
         else:
             ar = self.X.dot(flux)
+        if isinstance(flux, u.Quantity):
+            return ar * flux.unit
         return ar
 
     def __repr__(self):
@@ -120,7 +123,7 @@ class Scene(object):
         flux: npt.ArrayLike,
         delta_pos: Optional[npt.ArrayLike] = None,
         quiet: bool = False,
-        downsample: bool = True,
+        downsample: bool = False,
     ) -> npt.ArrayLike:
         """
         Parameters:
@@ -296,6 +299,7 @@ class ROIScene(Scene):
             nROIs=self.nROIs,
             ROI_size=self.ROI_size,
             ROI_corners=self.ROI_corners,
+            imcorner=self.corner,
         )
         self.dX0 = ROISparse3D(
             grad0.transpose([1, 2, 0]),
@@ -305,6 +309,7 @@ class ROIScene(Scene):
             nROIs=self.nROIs,
             ROI_size=self.ROI_size,
             ROI_corners=self.ROI_corners,
+            imcorner=self.corner,
         )
         self.dX1 = ROISparse3D(
             grad1.transpose([1, 2, 0]),
@@ -314,6 +319,7 @@ class ROIScene(Scene):
             nROIs=self.nROIs,
             ROI_size=self.ROI_size,
             ROI_corners=self.ROI_corners,
+            imcorner=self.corner,
         )
         return
 
@@ -429,7 +435,7 @@ class TraceScene(Scene):
         shape: Tuple = (400, 80),
         corner: Tuple = (0, 0),
         scale: int = 1,
-        wav_bin: int = 4,
+        wavelength: npt.ArrayLike = None,
     ):
         if locations.shape[1] != 2:
             raise ValueError("`locations` must have shape (n, 2).")
@@ -448,8 +454,18 @@ class TraceScene(Scene):
             raise ValueError("No trace parameters, you need to set them.")
         self.ntargets = len(self.locations)
         self.rb, self.cb, self.prf = [], [], []
-        self.wav_bin = wav_bin
-        self._get_Xs(nbin=self.wav_bin)
+        if wavelength is None:
+            wavelength = np.interp(
+                np.arange(-150, 70, 0.25),
+                self.psf.trace_pixel.value,
+                self.psf.trace_wavelength,
+            )
+        self.wavelength = u.Quantity(wavelength, u.micron)
+        self.pixel = np.interp(
+            wavelength, self.psf.trace_wavelength, self.psf.trace_pixel
+        )
+        # self.wav_bin = wav_bin
+        self._get_Xs(nbin=1)
 
     def __repr__(self):
         return f"TraceScene Object [{self.psf.__repr__()}]"
@@ -535,8 +551,8 @@ class TraceScene(Scene):
             )
 
         pixs, wavs = (
-            self.psf.trace_pixel * self.psf.scale,
-            self.psf.trace_wavelength,
+            self.pixel * self.psf.scale,
+            self.wavelength,
         )
         dwavs = np.gradient(wavs)
         pixs, wavs, dwavs = (
@@ -593,7 +609,7 @@ class TraceScene(Scene):
             C.transpose([1, 2, 0]) - self.corner[1],
             imshape=self.shape,
         )
-        self.wavelength = wavs
+        # self.wavelength = wavs
 
     # def _get_Xs(self, nbin=4):
     #     pixs, wavs = self.psf.trace_pixel * self.psf.scale, self.psf.trace_wavelength
@@ -776,7 +792,7 @@ class TraceScene(Scene):
         spectra: npt.ArrayLike,
         delta_pos: Optional[npt.ArrayLike] = None,
         quiet: bool = False,
-        downsample: bool = True,
+        downsample: bool = False,
     ) -> npt.ArrayLike:
         """`spectra` must have shape nwav x ntargets x ntime"""
         if spectra.ndim == 1:
@@ -806,3 +822,10 @@ class TraceScene(Scene):
             return downsample_array(ar, self.scale)
         else:
             return ar
+
+    def integrate_spectrum(self, wavelength, spectrum):
+        return self.psf.integrate_spectrum(
+            wavelength=wavelength,
+            spectrum=spectrum,
+            wavelength_grid=self.wavelength,
+        )

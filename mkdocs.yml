@@ -6,7 +6,10 @@ nav:
   - Home: README.md
   - PSF API: PSF.md
   - Scene API: Scene.md
-  - Example: example-psf.ipynb
+  - Example1: example-psf.ipynb
+  - Example2: example-scene.ipynb
+  - Example3: example-roiscene.ipynb
+  - Example4: example-tracescene.ipynb
   
 theme:
   name: "material"

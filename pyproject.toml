@@ -9,7 +9,7 @@ packages = [{include = "pandorapsf", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 pandorasat = ">=0.7.0"
-sparse3d = ">=1.0.2"
+sparse3d = ">=1.0.3"
 appdirs = "^1.4.4"
 numpy = ">=1.26.0"
 
