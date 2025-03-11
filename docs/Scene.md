@@ -12,6 +12,6 @@
 
 # TraceScene Class
 
-::: pandorapsf.scene.ROIScene
+::: pandorapsf.scene.TraceScene
     selection:
       docstring_style: numpy

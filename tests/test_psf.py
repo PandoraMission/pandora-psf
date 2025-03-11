@@ -1,3 +1,6 @@
+# Standard library
+import os
+
 # Third-party
 import astropy.units as u
 import matplotlib.pyplot as plt
@@ -5,7 +8,7 @@ import numpy as np
 import pytest
 
 # First-party/Local
-from pandorapsf import DOCSDIR, PACKAGEDIR, PSF
+from pandorapsf import DATADIR, DOCSDIR, PACKAGEDIR, PSF
 from pandorapsf.plotting import plot_spatial, plot_spectral
 from pandorapsf.psf import OutOfBoundsError
 from pandorapsf.utils import prep_for_add
@@ -90,38 +93,27 @@ def test_gaussian():
 
 def test_vis_psf_init():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits", name="visda"
+        file=f"{PACKAGEDIR}/data/pandora_vis_psf_lowres.fits", name="visda"
     )
-    assert p.shape == (256, 256)
-    assert p.ndims == 3
-
-    # freeze some dimensions
-    p = p.freeze_dimension(wavelength=p.wavelength0d)
     assert p.shape == (256, 256)
     assert p.ndims == 2
-    assert (
-        p.__repr__()
-        == "2D PSF Model [row, column] (Frozen: wavelength: 0.525 micron)"
-    )
 
 
 def test_nir_psf_init():
     p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_nir_2024-05.fits", name="nirda"
+        file=f"{PACKAGEDIR}/data/pandora_nir_psf_lowres.fits", name="nirda"
     )
-    assert p.shape == (256, 256)
-    assert p.ndims == 3
-
-    # freeze some dimensions
-    p = p.freeze_dimension(row=0 * u.pixel, column=0 * u.pixel)
     assert p.shape == (256, 256)
     assert p.ndims == 1
 
 
 def test_vis_psf():
-    p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits", name="visda"
-    )
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        pytest.skip(
+            "Skipping this test on GitHub Actions, as this requires PSF file download."
+        )
+    p = PSF.from_file(file=f"{DATADIR}/pandora_vis_psf.fits", name="visda")
+
     # Should raise out of bounds
     with pytest.raises(OutOfBoundsError):
         p._check_bounds(wavelength=40 * u.micron)
@@ -224,9 +216,11 @@ def test_vis_psf():
 
 
 def test_nir_psf():
-    p = PSF.from_file(
-        filename=f"{PACKAGEDIR}/data/pandora_nir_2024-05.fits", name="nirda"
-    )
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        pytest.skip(
+            "Skipping this test on GitHub Actions, as this requires PSF file download."
+        )
+    p = PSF.from_file(file=f"{DATADIR}/pandora_nir_psf.fits", name="nirda")
     # Should raise out of bounds
     with pytest.raises(OutOfBoundsError):
         p._check_bounds(wavelength=40 * u.micron)

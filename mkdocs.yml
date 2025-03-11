@@ -46,20 +46,26 @@ plugins:
   - mkdocs-jupyter:
       execute: false
   - mkdocstrings:
-      watch:
-        - src/pandorapsf
       default_handler: python      
       handlers:
         python:
+          paths: [src]
+          load_external_modules: true
           options:
             show_source: false
             inherited_members: true
             filters:
               - "!^_"
-            heading_level: 2  # Ensures API docs have an H2 header for structure
+            heading_level: 2
             sorting: source 
+            docstring_style: numpy
+            merge_init_into_class: true
+            force_inspection: true
+            load_external_modules: true
+            docstring_sectioning: true
 markdown_extensions:
   - admonition
+  - codehilite
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.arithmatex:

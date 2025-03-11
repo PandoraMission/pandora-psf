@@ -11,28 +11,42 @@ import pandorasat as ps
 from astropy.io import fits
 from pandorasat.utils import get_phoenix_model
 
-from . import DATADIR, PACKAGEDIR
+from . import DATADIR, PACKAGEDIR, logger
+from .docstrings import add_docstring
 from .plotting import plot_spatial, plot_spectral
-from .utils import bin_prf, verify_psf_files
+from .utils import bin_prf, verify_nir_psf_files, verify_vis_psf_files
 
 __all__ = ["PSF"]
 
 
 class PSF(object):
-    """Class to use PSFs"""
+    """Class to work with abstract PSFs"""
 
+    @add_docstring(
+        "X",
+        "psf_flux",
+        "dimension_names",
+        "dimension_units",
+        "pixel_size",
+        "sub_pixel_size",
+        "transpose",
+        "freeze_dictionary",
+        "check_bounds",
+        "extrapolate",
+        "scale",
+        "bin",
+    )
     def __init__(
         self,
         name: str,
-        X: npt.ArrayLike,
-        psf_flux: npt.ArrayLike,
+        X: npt.NDArray,
+        psf_flux: npt.NDArray,
         dimension_names: List,
         dimension_units: List,
         pixel_size: u.Quantity,
         sub_pixel_size: u.Quantity,
         transpose: bool = False,
         freeze_dictionary: Dict = {},
-        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         check_bounds: bool = True,
         extrapolate: bool = False,
         scale: int = 1,
@@ -40,33 +54,7 @@ class PSF(object):
     ):
         """
         PSF class for making PSFs, PRFs, and traces.
-
-        Parameters:
-        -----------
-        X : np.NDArray
-            Array of 1D vectors defining the value of each dimension for every element of `psf_flux`.
-            Should have as many entries as `psf_flux` has dimensions.
-        psf_flux: np.NDArray
-            ND array of flux values
-        dimension_names: list
-            List of names for each of the N dimensions in `psf_flux`
-        dimension_units: list
-            List of `astropy.unit.Quantity`'s describing units of each dimension
-        pixel_size: u.Quantity
-            True detector pixel size in dimensions of length/pixel
-        sub_pixel_size: u.Quantity
-            PSF file pixel size in dimensions of length/pixel
-        transpose: bool
-            Whether to transpose the data in the column/row axis
-        freeze_dictionary: dict
-            Dictionary of dimensions to freeze
-        blur_value: tuple
-            Tuple of astropy quantities in pixels describing the amount of blur in each axis.
-        extrapolate : bool
-            Whether to allow the PSF to be evaluated outside of the bounds (i.e. will extrapolate)
         """
-        # Check that files are downloaded and current.
-        verify_psf_files()
         if bin == 1:
             self.psf_flux = psf_flux
         elif bin >= 1:
@@ -177,117 +165,21 @@ class PSF(object):
         for dim, p in enumerate(self.dimension_names):
             lp = getattr(self, self.dimension_names[dim])
             setattr(self, p + "_bounds", [lp.min(), lp.max()])
-        #        self._psf_flux_jitter = np.zeros_like(self._psf_flux)
-
-    #        self._blur(self.blur_value)
-
-    #       self.psf_flux = self._psf_flux_blur #+ self._psf_flux_jitter
-
-    # def _blur(self, blur_value: Tuple):
-    #     """Blurs the PSF using a Gaussian Kernel. Will update `self._psf_flux_blur` and `self._psf_flux_blur_grad`.
-
-    #     Parameters:
-    #     -----------
-    #     blur_value: tuple of astropy quantities, must be in units of pixels
-    #     """
-    #     xstd, ystd = blur_value
-    #     xstd, ystd = u.Quantity(xstd, "pixel"), u.Quantity(ystd, "pixel")
-
-    #     xstd = ((self.pixel_size * xstd) / self.sub_pixel_size).value
-    #     ystd = ((self.pixel_size * ystd) / self.sub_pixel_size).value
-    #     a = deepcopy(self._psf_flux)
-    #     if (xstd == 0) & (ystd == 0):
-    #         print('christina')
-    #         self._psf_flux_blur = deepcopy(self._psf_flux)
-    #         self._psf_flux_blur_grad = (
-    #             np.asarray(
-    #                 np.gradient(
-    #                     self._psf_flux_blur,
-    #                     np.median(np.diff(self.psf_row)).value / self.scale,
-    #                     axis=(0, 1),
-    #                 )
-    #             )
-    #             * (self.sub_pixel_size / self.pixel_size).value
-    #         )
-    #         self.psf_flux = deepcopy(self._psf_flux)
-    #         return
-    #     s = a.shape
-    #     a = a.reshape((s[0], s[1], np.prod(s[2:]).astype(int)))
-    #     b = np.asarray(
-    #         [
-    #             convolve(
-    #                 a[:, :, idx],
-    #                 Gaussian2DKernel(
-    #                     xstd,
-    #                     ystd,
-    #                 ),
-    #             )
-    #             for idx in range(a.shape[2])
-    #         ]
-    #     ).transpose([1, 2, 0])
-    #     b = b.reshape(s)
-    #     b /= b.sum(axis=(0, 1))[None, None]
-    #     self._psf_flux_blur = b
-    #     self._psf_flux_blur_grad = (
-    #         np.asarray(
-    #             np.gradient(
-    #                 self._psf_flux_blur,
-    #                 np.median(np.diff(self.psf_row)).value / self.scale,
-    #                 axis=(0, 1),
-    #             )
-    #         )
-    #         * (self.sub_pixel_size / self.pixel_size).value
-    #     )
-    #     self.psf_flux = self._psf_flux_blur  # + self._psf_flux_jitter
-    #     return
-
-    # def _jitter(self, row: npt.ArrayLike, column: npt.ArrayLike):
-    #     """Jitters the PSF using gradients. Will update `self`
-
-    #     Parameters:
-    #     -----------
-    #     row: npt.ArrayLike
-    #         Row positions to jitter to. Will be downsampled
-    #     column: npt.ArrayLike
-    #         Column positions to jitter to. Will be downsampled
-    #     """
-
-    #     def grow(ar, ndims):
-    #         for i in range(ndims):
-    #             ar = ar[:, None]
-    #         return ar
-
-    #     def downsample(ar, npoints):
-    #         nbin = np.ceil(ar.shape[0] / npoints).astype(int)
-    #         a = np.asarray(
-    #             [ar[idx * nbin : (idx + 1) * nbin] for idx in range(npoints)]
-    #         )
-    #         mean, weight = np.asarray([a1.mean() for a1 in a]), np.asarray(
-    #             [len(a1) for a1 in a]
-    #         ).astype(float)
-    #         weight /= weight.max()
-    #         return mean, weight
-
-    #     if len(row) > 5:
-    #         row, row_w = downsample(row, 5)
-    #         column, column_w = downsample(column, 5)
-    #     else:
-    #         row_w = np.ones(len(row))
-    #         column_w = np.ones(len(column))
-    #     self._psf_flux_jitter *= 0
-    #     if (row.sum() == 0) & (column.sum() == 0):
-    #         self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
-    #         return
-    #     g1, g2 = self._psf_flux_blur_grad
-    #     self._psf_flux_jitter = (
-    #         g1 * grow(row * row_w, self.ndims + 2)
-    #         + g2 * grow(column * column_w, self.ndims + 2)
-    #     ).sum(axis=0)
-    #     self.psf_flux = self._psf_flux_blur + self._psf_flux_jitter
-    #     return
 
     def freeze_dimension(self, **kwargs):
-        """Drop a dimension of the PSF model"""
+        """
+        Drop a dimension of the PSF model. Dropped dimension must exist in self.dimension_names.
+
+        Examples
+        --------
+        Freeze a PSF object `p` to have row of 10 pixels and wavelength of 1.3 microns
+        >>> p.freeze_dimension(row=10*u.pixel, wavelength=1.3*u.micron)
+
+        Returns
+        -------
+        new: pandorapsf.psf.PSF
+            New PSF object
+        """
         dnms = self.dimension_names.copy()
         duns = self.dimension_units.copy()
         PSF0 = self.psf_flux.copy()
@@ -327,7 +219,22 @@ class PSF(object):
         )
         return psf2
 
-    def integrate_spectrum(self, wavelength, spectrum, wavelength_grid=None):
+    @add_docstring("wavelength", "spectrum")
+    def integrate_spectrum(
+        self,
+        wavelength: npt.NDArray,
+        spectrum: npt.NDArray,
+        wavelength_grid: npt.NDArray = None,
+    ):
+        """
+        Create an integrated spectrum, integrated over wavelength bounds.
+
+        Parameters
+        ----------
+        wavelength_grid: npt.NDArray
+            Optional wavelength grid at which to integrate. If no grid is provided, will default to the
+            `trace_wavelength` grid of this object.
+        """
         if wavelength_grid is None:
             wavelength_grid = self.trace_wavelength.to(wavelength.unit)
         dwavs = np.gradient(wavelength_grid.to(wavelength.unit))
@@ -371,7 +278,9 @@ class PSF(object):
 
         return integrated_flux
 
+    @add_docstring("teff", "logg")
     def integrate_wavelength(self, teff=5500, logg=4.5, **kwargs):
+        """Inte"""
         if "wavelength" not in self.dimension_names:
             raise ValueError("PSF has no wavelength dimension.")
 
@@ -407,13 +316,14 @@ class PSF(object):
         duns.pop(dim)
 
         psf2 = PSF(
-            self.name,
-            [X[dnm] for dnm in dnms],
-            PSF0,
-            dnms,
-            duns,
-            self.pixel_size,
-            self.sub_pixel_size,
+            name=self.name,
+            X=[X[dnm] for dnm in dnms],
+            psf_flux=PSF0,
+            dimension_names=dnms,
+            dimension_units=duns,
+            pixel_size=self.pixel_size,
+            sub_pixel_size=self.sub_pixel_size,
+            transpose=self.transpose,
             freeze_dictionary=kwargs.copy(),
             #            blur_value=self.blur_value,
             extrapolate=self.extrapolate,
@@ -430,14 +340,14 @@ class PSF(object):
         return f"{self.ndims}D PSF Model [{', '.join(self.dimension_names)}]{freeze_dictionary}"
 
     @staticmethod
+    @add_docstring("name", "transpose", "scale", "bin")
     def from_name(
         name: str,
         transpose: bool = False,
         scale: int = 1,
         bin: int = 1,
-        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
     ):
-        """Open a PSF file based on the detector name"""
+        """Open a PSF file based on the detector name. This will automatically freeze dimensions."""
         if name.lower() in ["gauss", "gaussian", "test"]:
             p = PSF.from_file(
                 "gaussian",
@@ -448,8 +358,9 @@ class PSF(object):
                 bin=bin,
             )
             return p
-
         if name.lower() in ["vis", "visda", "visible"]:
+            # Check that files are downloaded and current.
+            verify_vis_psf_files()
             p = PSF.from_file(
                 "visda",
                 f"{DATADIR}/pandora_vis_psf.fits",
@@ -458,12 +369,25 @@ class PSF(object):
                 scale=scale,
                 bin=bin,
             ).integrate_wavelength(teff=5500, logg=4.5)
-            # p = p.freeze_dimension(wavelength=p.wavelength0d)
-            #            p.blur_value = blur_value
-            #            p._blur(blur_value=p.blur_value)
             return p
-
+        elif name.lower() in [
+            "vis_fallback",
+            "visda_fallback",
+            "visible_fallback",
+        ]:
+            logger.info("Loading low resolution fallback file for VISDA.")
+            p = PSF.from_file(
+                "visda",
+                f"{PACKAGEDIR}/data/pandora_vis_psf_lowres.fits",
+                transpose=transpose,
+                extrapolate=True,
+                scale=scale,
+                bin=bin,
+            )
+            return p
         elif name.lower() in ["nir", "nirda", "ir"]:
+            # Check that files are downloaded and current.
+            verify_nir_psf_files()
             p = PSF.from_file(
                 "nirda",
                 f"{DATADIR}/pandora_nir_psf.fits",
@@ -472,16 +396,23 @@ class PSF(object):
                 scale=scale,
                 bin=bin,
             )
-            # p = p.freeze_dimension(temperature=-5 * u.deg_C)
-            # if we were modeling full focal plane we'd change this
-            # p = p.freeze_dimension(row=p.row0d, column=p.column0d)
-            #            p.blur_value = blur_value
-            #            p._blur(blur_value=p.blur_value)
+            return p
+        elif name.lower() in ["nir_fallback", "nirda_fallback", "ir_fallback"]:
+            logger.info("Loading low resolution fallback file for NIRDA.")
+            p = PSF.from_file(
+                "nirda",
+                f"{PACKAGEDIR}/data/pandora_nir_psf_lowres.fits",
+                transpose=transpose,
+                extrapolate=True,
+                scale=scale,
+                bin=bin,
+            )
             return p
         else:
             raise ValueError(f"No such PSF as `{name}`")
 
     def _add_trace_params(self):
+        """Adds the expected trace parameters from pandorasat"""
         if self.name == "visda":
             detector = ps.VisibleDetector()
         elif self.name == "nirda":
@@ -496,28 +427,30 @@ class PSF(object):
 
     @property
     def trace_sensitivity(self):
+        """The sensitivity of a spectrum trace at the `self.trace_wavelength` and `self.trace_pixel` positions."""
         if not hasattr(self, "_trace_sensitivity"):
             self._add_trace_params()
         return self._trace_sensitivity
 
     @property
     def trace_wavelength(self):
+        """Wavelengths corresponding to `self.trace_sensitivity`"""
         if not hasattr(self, "_trace_wavelength"):
             self._add_trace_params()
         return self._trace_wavelength
 
     @property
     def trace_pixel(self):
+        """Pixels corresponding to `self.trace_sensitivity`"""
         if not hasattr(self, "_trace_pixel"):
             self._add_trace_params()
         return self._trace_pixel
 
-    @staticmethod
+    @add_docstring("name", "transpose", "extrapolate", "scale", "bin")
     def from_file(
         name: str,
-        filename: str = f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits",
+        file: str = f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits",
         transpose: bool = False,
-        #        blur_value: Tuple = (0 * u.pixel, 0 * u.pixel),
         extrapolate: bool = False,
         scale: int = 1,
         bin: int = 1,
@@ -526,20 +459,23 @@ class PSF(object):
 
         Parameters:
         -----------
-        filename: str
-            Filename of PSF fits file. PSF cube must have a shape such that the first
+        file: str or fits.HDUList
+            Filename of PSF fits file, or opened hdulist. PSF cube must have a shape such that the first
             two dimensions are the x and y extent of the PSF. Defaults to visible PSF.
         transpose: bool
             Transpose the input file, i.e. rotate 90 degrees
-        blur_value: tuple:
-            A tuple describing the amount of motion blur in each axis. Optional, defaults to zero.
 
         Returns:
         --------
         psf : pandorapsf.PSF
             Returns a PSF object
         """
-        hdu = fits.open(filename)
+        if isinstance(file, str):
+            hdu = fits.open(file)
+        elif isinstance(file, fits.HDUList):
+            hdu = file
+        else:
+            raise ValueError("Can not recognize filename.")
         pixel_size = hdu[0].header["PIXSIZE"] * u.micron / u.pix
         sub_pixel_size = hdu[0].header["SUBPIXSZ"] * u.micron / u.pix
 
@@ -566,7 +502,16 @@ class PSF(object):
         else:
             l = np.arange(len(hdu) - 2).astype(int)
 
-        psf_flux = hdu[1].data.transpose(np.hstack([1, 0, *l + 2]))
+        # We expect the images to be in the first few dimensions
+        psf_flux = hdu[1].data
+        if (
+            np.asarray(psf_flux.shape)[l] == np.asarray(hdu[2].data.shape)
+        ).all():
+            psf_flux = psf_flux.transpose(
+                np.hstack([1 + l[-1] + 1, l[-1] + 1, *l])
+            )
+        else:
+            psf_flux = psf_flux.transpose(np.hstack([1, 0, *l + 2]))
         dimension_names = [dimension_names[l1] for l1 in l]
         dimension_units = [u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
         X = [
@@ -575,13 +520,13 @@ class PSF(object):
         ]
 
         return PSF(
-            name,
-            X,
-            psf_flux,
-            dimension_names,
-            dimension_units,
-            pixel_size,
-            sub_pixel_size,
+            name=name,
+            X=X,
+            psf_flux=psf_flux,
+            dimension_names=dimension_names,
+            dimension_units=dimension_units,
+            pixel_size=pixel_size,
+            sub_pixel_size=sub_pixel_size,
             transpose=transpose,
             #            blur_value=blur_value,
             extrapolate=extrapolate,
@@ -630,13 +575,11 @@ class PSF(object):
                 cleaned[key] = value
         return cleaned
 
+    @add_docstring("gradients")
     def psf(self, gradients=False, **kwargs):
-        """Interpolate the PSF cube to a particular point
+        """
+        Interpolate the PSF cube to a particular point
 
-        Parameters
-        ----------
-        args: dict
-            Dictionary of arguments to pass, set each dimension name to a value
         Returns
         -------
         ar : np.ndarray of shape self.shape
@@ -676,22 +619,18 @@ class PSF(object):
             )
         return PSF0 / integral
 
+    @add_docstring("row", "column", "gradients")
     def prf(self, row, column, gradients=False, **kwargs):
         """
         Bins the PSF down to the pixel scale.
 
-        Parameters
-        ----------
-        args: dict
-            Dictionary of arguments to pass, set each dimension name to a value
-
         Returns
         -------
-        row: np.ndarray
+        row_array: npt.NDArray
             Array of integer row positions
-        column: np.ndarray
+        column_array: npt.NDArray
             Array of integer column positions
-        psf: np.ndarray
+        prf: np.ndarray
             2D array of PRF flux values with shape (nrows, ncolumns)
         """
         if self.check_bounds:
@@ -764,25 +703,11 @@ class PSF(object):
             **kwargs,
         )
 
-    # def _bin_prf(self, psf0, row, column, normalize=True):
-    #     mod = (self.psf_column.value + column.value) % 1
-    #     cyc = ((self.psf_column.value + column.value) - mod).astype(int)
-    #     colbin = np.unique(cyc)
-    #     psf1 = np.asarray(
-    #         [psf0[:, cyc == c].sum(axis=1) / (cyc == c).sum() for c in colbin]
-    #     ).T
-    #     mod = (self.psf_row.value + row.value) % 1
-    #     cyc = ((self.psf_row.value + row.value) - mod).astype(int)
-    #     rowbin = np.unique(cyc)
-    #     psf2 = np.asarray(
-    #         [psf1[cyc == c].sum(axis=0) / (cyc == c).sum() for c in rowbin]
-    #     )
-    #     if normalize:
-    #         psf2 /= psf2.sum()
-    #     return rowbin.astype(int), colbin.astype(int), psf2
-
 
 def interpfunc(l, lp, PSF0):
+    """Interpolation function.
+    Given a grid of points l and a desired point lp will interpolate n dimensional PSF0.
+    Grid is always assumed to be the last dimension."""
     if l in lp:
         PSF1 = PSF0[:, :, np.where(lp == l)[0][0]]
     elif l < lp[0]:

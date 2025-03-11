@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0
+
+- Updated fits files on zenodo to include background area
+- Updated the files stored on zenodo to use comressed images in astropy
+- Added low resolution versions of the PSF to the package data to ensure that PSF models can be made offline. These files have no/small grids and do not include the background region. They are 1Mb each.
+
 ## v0.3.3
 
 - Fixed sparse3d bug that broke ROISparse

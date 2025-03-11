@@ -37,11 +37,11 @@ def reset_config():
     config = configparser.ConfigParser()
     config["SETTINGS"] = {
         "data_dir": user_data_dir("pandorapsf"),
-        "log_level": "INFO",
-        "vis_psf_download_location": "https://zenodo.org/records/11228523/files/pandora_vis_2024-05.fits?download=1",
-        "nir_psf_download_location": "https://zenodo.org/records/11153153/files/pandora_nir_2024-05.fits?download=1",
-        "vis_psf_creation_date": "2024-05-14T11:38:14.755119",
-        "nir_psf_creation_date": "2024-05-08T15:02:58.461202",
+        "log_level": "WARNING",
+        "vis_psf_download_location": "https://zenodo.org/records/15002439/files/pandora_vis_2025-03.fits?download=1",
+        "nir_psf_download_location": "https://zenodo.org/records/15002439/files/pandora_nir_2025-03.fits?download=1",
+        "vis_psf_creation_date": "2025-03-10T15:32:23.536414",
+        "nir_psf_creation_date": "2025-03-10T15:30:19.048825",
     }
 
     with open(CONFIGPATH, "w") as configfile:

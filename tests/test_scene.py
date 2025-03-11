@@ -1,3 +1,6 @@
+# Standard library
+import os
+
 # Third-party
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,35 +10,13 @@ import pytest
 from pandorapsf import DOCSDIR, PSF, ROIScene, Scene, TraceScene
 from pandorapsf.utils import downsample, prep_for_add
 
-
-@pytest.mark.skip(reason="outdated functionality for now")
-def test_centered():
-    for scale in [1, 2]:
-        for name in ["gaussian", "visda", "nirda"]:
-            p = PSF.from_name(name, scale=scale)
-            locations = np.vstack([np.asarray([0]), np.asarray([0])]).T
-            s = Scene(locations, psf=p, shape=(50, 70), corner=(-25, -35))
-            delta_pos = np.random.normal(0, 3, size=(2, 100))
-            delta_pos[1] *= 2
-            flux = np.ones(delta_pos.shape[1])[None, :]
-
-            ar = s.model(flux, delta_pos, quiet=True)
-
-            R, C = np.meshgrid(np.arange(50), np.arange(70), indexing="ij")
-            rmid = np.asarray(
-                [np.average(R, weights=ar[tdx]) for tdx in range(ar.shape[0])]
-            )
-            cmid = np.asarray(
-                [np.average(C, weights=ar[tdx]) for tdx in range(ar.shape[0])]
-            )
-            dr = rmid - R.mean() - delta_pos[0]
-            dc = cmid - C.mean() - delta_pos[1]
-            assert np.allclose(dr - np.median(dr), 0, atol=0.05)
-            assert np.allclose(dc - np.median(dc), 0, atol=0.05)
-
-
-pn = PSF.from_name("nirda")
-pv = PSF.from_name("visda")
+if os.getenv("GITHUB_ACTIONS") == "true":
+    # github actions uses the fallback data so we don't download from zenodo
+    pn = PSF.from_name("nirda_fallback")
+    pv = PSF.from_name("visda_fallback")
+else:
+    pn = PSF.from_name("nirda")
+    pv = PSF.from_name("visda")
 
 
 def test_simple_vis_scene():
@@ -49,12 +30,15 @@ def test_simple_vis_scene():
     assert (s.X.dot(np.ones(s.X.shape[-1])).sum(axis=0) <= 1.0 + 1e10).all()
     img = s.model(np.ones(s.X.shape[1]), quiet=True)
     assert img.ndim == 3
-    fig, ax = plt.subplots()
-    ax.imshow(np.log10(img[0]), origin="lower")
-    ax.set(title="Simple Visible Scene Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(
-        DOCSDIR + "images/test_vis_scene.png", dpi=150, bbox_inches="tight"
-    )
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        fig, ax = plt.subplots()
+        ax.imshow(np.log10(img[0]), origin="lower")
+        ax.set(
+            title="Simple Visible Scene Test", xlabel="Pixels", ylabel="Pixels"
+        )
+        fig.savefig(
+            DOCSDIR + "images/test_vis_scene.png", dpi=150, bbox_inches="tight"
+        )
 
 
 def test_vis_grad_scene():
@@ -66,14 +50,17 @@ def test_vis_grad_scene():
     img0 = s.dX0.dot(np.ones(s.dX0.shape[1])).reshape((100, 100))
     img1 = s.dX1.dot(np.ones(s.dX1.shape[1])).reshape((100, 100))
     img = img0 + img1
-    fig, ax = plt.subplots()
-    ax.imshow(img, origin="lower")
-    ax.set(title="Simple Visible Grad Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(
-        DOCSDIR + "images/test_vis_grad_scene.png",
-        dpi=150,
-        bbox_inches="tight",
-    )
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        fig, ax = plt.subplots()
+        ax.imshow(img, origin="lower")
+        ax.set(
+            title="Simple Visible Grad Test", xlabel="Pixels", ylabel="Pixels"
+        )
+        fig.savefig(
+            DOCSDIR + "images/test_vis_grad_scene.png",
+            dpi=150,
+            bbox_inches="tight",
+        )
 
 
 def test_simple_IR_scene():
@@ -85,12 +72,61 @@ def test_simple_IR_scene():
     s = Scene(locations=locations, psf=pn, shape=(400, 80), corner=(-200, -40))
     img = s.model(np.ones(s.X.shape[1]), quiet=True)
     assert img.ndim == 3
-    fig, ax = plt.subplots()
-    ax.imshow(np.log10(img[0]), origin="lower")
-    ax.set(title="Simple IR Scene Test", xlabel="Pixels", ylabel="Pixels")
-    fig.savefig(
-        DOCSDIR + "images/test_nir_scene.png", dpi=150, bbox_inches="tight"
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        fig, ax = plt.subplots()
+        ax.imshow(np.log10(img[0]), origin="lower")
+        ax.set(title="Simple IR Scene Test", xlabel="Pixels", ylabel="Pixels")
+        fig.savefig(
+            DOCSDIR + "images/test_nir_scene.png", dpi=150, bbox_inches="tight"
+        )
+
+
+def test_roiscene():
+    ntimes = 20
+    roi_size = (30, 30)
+    corners = [(0, 0), (0, 70), (30, 30)]
+    locations = np.vstack(
+        [
+            np.vstack(
+                [
+                    np.random.uniform(10, roi_size[0] - 10, size=3),
+                    np.random.uniform(10, roi_size[1] - 10, size=3),
+                ]
+            ).T
+            + np.asarray(corner)
+            for corner in corners
+        ]
     )
+    true_fluxes = (
+        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
+        * np.ones(ntimes)[None, :]
+    )
+    s = ROIScene(
+        locations=locations,
+        shape=(100, 100),
+        corner=(0, 0),
+        psf=pv,
+        nROIs=len(corners),
+        ROI_size=roi_size,
+        ROI_corners=corners,
+    )
+    roi_data = s.model(true_fluxes)
+    assert roi_data.shape == (len(corners), ntimes, *roi_size)
+    assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() == 0
+
+    true_fluxes = (
+        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
+        * np.ones(ntimes)[None, :]
+    )
+    shot_noise = np.random.normal(
+        0, true_fluxes[:, 0] ** 0.5, size=(ntimes, s.ntargets)
+    ).T
+    true_fluxes += shot_noise
+    true_shift = np.random.normal(0, 0.1, size=(2, ntimes))
+
+    roi_data = s.model(true_fluxes, true_shift)
+    assert roi_data.shape == (len(corners), ntimes, *roi_size)
+    assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() != 0
 
 
 @pytest.mark.skip(
@@ -148,54 +184,6 @@ def test_trace_scene():
         dpi=150,
         bbox_inches="tight",
     )
-
-
-def test_roiscene():
-    ntimes = 20
-    roi_size = (30, 30)
-    corners = [(0, 0), (0, 70), (30, 30)]
-    locations = np.vstack(
-        [
-            np.vstack(
-                [
-                    np.random.uniform(10, roi_size[0] - 10, size=3),
-                    np.random.uniform(10, roi_size[1] - 10, size=3),
-                ]
-            ).T
-            + np.asarray(corner)
-            for corner in corners
-        ]
-    )
-    true_fluxes = (
-        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
-        * np.ones(ntimes)[None, :]
-    )
-    s = ROIScene(
-        locations=locations,
-        shape=(100, 100),
-        corner=(0, 0),
-        psf=pv,
-        nROIs=len(corners),
-        ROI_size=roi_size,
-        ROI_corners=corners,
-    )
-    roi_data = s.model(true_fluxes)
-    assert roi_data.shape == (len(corners), ntimes, *roi_size)
-    assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() == 0
-
-    true_fluxes = (
-        10 ** np.random.uniform(1, 3, size=(locations.shape[0]))[:, None]
-        * np.ones(ntimes)[None, :]
-    )
-    shot_noise = np.random.normal(
-        0, true_fluxes[:, 0] ** 0.5, size=(ntimes, s.ntargets)
-    ).T
-    true_fluxes += shot_noise
-    true_shift = np.random.normal(0, 0.1, size=(2, ntimes))
-
-    roi_data = s.model(true_fluxes, true_shift)
-    assert roi_data.shape == (len(corners), ntimes, *roi_size)
-    assert np.abs(roi_data[1, 1, :, :] - roi_data[1, 0, :, :]).sum() != 0
 
 
 @pytest.mark.skip(reason="outdated functionality for now")
@@ -261,3 +249,29 @@ def test_scale():
                 dpi=150,
                 bbox_inches="tight",
             )
+
+
+@pytest.mark.skip(reason="outdated functionality for now")
+def test_centered():
+    for scale in [1, 2]:
+        for name in ["gaussian", "visda", "nirda"]:
+            p = PSF.from_name(name, scale=scale)
+            locations = np.vstack([np.asarray([0]), np.asarray([0])]).T
+            s = Scene(locations, psf=p, shape=(50, 70), corner=(-25, -35))
+            delta_pos = np.random.normal(0, 3, size=(2, 100))
+            delta_pos[1] *= 2
+            flux = np.ones(delta_pos.shape[1])[None, :]
+
+            ar = s.model(flux, delta_pos, quiet=True)
+
+            R, C = np.meshgrid(np.arange(50), np.arange(70), indexing="ij")
+            rmid = np.asarray(
+                [np.average(R, weights=ar[tdx]) for tdx in range(ar.shape[0])]
+            )
+            cmid = np.asarray(
+                [np.average(C, weights=ar[tdx]) for tdx in range(ar.shape[0])]
+            )
+            dr = rmid - R.mean() - delta_pos[0]
+            dc = cmid - C.mean() - delta_pos[1]
+            assert np.allclose(dr - np.median(dr), 0, atol=0.05)
+            assert np.allclose(dc - np.median(dc), 0, atol=0.05)

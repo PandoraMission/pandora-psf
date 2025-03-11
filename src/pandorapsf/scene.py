@@ -12,6 +12,7 @@ from scipy import sparse
 from sparse3d import ROISparse3D, Sparse3D
 from tqdm import tqdm
 
+from .docstrings import add_docstring
 from .psf import PSF
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
@@ -20,6 +21,13 @@ __all__ = ["ROIScene", "Scene", "TraceScene"]
 
 
 class Scene(object):
+    @add_docstring(
+        "locations",
+        "psf",
+        "shape",
+        "corner",
+        "scale",
+    )
     def __init__(
         self,
         locations: npt.ArrayLike,
@@ -28,6 +36,9 @@ class Scene(object):
         corner: Tuple = (0, 0),
         scale: int = 1,
     ):
+        """
+        Class for working with scenes of many PSFs
+        """
         if locations.shape[1] != 2:
             raise ValueError("`locations` must have shape (n, 2).")
         self.locations = locations

@@ -19,7 +19,7 @@ from . import DATADIR, PACKAGEDIR, config, logger
 
 
 @lru_cache()
-def verify_psf_files():
+def verify_vis_psf_files():
     """Check that the PSF files exist, and have the right times in them."""
     if not os.path.isfile(f"{DATADIR}/pandora_vis_psf.fits"):
         # Third-party
@@ -36,6 +36,32 @@ def verify_psf_files():
             f"VIS PSF downloaded to {DATADIR}/pandora_vis_psf.fits."
         )
 
+    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
+    hdulist.verify("exception")
+    if not (
+        hdulist[0].header["DATE"]
+        == config["SETTINGS"]["vis_psf_creation_date"]
+    ):
+        raise ValueError("Out of date visible PRF file.")
+
+    # uncompress any compressed images to speed up read operations
+    if np.any([isinstance(hdu, fits.CompImageHDU) for hdu in hdulist]):
+        logger.warning("PSF file is compressed, uncompressing on disk.")
+        fits.HDUList(
+            [
+                (
+                    fits.ImageHDU(hdu.data, name=hdu.name)
+                    if isinstance(hdu, fits.CompImageHDU)
+                    else hdu
+                )
+                for hdu in hdulist
+            ]
+        ).writeto(DATADIR + "/pandora_vis_psf.fits", overwrite=True)
+
+
+@lru_cache()
+def verify_nir_psf_files():
+    """Check that the PSF files exist, and have the right times in them."""
     if not os.path.isfile(f"{DATADIR}/pandora_nir_psf.fits"):
         # Third-party
         from astropy.utils.data import download_file  # noqa: E402
@@ -51,14 +77,6 @@ def verify_psf_files():
             f"NIR PSF downloaded to {DATADIR}/pandora_nir_psf.fits."
         )
 
-    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
-    hdulist.verify("exception")
-    if not (
-        hdulist[0].header["DATE"]
-        == config["SETTINGS"]["vis_psf_creation_date"]
-    ):
-        raise ValueError("Out of date visible PRF file.")
-
     hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
     hdulist.verify("exception")
     if not (
@@ -66,6 +84,20 @@ def verify_psf_files():
         == config["SETTINGS"]["nir_psf_creation_date"]
     ):
         raise ValueError("Out of date NIR PRF file.")
+
+    # uncompress any compressed images to speed up read operations
+    if np.any([isinstance(hdu, fits.CompImageHDU) for hdu in hdulist]):
+        logger.warning("PSF file is compressed, uncompressing on disk.")
+        fits.HDUList(
+            [
+                (
+                    fits.ImageHDU(hdu.data, name=hdu.name)
+                    if isinstance(hdu, fits.CompImageHDU)
+                    else hdu
+                )
+                for hdu in hdulist
+            ]
+        ).writeto(DATADIR + "/pandora_nir_psf.fits", overwrite=True)
 
 
 def make_pixel_files():
@@ -406,7 +438,9 @@ def make_PSF_fits_files(
     hdu = fits.HDUList(
         [
             primaryhdu,
-            fits.ImageHDU(PSF.astype(np.float32), name="PSF"),
+            fits.CompImageHDU(
+                PSF.transpose([2, 3, 4, 0, 1]).astype(np.float32), name="PSF"
+            ),
             fits.ImageHDU(row.value.astype(np.float32), name="ROW"),
             fits.ImageHDU(column.value.astype(np.float32), name="COLUMN"),
             fits.ImageHDU(
@@ -417,10 +451,68 @@ def make_PSF_fits_files(
     hdu[2].header["UNIT"] = row.unit.to_string()
     hdu[3].header["UNIT"] = column.unit.to_string()
     hdu[4].header["UNIT"] = wavelength.unit.to_string()
+    return hdu
+
+
+def make_lowres_package_data():
+    """Function to make low resolution versions that are ~1Mb to save in package data."""
+    from .psf import PSF
+
+    psf = PSF.from_name("nirda")
+    psf = psf.freeze_dimension(row=0, column=0)
+    hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
+    hdr = hdulist[0].header
+    hdr["SUFFIX"] = hdulist[0].header["SUFFIX"] + "_lowres"
+    hdr["DATE"] = datetime.now().isoformat()
+    hdr["ROW"] = 0
+    hdr["COLUMN"] = 0
+
+    primaryhdu = fits.PrimaryHDU(header=hdr)
+    hdu = fits.HDUList(
+        [
+            primaryhdu,
+            fits.CompImageHDU(
+                psf.psf_flux[128:-128, 128:-128].transpose([2, 1, 0]),
+                name="PSF",
+            ),
+            fits.ImageHDU(
+                psf.wavelength.value.astype(np.float32), name="WAVELENGTH"
+            ),
+        ]
+    )
+    hdu[2].header["UNIT"] = psf.wavelength.unit.to_string()
     hdu.writeto(
-        PACKAGEDIR
-        + f"/data/pandora_{suffix}_{datetime.strftime(datetime.now(), '%Y-%m')}.fits",
-        overwrite=True,
+        PACKAGEDIR + "/data/pandora_nir_psf_lowres.fits", overwrite=True
+    )
+
+    psf = PSF.from_name("visda")
+    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
+    hdr = hdulist[0].header
+    hdr["SUFFIX"] = hdulist[0].header["SUFFIX"] + "_lowres"
+    hdr["DATE"] = datetime.now().isoformat()
+
+    primaryhdu = fits.PrimaryHDU(header=hdr)
+    hdu = fits.HDUList(
+        [
+            primaryhdu,
+            fits.CompImageHDU(
+                psf.psf_flux[128:-128, 128:-128, 3:6, 3:6].transpose(
+                    [2, 3, 1, 0]
+                ),
+                name="PSF",
+            ),
+            fits.ImageHDU(
+                psf.row[3:6, 3:6].value.astype(np.float32), name="ROW"
+            ),
+            fits.ImageHDU(
+                psf.column[3:6, 3:6].value.astype(np.float32), name="COLUMN"
+            ),
+        ]
+    )
+    hdu[2].header["UNIT"] = psf.row.unit.to_string()
+    hdu[3].header["UNIT"] = psf.column.unit.to_string()
+    hdu.writeto(
+        PACKAGEDIR + "/data/pandora_vis_psf_lowres.fits", overwrite=True
     )
 
 
