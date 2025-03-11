@@ -1002,7 +1002,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f39f8d32-b05c-4924-95b2-7485f828b496">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e78ca47d-6992-443d-bcc5-d8c20f288cb3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1020,9 +1020,79 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSF</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="o">%</span><span class="n">load_ext</span> <span class="n">autoreload</span>
+<span class="o">%</span><span class="n">autoreload</span> <span class="mi">2</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from pandorapsf import PSF</div>
+<div class="clipboard-copy-txt" id="cell-1">%load_ext autoreload
+%autoreload 2</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f39f8d32-b05c-4924-95b2-7485f828b496">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">PSF</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandorasat</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ps</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-2">from pandorapsf import PSF
+import pandorasat as ps</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=757e045f-a85f-465c-a999-767a04e1568a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">ps</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">SED</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">jmag</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unit</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-3">ps.utils.SED(4000, jmag=10)[1].unit.to_string()</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>'erg / (Angstrom s cm2)'</pre>
 </div>
 </div>
 </div>
@@ -1039,6 +1109,253 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bca52a47-7fd2-4dad-8f26-4d75928fdd75">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">PSF</span><span class="err">?</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-4">PSF?</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre><span class="ansi-red-fg">Init signature:</span>
+PSF<span class="ansi-blue-fg">(</span>
+    name<span class="ansi-blue-fg">:</span> str<span class="ansi-blue-fg">,</span>
+    X<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>__array_like<span class="ansi-blue-fg">.</span>_SupportsArray<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>dtype<span class="ansi-blue-fg">[</span>Any<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> numpy<span class="ansi-blue-fg">.</span>__nested_sequence<span class="ansi-blue-fg">.</span>_NestedSequence<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>__array_like<span class="ansi-blue-fg">.</span>_SupportsArray<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>dtype<span class="ansi-blue-fg">[</span>Any<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> bool<span class="ansi-blue-fg">,</span> int<span class="ansi-blue-fg">,</span> float<span class="ansi-blue-fg">,</span> complex<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">,</span> bytes<span class="ansi-blue-fg">,</span> numpy<span class="ansi-blue-fg">.</span>__nested_sequence<span class="ansi-blue-fg">.</span>_NestedSequence<span class="ansi-blue-fg">[</span>Union<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">,</span> int<span class="ansi-blue-fg">,</span> float<span class="ansi-blue-fg">,</span> complex<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">,</span> bytes<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span>
+    psf_flux<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>__array_like<span class="ansi-blue-fg">.</span>_SupportsArray<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>dtype<span class="ansi-blue-fg">[</span>Any<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> numpy<span class="ansi-blue-fg">.</span>__nested_sequence<span class="ansi-blue-fg">.</span>_NestedSequence<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>__array_like<span class="ansi-blue-fg">.</span>_SupportsArray<span class="ansi-blue-fg">[</span>numpy<span class="ansi-blue-fg">.</span>dtype<span class="ansi-blue-fg">[</span>Any<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> bool<span class="ansi-blue-fg">,</span> int<span class="ansi-blue-fg">,</span> float<span class="ansi-blue-fg">,</span> complex<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">,</span> bytes<span class="ansi-blue-fg">,</span> numpy<span class="ansi-blue-fg">.</span>__nested_sequence<span class="ansi-blue-fg">.</span>_NestedSequence<span class="ansi-blue-fg">[</span>Union<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">,</span> int<span class="ansi-blue-fg">,</span> float<span class="ansi-blue-fg">,</span> complex<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">,</span> bytes<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span>
+    dimension_names<span class="ansi-blue-fg">:</span> List<span class="ansi-blue-fg">,</span>
+    dimension_units<span class="ansi-blue-fg">:</span> List<span class="ansi-blue-fg">,</span>
+    pixel_size<span class="ansi-blue-fg">:</span> astropy<span class="ansi-blue-fg">.</span>units<span class="ansi-blue-fg">.</span>quantity<span class="ansi-blue-fg">.</span>Quantity<span class="ansi-blue-fg">,</span>
+    sub_pixel_size<span class="ansi-blue-fg">:</span> astropy<span class="ansi-blue-fg">.</span>units<span class="ansi-blue-fg">.</span>quantity<span class="ansi-blue-fg">.</span>Quantity<span class="ansi-blue-fg">,</span>
+    transpose<span class="ansi-blue-fg">:</span> bool <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    freeze_dictionary<span class="ansi-blue-fg">:</span> Dict <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">{</span><span class="ansi-blue-fg">}</span><span class="ansi-blue-fg">,</span>
+    check_bounds<span class="ansi-blue-fg">:</span> bool <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">True</span><span class="ansi-blue-fg">,</span>
+    extrapolate<span class="ansi-blue-fg">:</span> bool <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    scale<span class="ansi-blue-fg">:</span> int <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+    bin<span class="ansi-blue-fg">:</span> int <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>      Class to work with abstract PSFs
+<span class="ansi-red-fg">Init docstring:</span>
+PSF class for making PSFs, PRFs, and traces.
+
+
+Parameters
+----------
+X: ndarray
+    Array of 1D vectors defining the value of each dimension for every element of `psf_flux`. Should have as many entries as `psf_flux` has dimensions.
+psf_flux: ndarray
+    ND array of flux values
+dimension_names: list
+    List of names for each of the N dimensions in `psf_flux`
+dimension_units: list
+    List of `astropy.unit.Quantity`'s describing units of each dimension
+pixel_size: Quantity
+    True detector pixel size in dimensions of length/pixel
+sub_pixel_size: Quantity
+    PSF file pixel size in dimensions of length/pixel
+transpose: bool
+    Whether to transpose the input data in the column/row axis.
+freeze_dictionary: dict
+    Dictionary of dimensions to freeze
+check_bounds: bool
+    Whether to check if the inputs are within the bounds of the PSF model and have the right units. This check causes a small slowdown.
+extrapolate: bool
+    Whether to allow the PSF to be evaluated outside of the bounds (i.e. will extrapolate)
+scale: float
+    How much to scale the PSF grid. Scale of 2 makes the PSF 2x broader. Default is 1.
+<span class="ansi-red-fg">File:</span>           ~/Pandora/repos/pandora-psf/src/pandorapsf/psf.py
+<span class="ansi-red-fg">Type:</span>           type
+<span class="ansi-red-fg">Subclasses:</span>     </pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0063e12a-dd9f-4d3e-bf17-03d94052ca48">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="err">?</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-5">PSF.from_name?</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre><span class="ansi-red-fg">Signature:</span>
+PSF<span class="ansi-blue-fg">.</span>from_name<span class="ansi-blue-fg">(</span>
+    name<span class="ansi-blue-fg">:</span> str<span class="ansi-blue-fg">,</span>
+    transpose<span class="ansi-blue-fg">:</span> bool <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+    scale<span class="ansi-blue-fg">:</span> int <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+    bin<span class="ansi-blue-fg">:</span> int <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+Open a PSF file based on the detector name
+
+Parameters
+----------
+name: str
+    Name of detector
+transpose: bool
+    Whether to transpose the input data in the column/row axis.
+scale: float
+    How much to scale the PSF grid. Scale of 2 makes the PSF 2x broader. Default is 1.
+<span class="ansi-red-fg">File:</span>      ~/Pandora/repos/pandora-psf/src/pandorapsf/psf.py
+<span class="ansi-red-fg">Type:</span>      function</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bba4ed49-615e-46e3-872e-71e29eff8635">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-6"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[20]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>array([[4.15443175e-08, 4.23301935e-08, 4.35295126e-08, ...,
+        4.25727658e-08, 4.25590783e-08, 4.27253996e-08],
+       [4.20919629e-08, 4.28591937e-08, 4.40564532e-08, ...,
+        4.31704021e-08, 4.31352932e-08, 4.32561122e-08],
+       [4.35145393e-08, 4.42299634e-08, 4.53726330e-08, ...,
+        4.44587514e-08, 4.45049891e-08, 4.46213496e-08],
+       ...,
+       [4.50425935e-08, 4.49908246e-08, 4.49004786e-08, ...,
+        3.80775601e-08, 3.88097174e-08, 3.92389085e-08],
+       [4.46573335e-08, 4.45301949e-08, 4.44178896e-08, ...,
+        3.67943742e-08, 3.75212921e-08, 3.79551062e-08],
+       [4.45340958e-08, 4.43847203e-08, 4.42941958e-08, ...,
+        3.60888992e-08, 3.68088658e-08, 3.72464230e-08]])</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9668ee86-e1c4-45f6-8618-a4cacb9a3895">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">psf</span><span class="err">?</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-7">p.psf?</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre><span class="ansi-red-fg">Signature:</span> p<span class="ansi-blue-fg">.</span>psf<span class="ansi-blue-fg">(</span>gradients<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">**</span>kwargs<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+Interpolate the PSF cube to a particular point
+
+Parameters
+----------
+args: dict
+    Dictionary of arguments to pass, set each dimension name to a value
+Returns
+-------
+ar : np.ndarray of shape self.shape
+    The interpolated PSF
+<span class="ansi-red-fg">File:</span>      ~/Pandora/repos/pandora-psf/src/pandorapsf/psf.py
+<span class="ansi-red-fg">Type:</span>      method</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=32093df4-07bd-40a2-a93d-0650a5748455">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -1048,7 +1365,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1060,7 +1377,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">p = PSF.from_name("NIRDA")</div>
+<div class="clipboard-copy-txt" id="cell-8">p = PSF.from_name("NIRDA")</div>
 </div>
 </div>
 </div>
@@ -1075,7 +1392,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1087,7 +1404,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">p</div>
+<div class="clipboard-copy-txt" id="cell-9">p</div>
 </div>
 </div>
 </div>
@@ -1125,7 +1442,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1137,7 +1454,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">row</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">p.row.shape</div>
+<div class="clipboard-copy-txt" id="cell-10">p.row.shape</div>
 </div>
 </div>
 </div>
@@ -1164,7 +1481,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1176,7 +1493,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">column</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">p.column.shape</div>
+<div class="clipboard-copy-txt" id="cell-11">p.column.shape</div>
 </div>
 </div>
 </div>
@@ -1203,7 +1520,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1215,7 +1532,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">wavelength</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">p.wavelength.shape</div>
+<div class="clipboard-copy-txt" id="cell-12">p.wavelength.shape</div>
 </div>
 </div>
 </div>
@@ -1253,7 +1570,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1265,7 +1582,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">wavelength</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">p.wavelength</div>
+<div class="clipboard-copy-txt" id="cell-13">p.wavelength</div>
 </div>
 </div>
 </div>
@@ -1351,7 +1668,7 @@ $[[[1,~1.0700001,~1.14,~\dots,~1.5599999,~1.63,~1.7],~
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-14">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1363,7 +1680,7 @@ $[[[1,~1.0700001,~1.14,~\dots,~1.5599999,~1.63,~1.7],~
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">wavelength1d</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">p.wavelength1d</div>
+<div class="clipboard-copy-txt" id="cell-14">p.wavelength1d</div>
 </div>
 </div>
 </div>
@@ -1401,7 +1718,7 @@ $[1,~1.0700001,~1.14,~1.21,~1.28,~1.35,~1.42,~1.49,~1.5599999,~1.63,~1.7] \; \ma
 <div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1413,7 +1730,7 @@ $[1,~1.0700001,~1.14,~1.21,~1.28,~1.35,~1.42,~1.49,~1.5599999,~1.63,~1.7] \; \ma
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">wavelength0d</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">p.wavelength0d</div>
+<div class="clipboard-copy-txt" id="cell-15">p.wavelength0d</div>
 </div>
 </div>
 </div>
@@ -1451,7 +1768,7 @@ $1.35 \; \mathrm{\mu m}$
 <div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1463,7 +1780,7 @@ $1.35 \; \mathrm{\mu m}$
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">plot_spatial</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">p.plot_spatial()</div>
+<div class="clipboard-copy-txt" id="cell-16">p.plot_spatial()</div>
 </div>
 </div>
 </div>
@@ -1501,7 +1818,7 @@ $1.35 \; \mathrm{\mu m}$
 <div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1513,7 +1830,7 @@ $1.35 \; \mathrm{\mu m}$
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">plot_spectral</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">p.plot_spectral()</div>
+<div class="clipboard-copy-txt" id="cell-17">p.plot_spectral()</div>
 </div>
 </div>
 </div>
@@ -1557,7 +1874,7 @@ $1.35 \; \mathrm{\mu m}$
 <div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1569,7 +1886,7 @@ $1.35 \; \mathrm{\mu m}$
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">psf</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">column</span><span class="o">=-</span><span class="mi">40</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12">p.psf(row=100, column=-40, wavelength=1.3)</div>
+<div class="clipboard-copy-txt" id="cell-18">p.psf(row=100, column=-40, wavelength=1.3)</div>
 </div>
 </div>
 </div>
@@ -1619,7 +1936,7 @@ $1.35 \; \mathrm{\mu m}$
 <div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1631,7 +1948,7 @@ $1.35 \; \mathrm{\mu m}$
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">psf_row</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">p.psf_row</div>
+<div class="clipboard-copy-txt" id="cell-19">p.psf_row</div>
 </div>
 </div>
 </div>
@@ -1669,7 +1986,7 @@ $[-25.281519,~-25.084775,~-24.888032,~\dots,~24.494545,~24.691289,~24.888032] \;
 <div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-14">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1682,7 +1999,7 @@ $[-25.281519,~-25.084775,~-24.888032,~\dots,~24.494545,~24.691289,~24.888032] \;
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14">import numpy as np
+<div class="clipboard-copy-txt" id="cell-20">import numpy as np
 import matplotlib.pyplot as plt</div>
 </div>
 </div>
@@ -1698,7 +2015,7 @@ import matplotlib.pyplot as plt</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-21">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1712,7 +2029,7 @@ import matplotlib.pyplot as plt</div>
 <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">psf_column</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">psf_row</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">psf</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">column</span><span class="o">=-</span><span class="mi">40</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.3</span><span class="p">),</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'$\delta$ Column [pixel]'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'$\delta$ Row [pixel]'</span><span class="p">);</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15">fig, ax = plt.subplots(figsize=(4, 4))
+<div class="clipboard-copy-txt" id="cell-21">fig, ax = plt.subplots(figsize=(4, 4))
 ax.pcolormesh(p.psf_column.value, p.psf_row.value, p.psf(row=100, column=-40, wavelength=1.3), vmin=0, vmax=0.001)
 ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 </div>
@@ -1752,7 +2069,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-22">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1764,7 +2081,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span><span class="o">.</span><span class="n">prf</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16">p.prf(row=10, column=1, wavelength=1.3)</div>
+<div class="clipboard-copy-txt" id="cell-22">p.prf(row=10, column=1, wavelength=1.3)</div>
 </div>
 </div>
 </div>
@@ -1824,7 +2141,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-23">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1836,7 +2153,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">ar</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">prf</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">column</span><span class="o">=-</span><span class="mi">40</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="mf">1.3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17">r, c, ar = p.prf(row=100, column=-40, wavelength=1.3)</div>
+<div class="clipboard-copy-txt" id="cell-23">r, c, ar = p.prf(row=100, column=-40, wavelength=1.3)</div>
 </div>
 </div>
 </div>
@@ -1851,7 +2168,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-24">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1865,7 +2182,7 @@ ax.set(xlabel='$\delta$ Column [pixel]', ylabel='$\delta$ Row [pixel]');</div>
 <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">ar</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'Column [pixel]'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'Row [pixel]'</span><span class="p">);</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-18">fig, ax = plt.subplots(figsize=(4, 4))
+<div class="clipboard-copy-txt" id="cell-24">fig, ax = plt.subplots(figsize=(4, 4))
 ax.pcolormesh(c, r, ar, vmin=0, vmax=0.001)
 ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 </div>
@@ -1906,7 +2223,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-25">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1918,7 +2235,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">)</span><span class="o">.</span><span class="n">freeze_dimension</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-19">p = PSF.from_name("NIRDA").freeze_dimension(row=0, column=0)</div>
+<div class="clipboard-copy-txt" id="cell-25">p = PSF.from_name("NIRDA").freeze_dimension(row=0, column=0)</div>
 </div>
 </div>
 </div>
@@ -1944,7 +2261,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-26">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1956,7 +2273,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-20">p</div>
+<div class="clipboard-copy-txt" id="cell-26">p</div>
 </div>
 </div>
 </div>
@@ -2005,7 +2322,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-21">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-27">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2017,7 +2334,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">)</span><span class="o">.</span><span class="n">freeze_dimension</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mf">1.3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-21">p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1.3)</div>
+<div class="clipboard-copy-txt" id="cell-27">p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1.3)</div>
 </div>
 </div>
 </div>
@@ -2032,7 +2349,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-22">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-28">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2044,7 +2361,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-22">p</div>
+<div class="clipboard-copy-txt" id="cell-28">p</div>
 </div>
 </div>
 </div>
@@ -2087,7 +2404,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-23">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-29">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2100,7 +2417,7 @@ ax.set(xlabel='Column [pixel]', ylabel='Row [pixel]');</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
 <span class="n">p</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">)</span><span class="o">.</span><span class="n">freeze_dimension</span><span class="p">(</span><span class="n">wavelength</span><span class="o">=</span><span class="mi">1300</span><span class="o">*</span><span class="n">u</span><span class="o">.</span><span class="n">nm</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-23">import astropy.units as u
+<div class="clipboard-copy-txt" id="cell-29">import astropy.units as u
 p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 </div>
 </div>
@@ -2116,7 +2433,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-24">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-30">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2128,7 +2445,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-24">p</div>
+<div class="clipboard-copy-txt" id="cell-30">p</div>
 </div>
 </div>
 </div>
@@ -2166,7 +2483,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-25">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-31">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2178,7 +2495,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">ar</span><span class="p">,</span> <span class="n">dar1</span><span class="p">,</span> <span class="n">dar2</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">prf</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">column</span><span class="o">=-</span><span class="mi">40</span><span class="p">,</span> <span class="n">gradients</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-25">r, c, ar, dar1, dar2 = p.prf(row=100, column=-40, gradients=True)</div>
+<div class="clipboard-copy-txt" id="cell-31">r, c, ar, dar1, dar2 = p.prf(row=100, column=-40, gradients=True)</div>
 </div>
 </div>
 </div>
@@ -2193,7 +2510,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-26">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-32">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2211,7 +2528,7 @@ p = PSF.from_name("NIRDA").freeze_dimension(wavelength=1300*u.nm)</div>
 <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'Column [pixel]'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'Row [pixel]'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">'Gradient dimension 1'</span><span class="p">)</span>
 <span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'Column [pixel]'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'Row [pixel]'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">'Gradient dimension 2'</span><span class="p">);</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-26">fig, ax = plt.subplots(1, 3, figsize=(12, 3))
+<div class="clipboard-copy-txt" id="cell-32">fig, ax = plt.subplots(1, 3, figsize=(12, 3))
 ax[0].pcolormesh(c, r, ar, vmin=0, vmax=0.001)
 ax[1].pcolormesh(c, r, dar1, vmin=-0.001, vmax=0.001, cmap='coolwarm')
 ax[2].pcolormesh(c, r, dar2, vmin=-0.001, vmax=0.001, cmap='coolwarm')
@@ -2277,7 +2594,7 @@ ax[2].set(xlabel='Column [pixel]', ylabel='Row [pixel]', title='Gradient dimensi
 <div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-27">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-33">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2290,7 +2607,7 @@ ax[2].set(xlabel='Column [pixel]', ylabel='Row [pixel]', title='Gradient dimensi
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">p1</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">p2</span> <span class="o">=</span> <span class="n">PSF</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">"NIRDA"</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-27">p1 = PSF.from_name("NIRDA", scale=1)
+<div class="clipboard-copy-txt" id="cell-33">p1 = PSF.from_name("NIRDA", scale=1)
 p2 = PSF.from_name("NIRDA", scale=2)</div>
 </div>
 </div>
@@ -2306,7 +2623,7 @@ p2 = PSF.from_name("NIRDA", scale=2)</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-28">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-34">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2328,7 +2645,7 @@ p2 = PSF.from_name("NIRDA", scale=2)</div>
 <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">-</span><span class="mi">40</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">'r'</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">'Column [pixel]'</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">'Row [pixel]'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">'Scale=2'</span><span class="p">);</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-28">fig, ax = plt.subplots(1, 2, figsize=(8, 4), sharex=True, sharey=True)
+<div class="clipboard-copy-txt" id="cell-34">fig, ax = plt.subplots(1, 2, figsize=(8, 4), sharex=True, sharey=True)
 
 r, c, ar = p1.prf(row=100, column=-40, wavelength=1.3)
 ax[0].scatter(-40, 100, c='r', zorder=10)
