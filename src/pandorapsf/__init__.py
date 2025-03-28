@@ -38,10 +38,10 @@ def reset_config():
     config["SETTINGS"] = {
         "data_dir": user_data_dir("pandorapsf"),
         "log_level": "WARNING",
-        "vis_psf_download_location": "https://zenodo.org/records/15002439/files/pandora_vis_2025-03.fits?download=1",
-        "nir_psf_download_location": "https://zenodo.org/records/15002439/files/pandora_nir_2025-03.fits?download=1",
-        "vis_psf_creation_date": "2025-03-10T15:32:23.536414",
-        "nir_psf_creation_date": "2025-03-10T15:30:19.048825",
+        "vis_psf_download_location": "https://zenodo.org/records/15101982/files/pandora_vis_psf.fits?download=1",
+        "nir_psf_download_location": "https://zenodo.org/records/15101982/files/pandora_nir_psf.fits?download=1",
+        "vis_psf_creation_date": "2025-03-28T10:30:27.329441",
+        "nir_psf_creation_date": "2025-03-28T10:06:08.770326",
     }
 
     with open(CONFIGPATH, "w") as configfile:

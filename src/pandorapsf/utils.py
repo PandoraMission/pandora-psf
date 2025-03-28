@@ -387,8 +387,25 @@ def _open_LLNL_file(
 
 
 def make_PSF_fits_files(
-    filename, suffix, pixel_size, downsample=None, trim=None, jitter_width=0.5
+    filename, pixel_size, downsample=None, trim=None, jitter_width=0.5
 ):
+    """Make the pandorapsf fits files from LLNL PSF matlab files.
+
+    Parameters
+    ----------
+    filename: str
+        File name of the matlab file to use
+    pixel_size: float or u.Quantity
+        The size of the pixels in microns/pixel. This is required to convert the matlab file.
+    downsample: Optional, int
+        Whether to downsample the file. If an integer is provided, the 2D images will be reduced by that factor on each side.
+        i.e. downsample=2 reduces the file size by a factor 4
+    trim: Optional, int
+        If this value is passed the matlab 2D images will be reduced to [trim:-trim, trim:-trim] in shape.
+    jitter_width: float
+        This value is how much motion blur will be added to the PSF files in pixels. This motion blur is permanently in the file.
+        Default is 0.5 pixels.
+    """
     (
         subpixel_size,
         subpixel_row,
@@ -418,7 +435,6 @@ def make_PSF_fits_files(
             ("AUTHOR1", "LLNL"),
             ("AUTHOR2", "Pandora DPC"),
             ("ORIGIN", filename.split("/")[-1]),
-            ("SUFFIX", suffix),
             ("CREATED", created_on),
             ("DATE", datetime.now().isoformat()),
             (
@@ -462,7 +478,11 @@ def make_lowres_package_data():
     psf = psf.freeze_dimension(row=0, column=0)
     hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
     hdr = hdulist[0].header
-    hdr["SUFFIX"] = hdulist[0].header["SUFFIX"] + "_lowres"
+    hdr["SUFFIX"] = (
+        hdulist[0].header["SUFFIX"] + "_"
+        if "SUFFIX" in hdulist[0].header
+        else "" + "lowres"
+    )
     hdr["DATE"] = datetime.now().isoformat()
     hdr["ROW"] = 0
     hdr["COLUMN"] = 0
@@ -488,7 +508,11 @@ def make_lowres_package_data():
     psf = PSF.from_name("visda")
     hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
     hdr = hdulist[0].header
-    hdr["SUFFIX"] = hdulist[0].header["SUFFIX"] + "_lowres"
+    hdr["SUFFIX"] = (
+        hdulist[0].header["SUFFIX"] + "_"
+        if "SUFFIX" in hdulist[0].header
+        else "" + "lowres"
+    )
     hdr["DATE"] = datetime.now().isoformat()
 
     primaryhdu = fits.PrimaryHDU(header=hdr)

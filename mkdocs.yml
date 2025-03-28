@@ -10,6 +10,7 @@ nav:
   - Example2: example-scene.ipynb
   - Example3: example-roiscene.ipynb
   - Example4: example-tracescene.ipynb
+  - Updating Instructions: uploading-new-files.ipynb
   
 theme:
   name: "material"
