@@ -95,7 +95,7 @@ class PSF(object):
                     axis=(0, 1),
                 )
             )
-            * (self.sub_pixel_size / self.pixel_size).value
+            # * (self.sub_pixel_size / self.pixel_size).value
         )
 
     def _validate(self):
