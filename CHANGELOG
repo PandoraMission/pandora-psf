@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.0
+
+- Fixed bug where PRF function provided PSF with an in center
+- Added tests to ensure PSFs and PRFs are centered throughput pandorapsf
+
 ## v0.4.0
 
 - Updated fits files on zenodo to include background area

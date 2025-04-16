@@ -1,5 +1,6 @@
 # Standard library
 import os
+from copy import deepcopy
 
 # Third-party
 import matplotlib.pyplot as plt
@@ -275,3 +276,47 @@ def test_centered():
             dc = cmid - C.mean() - delta_pos[1]
             assert np.allclose(dr - np.median(dr), 0, atol=0.05)
             assert np.allclose(dc - np.median(dc), 0, atol=0.05)
+
+
+def test_aligned():
+    p = PSF.from_name("visda_fallback")
+    c, r = deepcopy(p.psf_column.value), deepcopy(p.psf_row.value)
+    C, R = np.meshgrid(c, r)
+    ar = p.psf(row=0, column=0)
+    x1, y1 = np.average(C, weights=ar), np.average(R, weights=ar)
+
+    dR, dC = np.mgrid[-0.5:0.5:11j, -0.5:0.5:11j]
+
+    shape = (100, 101)
+    corner = (-50, -50)
+    R, C = np.mgrid[: shape[0], : shape[1]]
+    R -= 50
+    C -= 50
+    x, y = np.zeros((2, np.prod(dC.shape)))
+    for idx, dc, dr in zip(range(np.prod(dC.shape)), dC.ravel(), dR.ravel()):
+        s = Scene(
+            locations=np.asarray([dr, dc])[None, :],
+            shape=shape,
+            corner=corner,
+            psf=p,
+        )
+        ar = s.model(np.ones(1))[0]
+        x[idx], y[idx] = np.average(C, weights=ar), np.average(R, weights=ar)
+    x, y = x.reshape(dC.shape), y.reshape(dR.shape)
+    assert np.allclose(dC + x1, x, atol=0.05)
+    assert np.allclose(dR + y1, y, atol=0.05)
+
+    x, y = np.zeros((2, np.prod(dC.shape)))
+    s = Scene(
+        locations=np.asarray([0, 0])[None, :],
+        shape=shape,
+        corner=corner,
+        psf=p,
+    )
+    for idx, dc, dr in zip(range(np.prod(dC.shape)), dC.ravel(), dR.ravel()):
+        delta_pos = (np.asarray([dr, dc])[None, :] * np.ones(2)[:, None]).T
+        ar = s.model(np.ones((1, 2)), delta_pos=delta_pos)[0]
+        x[idx], y[idx] = np.average(C, weights=ar), np.average(R, weights=ar)
+    x, y = x.reshape(dC.shape), y.reshape(dR.shape)
+    assert np.allclose(dC + x1, x, atol=0.05)
+    assert np.allclose(dR + y1, y, atol=0.05)

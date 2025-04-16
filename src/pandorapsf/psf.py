@@ -654,8 +654,8 @@ class PSF(object):
                 psf0 = self.psf(**kwargs)
         rb, cb, psfb = bin_prf(
             psf0,
-            self.psf_row.value,
-            self.psf_column.value,
+            self.psf_row.value + 0.5,
+            self.psf_column.value + 0.5,
             (row.value, column.value),
             normalize=False,
         )
@@ -663,15 +663,15 @@ class PSF(object):
         if gradients:
             _, _, dpsf0b = bin_prf(
                 dpsf0,
-                self.psf_row.value,
-                self.psf_column.value,
+                self.psf_row.value + 0.5,
+                self.psf_column.value + 0.5,
                 (row.value, column.value),
                 normalize=False,
             )
             _, _, dpsf1b = bin_prf(
                 dpsf1,
-                self.psf_row.value,
-                self.psf_column.value,
+                self.psf_row.value + 0.5,
+                self.psf_column.value + 0.5,
                 (row.value, column.value),
                 normalize=False,
             )

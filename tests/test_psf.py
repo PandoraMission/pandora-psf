@@ -1,5 +1,6 @@
 # Standard library
 import os
+from copy import deepcopy
 
 # Third-party
 import astropy.units as u
@@ -268,6 +269,42 @@ def test_nir_psf():
     p = PSF.from_name("nirda")
     assert hasattr(p, "trace_wavelength")
     assert hasattr(p, "trace_sensitivity")
+
+
+def test_aligned():
+    """Tests that the PRF function produces an image with the same center as the PSF function"""
+    p = PSF.from_name("visda_fallback")
+    c, r = deepcopy(p.psf_column.value), deepcopy(p.psf_row.value)
+    C, R = np.meshgrid(c, r)
+    psf0 = p.psf(row=0, column=0)
+    x1, y1 = np.average(C, weights=psf0), np.average(R, weights=psf0)
+
+    rb, cb, psfb = p.prf(row=0, column=0)
+    Cb, Rb = np.meshgrid(cb, rb)
+    xb, yb = np.average(Cb, weights=psfb), np.average(Rb, weights=psfb)
+    assert np.isclose(x1, xb, atol=0.01)
+    assert np.isclose(y1, yb, atol=0.01)
+
+
+def test_aligned_grid():
+    p = PSF.from_name("visda_fallback")
+    c, r = deepcopy(p.psf_column.value), deepcopy(p.psf_row.value)
+    C, R = np.meshgrid(c, r)
+    ar = p.psf(row=0, column=0)
+    x1, y1 = np.average(C, weights=ar), np.average(R, weights=ar)
+
+    dR, dC = np.mgrid[-0.5:0.5:11j, -0.5:0.5:11j]
+
+    x, y = np.zeros((2, np.prod(dC.shape)))
+    for idx, dc, dr in zip(range(np.prod(dC.shape)), dC.ravel(), dR.ravel()):
+        rb, cb, psfb = p.prf(row=dr, column=dc)
+        Cb, Rb = np.meshgrid(cb, rb)
+        x[idx], y[idx] = np.average(Cb, weights=psfb), np.average(
+            Rb, weights=psfb
+        )
+    x, y = x.reshape(dC.shape), y.reshape(dR.shape)
+    assert np.allclose(dC + x1, x, atol=0.05)
+    assert np.allclose(dR + y1, y, atol=0.05)
 
 
 # Needs to test the `extrapolate` funcionality
