@@ -281,7 +281,9 @@ def test_aligned():
 
     rb, cb, psfb = p.prf(row=0, column=0)
     Cb, Rb = np.meshgrid(cb, rb)
-    xb, yb = np.average(Cb, weights=psfb), np.average(Rb, weights=psfb)
+    xb, yb = np.average(Cb + 0.5, weights=psfb), np.average(
+        Rb + 0.5, weights=psfb
+    )
     assert np.isclose(x1, xb, atol=0.01)
     assert np.isclose(y1, yb, atol=0.01)
 
@@ -299,8 +301,9 @@ def test_aligned_grid():
     for idx, dc, dr in zip(range(np.prod(dC.shape)), dC.ravel(), dR.ravel()):
         rb, cb, psfb = p.prf(row=dr, column=dc)
         Cb, Rb = np.meshgrid(cb, rb)
-        x[idx], y[idx] = np.average(Cb, weights=psfb), np.average(
-            Rb, weights=psfb
+        x[idx], y[idx] = (
+            np.average(Cb + 0.5, weights=psfb),
+            np.average(Rb + 0.5, weights=psfb),
         )
     x, y = x.reshape(dC.shape), y.reshape(dR.shape)
     assert np.allclose(dC + x1, x, atol=0.05)

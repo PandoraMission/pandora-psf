@@ -301,7 +301,10 @@ def test_aligned():
             psf=p,
         )
         ar = s.model(np.ones(1))[0]
-        x[idx], y[idx] = np.average(C, weights=ar), np.average(R, weights=ar)
+        x[idx], y[idx] = (
+            np.average(C + 0.5, weights=ar),
+            np.average(R + 0.5, weights=ar),
+        )
     x, y = x.reshape(dC.shape), y.reshape(dR.shape)
     assert np.allclose(dC + x1, x, atol=0.05)
     assert np.allclose(dR + y1, y, atol=0.05)
@@ -316,7 +319,10 @@ def test_aligned():
     for idx, dc, dr in zip(range(np.prod(dC.shape)), dC.ravel(), dR.ravel()):
         delta_pos = (np.asarray([dr, dc])[None, :] * np.ones(2)[:, None]).T
         ar = s.model(np.ones((1, 2)), delta_pos=delta_pos)[0]
-        x[idx], y[idx] = np.average(C, weights=ar), np.average(R, weights=ar)
+        x[idx], y[idx] = (
+            np.average(C + 0.5, weights=ar),
+            np.average(R + 0.5, weights=ar),
+        )
     x, y = x.reshape(dC.shape), y.reshape(dR.shape)
     assert np.allclose(dC + x1, x, atol=0.05)
     assert np.allclose(dR + y1, y, atol=0.05)
