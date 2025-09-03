@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.0
+
+- Updated to use new version of pandorasat and pandoraref
+
 ## v0.6.0
 
 - Fixed bug where PRF function provided PSF with an in center

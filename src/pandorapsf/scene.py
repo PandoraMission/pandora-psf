@@ -466,11 +466,7 @@ class TraceScene(Scene):
         self.ntargets = len(self.locations)
         self.rb, self.cb, self.prf = [], [], []
         if wavelength is None:
-            wavelength = np.interp(
-                np.arange(-150, 70, 0.25),
-                self.psf.trace_pixel.value,
-                self.psf.trace_wavelength,
-            )
+            wavelength = self.psf.trace_wavelength
         self.wavelength = u.Quantity(wavelength, u.micron)
         self.pixel = np.interp(
             wavelength, self.psf.trace_wavelength, self.psf.trace_pixel

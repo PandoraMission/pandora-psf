@@ -3480,15 +3480,35 @@ files = [
 ]
 
 [[package]]
-name = "pandorasat"
-version = "0.7.0"
+name = "pandoraref"
+version = "0.1.3"
 description = ""
 optional = false
 python-versions = "<3.13,>=3.9"
 groups = ["main"]
 files = [
-    {file = "pandorasat-0.7.0-py3-none-any.whl", hash = "sha256:7201ff0ad7999e7330ff446631e6f0f1d53457cc641e85c42024f1070e670b1b"},
-    {file = "pandorasat-0.7.0.tar.gz", hash = "sha256:017511fe13a26536621ad60a0b52118b976d3bd8ed8793e6ad5467a6ac9d74f7"},
+    {file = "pandoraref-0.1.3-py3-none-any.whl", hash = "sha256:98f3e74662c8d16bee1fcb8266ac387a9ba8ec5a5523bc7c7fcee3bdd1f4e695"},
+    {file = "pandoraref-0.1.3.tar.gz", hash = "sha256:f456bc2bcf6b49bbebba89bb0741f7b67211568dc3ed5e2061395c2e957125fd"},
+]
+
+[package.dependencies]
+appdirs = ">=1.4.4,<2.0.0"
+astropy = ">=6.0.0"
+numpy = ">=1.2"
+pandas = ">=2.2.3,<3.0.0"
+pandorasat = ">=0.11.0"
+rich = ">=13.9.4,<14.0.0"
+
+[[package]]
+name = "pandorasat"
+version = "0.12.1"
+description = ""
+optional = false
+python-versions = "<3.13,>=3.9"
+groups = ["main"]
+files = [
+    {file = "pandorasat-0.12.1-py3-none-any.whl", hash = "sha256:e85dc2106468601e48184f5eba81ee2a799f5ace1274731a543748fcebaa51fc"},
+    {file = "pandorasat-0.12.1.tar.gz", hash = "sha256:ccc96bbcef1f138a5353c40ae460f849c07dd7c1d7ce8fa6226953c470c7f968"},
 ]
 
 [package.dependencies]
@@ -3499,10 +3519,12 @@ matplotlib = ">=3.8.0"
 numpy = ">=1.26.0"
 openpyxl = ">=3.1.5,<4.0.0"
 pandas = {version = ">=2.2.3,<3.0.0", extras = ["tabulate"]}
-pyarrow = "<17.0.0"
-pysynphot = ">=2.0.0"
+pandoraref = ">=0.1.3"
+pyarrow = "<20.0.0"
 rich = ">=13.0.0"
 scipy = ">=1.11.2"
+stsynphot = ">=1.3.0"
+synphot = ">=1.3.0"
 tabulate = ">=0.9.0,<0.10.0"
 tqdm = ">=4.60.1"
 
@@ -3916,23 +3938,6 @@ files = [
 
 [package.extras]
 diagrams = ["jinja2", "railroad-diagrams"]
-
-[[package]]
-name = "pysynphot"
-version = "2.0.0"
-description = "Python Synthetic Photometry Utilities"
-optional = false
-python-versions = ">=3.6"
-groups = ["main"]
-files = [
-    {file = "pysynphot-2.0.0.tar.gz", hash = "sha256:45c29f69248ec8a641c38625d11409dd2411ea1d6faffd8c3b44da354c4d22e7"},
-]
-
-[package.dependencies]
-astropy = "*"
-beautifulsoup4 = "*"
-numpy = "*"
-six = "*"
 
 [[package]]
 name = "pytest"
@@ -4840,6 +4845,132 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "stsynphot"
+version = "1.3.0"
+description = "Synthetic photometry for HST"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "python_version < \"3.11\""
+files = [
+    {file = "stsynphot-1.3.0-py3-none-any.whl", hash = "sha256:b1a3e6a9e2e2146b0ffb0e239e7776282518d6d3a4313171fa8fc6713e0ab72e"},
+    {file = "stsynphot-1.3.0.tar.gz", hash = "sha256:451e8f9b825f625782458f9b2a86d9bbf405f4120de99e6b80f9b09a86dfa396"},
+]
+
+[package.dependencies]
+astropy = ">=5"
+beautifulsoup4 = "*"
+numpy = ">=1.20"
+scipy = ">=1.6"
+synphot = ">=1.1"
+
+[package.extras]
+all = ["matplotlib"]
+docs = ["sphinx-astropy"]
+test = ["ci-watson", "pytest-astropy"]
+
+[[package]]
+name = "stsynphot"
+version = "1.4.0"
+description = "Synthetic photometry for HST"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.11\""
+files = [
+    {file = "stsynphot-1.4.0-py3-none-any.whl", hash = "sha256:43151bb4e2376e2e0743f882639f1a1c1cf2e8a9ce479d96b179636a07f50039"},
+    {file = "stsynphot-1.4.0.tar.gz", hash = "sha256:32bd5af99b149983be78483dfd9c202bf95a07124133899f9975ec191e7daa0b"},
+]
+
+[package.dependencies]
+astropy = ">=6"
+beautifulsoup4 = "*"
+numpy = ">=1.23"
+scipy = ">=1.9"
+synphot = ">=1.1"
+
+[package.extras]
+all = ["matplotlib"]
+docs = ["sphinx-astropy"]
+test = ["ci-watson", "pytest-astropy"]
+
+[[package]]
+name = "synphot"
+version = "1.3.post0"
+description = "Synthetic photometry"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "python_version < \"3.11\""
+files = [
+    {file = "synphot-1.3.post0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ddc6e57c30e557d5812ccc4d22b7010066106f4a38f70a24cee41ed36a626289"},
+    {file = "synphot-1.3.post0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ad807205798cdaf4ec0750008d3a5c9f9f4d778aff30c5d9c937ea362dd6758f"},
+    {file = "synphot-1.3.post0-cp310-cp310-win_amd64.whl", hash = "sha256:2be25f8c8a46bfc0990f8ffb5be6c58d240c708b9810ed16a177d105650f2091"},
+    {file = "synphot-1.3.post0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7bb44041ea5b9305da6d0c08a8cb53b2106acf874f1a4bf9aae252fe9cc5ed87"},
+    {file = "synphot-1.3.post0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4619980b5ab64a350c8d867405262869bfdcaf00ef8a9da9fd7c544d1feb2f94"},
+    {file = "synphot-1.3.post0-cp311-cp311-win_amd64.whl", hash = "sha256:9f0fce71764100e65c8ef9c4dc084bdab0aa5772d07d0a148b6f75912ad19dd9"},
+    {file = "synphot-1.3.post0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a45317dd194bd3f4d6157c57705f784fb5aba4529f90a19135a1eb2ef496a41e"},
+    {file = "synphot-1.3.post0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e2f1c709e45123dda30845453c65c27783d7f56de31b1b272f9e1d7d929a9ce4"},
+    {file = "synphot-1.3.post0-cp312-cp312-win_amd64.whl", hash = "sha256:90b1a5f94c56f9539472bf94f61371685761fe94292a0636b533a41f6cf7f777"},
+    {file = "synphot-1.3.post0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:a8996adc2e5a04a4a9736ea1fe593b8ec30aff0ff4bb3a94a52fffc5bedc0f38"},
+    {file = "synphot-1.3.post0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:56e41ad32c301e013e2061b3e0072b97adfd5e8e301dbfb28a23e1adc254fedf"},
+    {file = "synphot-1.3.post0-cp39-cp39-win_amd64.whl", hash = "sha256:987ad2ada32faf0682eeef2f3f9aa82317aac36c5172d226fc98e707a59054d8"},
+    {file = "synphot-1.3.post0.tar.gz", hash = "sha256:5bf3f8e415ac83d44c0727fb7257db33b09262af850c0cf1100f2a70a319a814"},
+]
+
+[package.dependencies]
+astropy = ">=5"
+numpy = ">=1.20"
+scipy = ">=1.6"
+
+[package.extras]
+all = ["dust-extinction", "specutils (>=0.7)"]
+docs = ["matplotlib", "sphinx-astropy"]
+test = ["pytest-astropy"]
+
+[[package]]
+name = "synphot"
+version = "1.6.0"
+description = "Synthetic photometry"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.11\""
+files = [
+    {file = "synphot-1.6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1a4622415e2a781f8a95950ed9dc4b5ff147e1890ebf5a66daa0e3c5e3e3c183"},
+    {file = "synphot-1.6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:213cddf1ba2a5239484594966514cde4ed8eb969b23438eddebeee55983b842d"},
+    {file = "synphot-1.6.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9af8d1d61827da8ec9c76c73b0554387746e0758ee86ebe093307a5173ecbf83"},
+    {file = "synphot-1.6.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:d87c96263eb0b91da0c5d40cf1d17fd766a7e4a1ff11e9ed6ed088e508a9778c"},
+    {file = "synphot-1.6.0-cp310-cp310-win_amd64.whl", hash = "sha256:e8b1363cb66f841a215269e8fc98a9767a8c36ef25b9135bed03a1cdc0bd94df"},
+    {file = "synphot-1.6.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:cfa8445d3c420a888061ccde1a7ffb061539c26414bbc44d7ab6dbfc5bac7df6"},
+    {file = "synphot-1.6.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f06cce0dbffdd0ef3dbde6fabfa7f80b039f17eb4ef429adefefd3d9b41969cc"},
+    {file = "synphot-1.6.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6127ed3234f796551af21a9bbabaf7709a1067682484725e41bb85bb26be6a42"},
+    {file = "synphot-1.6.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:f821677fde9a776949348e3618aeda1da613858a109d11b70215abb862a015e6"},
+    {file = "synphot-1.6.0-cp311-cp311-win_amd64.whl", hash = "sha256:80b2ae59b96de738a3a75290629f5d9823ece90f85b86cb403e614e3eb854f86"},
+    {file = "synphot-1.6.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:5a1f7727824fd58432facb4ff70be5a669e1306452607e9a37515e87a9e94ba9"},
+    {file = "synphot-1.6.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c4966e9857a550f3d091dc78e32b22b562d0a888de9fd9a92bcbd894749067f0"},
+    {file = "synphot-1.6.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:142c32c9bde08633e56b16f0addc5658cac8aadbc3546a48a35756885676f4d2"},
+    {file = "synphot-1.6.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:7d945fdbb9ce804ce0e319ab77c41e0855c2a09d85ee74436f8acd25567af417"},
+    {file = "synphot-1.6.0-cp312-cp312-win_amd64.whl", hash = "sha256:9b5c61d6fe22c575f2c9d04cc86ada8b0b26d897214f4651935ea6f208803962"},
+    {file = "synphot-1.6.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:ac75c7d078adace98858b8c134cdf952c916430ecf96713373cf0fb1c43be106"},
+    {file = "synphot-1.6.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:30d99af02bcc4f32fa620c46695fac665492252774f63399dd906b22143af71d"},
+    {file = "synphot-1.6.0-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5ef837635dbaf41304a5ac51ee2770be0e391d59155318bbaa705a79c3fa5ac2"},
+    {file = "synphot-1.6.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3812f9a0380f64ff8ee8efa5e956f88ccf3b7fe24262da0294001b9bdcfee568"},
+    {file = "synphot-1.6.0-cp313-cp313-win_amd64.whl", hash = "sha256:fb2e31137910b8fa0a6f7ebc13a32061c9df2f1703e2bd75746c1e68593c3a1d"},
+    {file = "synphot-1.6.0.tar.gz", hash = "sha256:999c12191607cd0669752417d890001aa0e44c44e541dfb041c26cd766898a6d"},
+]
+
+[package.dependencies]
+astropy = ">=6"
+numpy = ">=1.23"
+scipy = ">=1.9"
+
+[package.extras]
+all = ["dust-extinction", "specutils (>=1.10)"]
+docs = ["matplotlib", "sphinx-astropy"]
+test = ["pytest-astropy"]
+
+[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -5201,4 +5332,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "8e6c2d1a7d02525e2c6d044441db38df602b44a63590d4620bdbe0eb2540e076"
+content-hash = "16eaeb18795a6825cf2d60df3d4760f7462422b949d837006a637b7f1de3d4e2"

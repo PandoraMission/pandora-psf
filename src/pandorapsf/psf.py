@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 import pandorasat as ps
 from astropy.io import fits
-from pandorasat.utils import get_phoenix_model
+from pandorasat.phoenix import get_phoenix_model
 
 from . import DATADIR, PACKAGEDIR, logger
 from .docstrings import add_docstring
@@ -128,12 +128,9 @@ class PSF(object):
                     [np.hstack([dim, list(dims - set([dim]))]) + 2, 0, 1]
                 )
                 deshape = [
-                    np.where(reshape == idx)[0][0]
-                    for idx in range(len(reshape))
+                    np.where(reshape == idx)[0][0] for idx in range(len(reshape))
                 ]
-                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(
-                    deshape
-                )
+                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(deshape)
 
                 midpoint = getattr(self, self.dimension_names[dim] + "1d")
                 midpoint = midpoint[len(midpoint) // 2]
@@ -199,9 +196,7 @@ class PSF(object):
             dim = np.where(np.in1d(dnms2, key))[0][0]
             for dnm in dnms:
                 X[dnm] = X[dnm].transpose(
-                    np.hstack(
-                        [dim, list(set(np.arange(len(dnms2))) - set([dim]))]
-                    )
+                    np.hstack([dim, list(set(np.arange(len(dnms2))) - set([dim]))])
                 )[0]
             dnms2.pop(dim)
         psf2 = PSF(
@@ -266,9 +261,7 @@ class PSF(object):
                 np.hstack(
                     [
                         0,
-                        *np.interp(
-                            x, wavelength.value, spectrum.value * sens.value
-                        ),
+                        *np.interp(x, wavelength.value, spectrum.value * sens.value),
                         0,
                     ]
                 ),
@@ -415,15 +408,22 @@ class PSF(object):
         """Adds the expected trace parameters from pandorasat"""
         if self.name == "visda":
             detector = ps.VisibleDetector()
+            self._trace_wavelength = np.arange(0.25, 0.8, 0.01) * u.micron
+            self._trace_pixel = np.zeros(len(self._trace_wavelength)) * u.pixel
+            self._trace_sensitivity = detector.reference.get_sensitivity(
+                self._trace_wavelength
+            )
         elif self.name == "nirda":
             detector = ps.NIRDetector()
+            self._trace_pixel = np.arange(-150, 70, 0.5) * u.pixel
+            self._trace_wavelength = detector.reference.get_wavelength_position(
+                self._trace_pixel
+            )
+            self._trace_sensitivity = detector.reference.get_sensitivity(
+                self._trace_wavelength
+            )
         else:
             raise ValueError(f"Can not parse name {self.name}.")
-        self._trace_sensitivity, self._trace_pixel, self._trace_wavelength = (
-            detector.trace_sensitivity,
-            detector.trace_pixel,
-            detector.trace_wavelength,
-        )
 
     @property
     def trace_sensitivity(self):
@@ -483,11 +483,7 @@ class PSF(object):
         # This should make the array ROW-major
         replace = {"x": "column", "y": "row"}
         dimension_names = [
-            (
-                replace[i.name.lower()]
-                if i.name.lower() in replace
-                else i.name.lower()
-            )
+            (replace[i.name.lower()] if i.name.lower() in replace else i.name.lower())
             for i in hdu[2:]
         ]
 
@@ -504,20 +500,13 @@ class PSF(object):
 
         # We expect the images to be in the first few dimensions
         psf_flux = hdu[1].data
-        if (
-            np.asarray(psf_flux.shape)[l] == np.asarray(hdu[2].data.shape)
-        ).all():
-            psf_flux = psf_flux.transpose(
-                np.hstack([1 + l[-1] + 1, l[-1] + 1, *l])
-            )
+        if (np.asarray(psf_flux.shape)[l] == np.asarray(hdu[2].data.shape)).all():
+            psf_flux = psf_flux.transpose(np.hstack([1 + l[-1] + 1, l[-1] + 1, *l]))
         else:
             psf_flux = psf_flux.transpose(np.hstack([1, 0, *l + 2]))
         dimension_names = [dimension_names[l1] for l1 in l]
         dimension_units = [u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
-        X = [
-            hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"])
-            for l1 in l + 2
-        ]
+        X = [hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
 
         return PSF(
             name=name,
@@ -559,9 +548,7 @@ class PSF(object):
             dim = np.where(l)[0][0]
             value = u.Quantity(value, self.dimension_units[dim])
             bounds = getattr(self, self.dimension_names[dim] + "_bounds")
-            if (value.value < bounds[0].value) | (
-                value.value > bounds[1].value
-            ):
+            if (value.value < bounds[0].value) | (value.value > bounds[1].value):
                 if not self.extrapolate:
                     raise OutOfBoundsError(
                         f"Point ({value}) out of {self.dimension_names[dim]} bounds."
