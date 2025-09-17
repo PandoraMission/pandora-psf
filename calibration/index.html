@@ -8,26 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://pandoramission.github.io/pandora-psf/">
+        <link rel="canonical" href="https://pandoramission.github.io/pandora-psf/calibration/">
       
       
+        <link rel="prev" href="../example-tracescene/">
       
-        <link rel="next" href="uploading-new-files/">
+      
+        <link rel="next" href="building-new-data-driven-prf-models/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
-        <title>Start Here - pandorapsf</title>
+        <title>Calibration Tutorials - pandorapsf</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.8608ea7d.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -46,9 +48,9 @@
       
     
     
-      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pandorapsf" class="md-skip">
+        <a href="#calibration-tutorials" class="md-skip">
           Skip to content
         </a>
       
@@ -88,7 +90,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="pandorapsf" class="md-header__button md-logo" aria-label="pandorapsf" data-md-component="logo">
+    <a href=".." title="pandorapsf" class="md-header__button md-logo" aria-label="pandorapsf" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 8.5a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5A1.5 1.5 0 0 0 14 8.5m0 4a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5M10 17a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-8.5A1.5 1.5 0 0 0 8.5 10a1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5A1.5 1.5 0 0 0 10 8.5m4 12a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m0-3.5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m7-3.5a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5M18 5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 8a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m-8-.5A1.5 1.5 0 0 0 8.5 14a1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5M10 7a1 1 0 0 0 1-1 1 1 0 0 0-1-1 1 1 0 0 0-1 1 1 1 0 0 0 1 1m0-3.5a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5m0 17a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m-7-7a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m11-10a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5M14 7a1 1 0 0 0 1-1 1 1 0 0 0-1-1 1 1 0 0 0-1 1 1 1 0 0 0 1 1m7 3.5a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5M6 5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1M3 9.5a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5M6 9a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 8a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1"/></svg>
@@ -108,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Start Here
+              Calibration Tutorials
             
           </span>
         </div>
@@ -223,13 +225,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="." class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href=".." class="md-tabs__link">
           
   
   Home
@@ -247,7 +247,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="PSF/" class="md-tabs__link">
+        <a href="../PSF/" class="md-tabs__link">
           
   
   API
@@ -265,7 +265,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="example-psf/" class="md-tabs__link">
+        <a href="../example-psf/" class="md-tabs__link">
           
   
   Tutorials
@@ -279,11 +279,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="calibration/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   Calibration
@@ -316,7 +318,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="pandorapsf" class="md-nav__button md-logo" aria-label="pandorapsf" data-md-component="logo">
+    <a href=".." title="pandorapsf" class="md-nav__button md-logo" aria-label="pandorapsf" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 8.5a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5A1.5 1.5 0 0 0 14 8.5m0 4a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5M10 17a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-8.5A1.5 1.5 0 0 0 8.5 10a1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5A1.5 1.5 0 0 0 10 8.5m4 12a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m0-3.5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m7-3.5a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5M18 5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 8a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m-8-.5A1.5 1.5 0 0 0 8.5 14a1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5M10 7a1 1 0 0 0 1-1 1 1 0 0 0-1-1 1 1 0 0 0-1 1 1 1 0 0 0 1 1m0-3.5a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5m0 17a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m-7-7a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5m11-10a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5M14 7a1 1 0 0 0 1-1 1 1 0 0 0-1-1 1 1 0 0 0-1 1 1 1 0 0 0 1 1m7 3.5a.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5M6 5a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1M3 9.5a.5.5 0 0 0-.5.5.5.5 0 0 0 .5.5.5.5 0 0 0 .5-.5.5.5 0 0 0-.5-.5M6 9a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0 8a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1m0-4a1 1 0 0 0-1 1 1 1 0 0 0 1 1 1 1 0 0 0 1-1 1 1 0 0 0-1-1"/></svg>
@@ -343,30 +345,25 @@
       
   
   
-    
   
   
-  
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -378,7 +375,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Home
@@ -389,31 +386,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Start Here
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -423,77 +399,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#obtaining-psf-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Obtaining PSF files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Dependencies
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -506,7 +411,7 @@
   
   
     <li class="md-nav__item">
-      <a href="uploading-new-files/" class="md-nav__link">
+      <a href="../uploading-new-files/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -576,7 +481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="PSF/" class="md-nav__link">
+      <a href="../PSF/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -598,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="PRF/" class="md-nav__link">
+      <a href="../PRF/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -620,7 +525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Scene/" class="md-nav__link">
+      <a href="../Scene/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -690,7 +595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="example-psf/" class="md-nav__link">
+      <a href="../example-psf/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -712,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="example-scene/" class="md-nav__link">
+      <a href="../example-scene/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -734,7 +639,7 @@
   
   
     <li class="md-nav__item">
-      <a href="example-roiscene/" class="md-nav__link">
+      <a href="../example-roiscene/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -756,7 +661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="example-tracescene/" class="md-nav__link">
+      <a href="../example-tracescene/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -782,25 +687,30 @@
       
   
   
+    
   
   
+  
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -812,7 +722,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Calibration
@@ -823,10 +733,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="calibration/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -836,6 +755,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -848,7 +768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="calibration/building-new-data-driven-prf-models/" class="md-nav__link">
+      <a href="building-new-data-driven-prf-models/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -890,65 +810,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuration Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#obtaining-psf-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Obtaining PSF files
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      Dependencies
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -966,84 +827,8 @@
   
 
 
-<p><a href="https://github.com/pandoramission/pandora-psf/actions/workflows/black.yml"><img src="https://github.com/pandoramission/pandora-psf/workflows/black/badge.svg" alt="black status"/></a> <a href="https://github.com/pandoramission/pandora-psf/actions/workflows/flake8.yml"><img src="https://github.com/pandoramission/pandora-psf/workflows/flake8/badge.svg" alt="flake8 status"/></a> <a href="https://pandoramission.github.io/pandora-psf/"><img alt="Generic badge" src="https://img.shields.io/badge/documentation-live-blue.svg" /></a>
-<a href="https://pypi.org/project/pandorapsf/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/pandorapsf" /></a>
-<a href="https://pypi.org/project/pandorapsf/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/pandorapsf" /></a></p>
-<h1 id="pandorapsf">pandorapsf</h1>
-<p>This is a standalone tool for working with the NASA Pandora Mission PSF. This can be used to model the expected distribution of starlight on the detector.</p>
-<h2 id="installation">Installation</h2>
-<p>To install you can use</p>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pandorapsf<span class="w"> </span>--upgrade
-</span></code></pre></div>
-<p>You should update your package often, as we frequently put out new versions with updated Current Best Estimates, and some limited new functionality. Check your version number using</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ppsf</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">ppsf</span><span class="o">.</span><span class="n">__version__</span>
-</span></code></pre></div>
-<h2 id="configuration">Configuration</h2>
-<p><code>pandorapsf</code> has a configuration system. This determines where <code>pandorapsf</code> will expect your data to be stored.</p>
-<p>Users can find where the configuration file is stored using</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">CONFIGDIR</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">CONFIGDIR</span><span class="p">)</span>
-</span></code></pre></div>
-<p>You can display your current configuration using</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">display_config</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">display_config</span><span class="p">()</span>
-</span></code></pre></div>
-<p>You can access particular configuration parameters using</p>
-<p>You can display your current configuration, for example use the following to find the <code>data_dir</code> parameter.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">config</span><span class="p">[</span><span class="s2">&quot;SETTINGS&quot;</span><span class="p">][</span><span class="s2">&quot;data_dir&quot;</span><span class="p">]</span>
-</span></code></pre></div>
-<p>You can update the configuration either by updating the <code>config.ini</code> file in your <code>CONFIRDIR</code> or you can update them in your environment using <code>save_config</code>, e.g.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_config</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">config</span><span class="p">[</span><span class="s2">&quot;SETTINGS&quot;</span><span class="p">][</span><span class="s2">&quot;log_level&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;INFO&quot;</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">save_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-</span></code></pre></div>
-<p>If you want to reset back to defaults you can use</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pandorapsf</span><span class="w"> </span><span class="kn">import</span> <span class="n">reset_config</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">reset_config</span><span class="p">()</span>
-</span></code></pre></div>
-<h3 id="configuration-parameters">Configuration Parameters</h3>
-<p>Below is a table of all the configuration parameters in <code>pandorapsf</code> and their current defaults</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">(section, key)</th>
-<th style="text-align: left;">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'data_dir')</td>
-<td style="text-align: left;">Where data will be stored for the package. This includes ~0.5Gb of PSF files which will be downloaded.</td>
-</tr>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'log_level')</td>
-<td style="text-align: left;">Default level for the logger. Change this to make the tool more or less verbose by default.</td>
-</tr>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'vis_psf_download_location')</td>
-<td style="text-align: left;">Where the visible channel PSF file is located online for download.</td>
-</tr>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'nir_psf_download_location')</td>
-<td style="text-align: left;">Where the NIR channel PSF file is located online for download.</td>
-</tr>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'vis_psf_creation_date')</td>
-<td style="text-align: left;">This is the string provided in the "CREATION" keyword of the PSF fits file header. This will be used to verify that the PSF file is the correct version.</td>
-</tr>
-<tr>
-<td style="text-align: left;">('SETTINGS', 'nir_psf_creation_date')</td>
-<td style="text-align: left;">This is the string provided in the "CREATION" keyword of the PSF fits file header. This will be used to verify that the PSF file is the correct version.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="obtaining-psf-files">Obtaining PSF files</h3>
-<p>When you install this tool you will additionally need to download the PSF grid online. This grid will be updated periodically as we improve our estimates of Pandora's performance. <code>pandorapsf</code> will download the files for you and put them in your configured data directory.</p>
-<p>As we release new versions of <code>pandorapsf</code>, the default configuration will change to point to new PSF files that contain our new best estimates. Keep your <code>pandorapsf</code> version up to date to ensure you have the most recent changes.</p>
-<h2 id="dependencies">Dependencies</h2>
-<p>This tool depends on <a href="https://github.com/christinahedges/sparse3d"><code>sparse3d</code></a> which implements the sparse matrix maths needed to quickly model scenes.</p>
+<h1 id="calibration-tutorials">Calibration Tutorials</h1>
+<p>This section includes tutorials on how to create certain reference products from flight data, including new PRF models.</p>
 
 
 
@@ -1090,12 +875,12 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["content.code.copy", "content.code.annotate", "navigation.tabs", "navigation.sections"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "content.code.annotate", "navigation.tabs", "navigation.sections"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
       
-        <script src="javascripts/mathjax.js"></script>
+        <script src="../javascripts/mathjax.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
