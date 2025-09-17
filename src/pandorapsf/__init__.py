@@ -39,8 +39,10 @@ def reset_config():
         "data_dir": user_data_dir("pandorapsf"),
         "log_level": "WARNING",
         "vis_psf_download_location": "https://zenodo.org/records/15101982/files/pandora_vis_psf.fits?download=1",
+        "vis_prf_download_location": "https://zenodo.org/records/17145119/files/pandora_vis_prf.fits?download=1",
         "nir_psf_download_location": "https://zenodo.org/records/15101982/files/pandora_nir_psf.fits?download=1",
         "vis_psf_creation_date": "2025-03-28T10:30:27.329441",
+        "vis_prf_creation_date": "2025-09-17T17:57:40.946",
         "nir_psf_creation_date": "2025-03-28T10:06:08.770326",
     }
 
@@ -112,5 +114,6 @@ DATADIR = config["SETTINGS"]["data_dir"]
 os.makedirs(DATADIR, exist_ok=True)
 logger.setLevel(config["SETTINGS"]["log_level"])
 
+from .prf import PRF  # noqa: F401, E402
 from .psf import PSF  # noqa: F401, E402
 from .scene import ROIScene, Scene, TraceScene  # noqa: F401, E402

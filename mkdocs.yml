@@ -3,14 +3,21 @@ site_url: https://pandoramission.github.io/pandora-psf/
 docs_dir: docs
 
 nav:
-  - Home: README.md
-  - PSF API: PSF.md
-  - Scene API: Scene.md
-  - Example1: example-psf.ipynb
-  - Example2: example-scene.ipynb
-  - Example3: example-roiscene.ipynb
-  - Example4: example-tracescene.ipynb
-  - Updating Instructions: uploading-new-files.ipynb
+  - Home: 
+    - Start Here: README.md
+    - Updating Instructions: uploading-new-files.ipynb
+  - API:
+    - PSF API: PSF.md
+    - PRF API: PRF.md
+    - Scene API: Scene.md
+  - Tutorials:
+    - Example1: example-psf.ipynb
+    - Example2: example-scene.ipynb
+    - Example3: example-roiscene.ipynb
+    - Example4: example-tracescene.ipynb
+  - Calibration:
+    - calibration/README.md
+    - calibration/building-new-data-driven-prf-models.ipynb
   
 theme:
   name: "material"
@@ -19,6 +26,8 @@ theme:
   features:
     - content.code.copy
     - content.code.annotate 
+    - navigation.tabs
+    - navigation.sections
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"

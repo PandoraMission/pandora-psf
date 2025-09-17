@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from astropy.constants import c, h
 from astropy.io import fits
+from scipy.interpolate import RectBivariateSpline
 from scipy.io import loadmat
 from scipy.ndimage import gaussian_filter
 
@@ -57,6 +58,47 @@ def verify_vis_psf_files():
                 for hdu in hdulist
             ]
         ).writeto(DATADIR + "/pandora_vis_psf.fits", overwrite=True)
+
+
+@lru_cache()
+def verify_vis_prf_files():
+    """Check that the PRF files exist, and have the right times in them."""
+    if not os.path.isfile(f"{DATADIR}/pandora_vis_prf.fits"):
+        # Third-party
+        from astropy.utils.data import download_file  # noqa: E402
+
+        # Download vis PSF
+        logger.warning("No PRF file found. Downloading 20MB VIS PRF file.")
+        p = download_file(
+            config["SETTINGS"]["vis_prf_download_location"],
+            pkgname="pandora-psf",
+        )
+        shutil.move(p, f"{DATADIR}/pandora_vis_prf.fits")
+        logger.warning(
+            f"VIS PSF downloaded to {DATADIR}/pandora_vis_prf.fits."
+        )
+
+    hdulist = fits.open(DATADIR + "/pandora_vis_prf.fits")
+    hdulist.verify("exception")
+    if not (
+        hdulist[0].header["CREATED"]
+        == config["SETTINGS"]["vis_prf_creation_date"]
+    ):
+        raise ValueError("Out of date visible PRF file.")
+
+    # uncompress any compressed images to speed up read operations
+    if np.any([isinstance(hdu, fits.CompImageHDU) for hdu in hdulist]):
+        logger.warning("PRF file is compressed, uncompressing on disk.")
+        fits.HDUList(
+            [
+                (
+                    fits.ImageHDU(hdu.data, name=hdu.name)
+                    if isinstance(hdu, fits.CompImageHDU)
+                    else hdu
+                )
+                for hdu in hdulist
+            ]
+        ).writeto(DATADIR + "/pandora_vis_prf.fits", overwrite=True)
 
 
 @lru_cache()
@@ -851,6 +893,22 @@ def bin_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
         np.asarray(list(df2.columns)),
         df2.values,
     )
+
+
+def interp_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
+    r, c = (
+        np.arange(np.floor(psf_row[0]), np.ceil(psf_row[-1]), 1) + location[0],
+        np.arange(np.floor(psf_column[0]), np.ceil(psf_column[-1]), 1)
+        + location[1],
+    )
+    prf_im = RectBivariateSpline(
+        psf_row.astype(float) + location[0],
+        psf_column.astype(float) + location[1],
+        psf0,
+    )(r, c, grid=True)
+    if normalize:
+        prf_im /= prf_im.sum()
+    return r, c, prf_im
 
 
 def downsample(ar, n=2):
