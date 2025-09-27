@@ -17,7 +17,7 @@ from .psf import PSF
 from .utils import downsample as downsample_array
 from .utils import prep_for_add
 
-__all__ = ["ROIScene", "Scene", "TraceScene"]
+__all__ = ["ROIScene", "Scene", "TraceScene", "PixelTraceScene"]
 
 
 class Scene(object):
@@ -147,9 +147,7 @@ class Scene(object):
         if flux.ndim == 1:
             flux = flux[:, None]
         if flux.shape[0] != self.ntargets:
-            raise ValueError(
-                "`flux` must be an array with shape (ntargets x ntimes)."
-            )
+            raise ValueError("`flux` must be an array with shape (ntargets x ntimes).")
         # nt = flux.shape[1]
         if delta_pos is not None:
             delta_pos = deepcopy(delta_pos) * float(self.scale)
@@ -198,9 +196,7 @@ class Scene(object):
         else:
             return ar
 
-    def fit_images(
-        self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False
-    ):
+    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
         """Fit a stack of images with the PRF model"""
         if imgs.ndim == 2:
             imgs = imgs[None, :, :]
@@ -363,9 +359,7 @@ class ROIScene(Scene):
             ar = self.X.dot(flux)
         return ar
 
-    def fit_images(
-        self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False
-    ):
+    def fit_images(self, imgs, prior_mu=None, prior_sigma=None, fit_shifts=False):
         """Fit a stack of images with the PRF model"""
         if imgs.ndim == 3:
             imgs = imgs[:, None, :, :]
@@ -385,12 +379,12 @@ class ROIScene(Scene):
             np.arange(0, self.ROI_size[1]),
             indexing="ij",
         )
-        row = np.asarray(
-            [R + corner[0] for corner in self.ROI_corners]
-        ).transpose([1, 2, 0])
-        column = np.asarray(
-            [C + corner[1] for corner in self.ROI_corners]
-        ).transpose([1, 2, 0])
+        row = np.asarray([R + corner[0] for corner in self.ROI_corners]).transpose(
+            [1, 2, 0]
+        )
+        column = np.asarray([C + corner[1] for corner in self.ROI_corners]).transpose(
+            [1, 2, 0]
+        )
 
         for img in imgs.transpose([1, 0, 2, 3]):
             data = img.transpose([1, 2, 0])
@@ -569,10 +563,7 @@ class TraceScene(Scene):
         )
 
         bounds0 = np.asarray(
-            [
-                wav[0].value - dwav[0].value / 2
-                for wav, dwav in zip(wavs, dwavs)
-            ]
+            [wav[0].value - dwav[0].value / 2 for wav, dwav in zip(wavs, dwavs)]
         )
         bounds1 = np.hstack(
             [*bounds0[1:], wavs[-1][-1].value + dwavs[-1][-1].value / 2]
@@ -581,9 +572,7 @@ class TraceScene(Scene):
         self.wavs = wavs
         self.bounds = np.asarray([bounds0, bounds1])
         self.nwav = self.bounds.shape[1]
-        data, grad0, grad1 = np.zeros(
-            (3, len(pixs), len(self.locations), *self.shape)
-        )
+        data, grad0, grad1 = np.zeros((3, len(pixs), len(self.locations), *self.shape))
         res = get_chunked_data(self.locations * self.psf.scale, pixs, wavs)
         r = np.asarray([item["r"] for _, item in res.items()])
         c = np.asarray([item["c"] for _, item in res.items()])
@@ -807,9 +796,7 @@ class TraceScene(Scene):
         elif spectra.ndim == 2:
             spectra = spectra[:, :, None]
         elif spectra.ndim != 3:
-            raise ValueError(
-                "Pass a 3D array for flux (nwav, ntargets, ntime)."
-            )
+            raise ValueError("Pass a 3D array for flux (nwav, ntargets, ntime).")
         if (spectra.shape[0] != self.nwav) | (spectra.shape[1] != len(self)):
             raise ValueError("`spectra` must have shape (nwav, ntargets)")
         if delta_pos is not None:
@@ -819,9 +806,7 @@ class TraceScene(Scene):
             elif delta_pos.ndim != 2:
                 raise ValueError("Pass 2D array for delta_pos (2, ntime).")
 
-        ar = self._get_ar(
-            flux=np.vstack(spectra), delta_pos=delta_pos, quiet=quiet
-        )
+        ar = self._get_ar(flux=np.vstack(spectra), delta_pos=delta_pos, quiet=quiet)
 
         if self.scale == 1:
             return ar
@@ -836,3 +821,170 @@ class TraceScene(Scene):
             spectrum=spectrum,
             wavelength_grid=self.wavelength,
         )
+
+
+class PixelTraceScene(Scene):
+    """Special trace scene that has no wavelength information."""
+
+    def __init__(
+        self,
+        locations: npt.ArrayLike,
+        psf: PSF = None,
+        shape: Tuple = (400, 80),
+        corner: Tuple = (0, 0),
+        scale: int = 1,
+    ):
+        if locations.shape[1] != 2:
+            raise ValueError("`locations` must have shape (n, 2).")
+        self.locations = locations
+        if psf is None:
+            psf = PSF.from_name("nirda", scale=scale)
+        self.psf = psf
+        self.scale = self.psf.scale
+        self.shape = tuple(np.asarray(shape) * self.scale)
+        self.corner = tuple(np.asarray(corner) * self.scale)
+        self.ntargets = len(self.locations)
+        self.rb, self.cb, self.prf = [], [], []
+        self.pixel = self.psf.pixel1d
+        self.npix = len(self.pixel)
+        self._get_Xs(nbin=1)
+
+    def __repr__(self):
+        return f"TraceScene Object [{self.psf.__repr__()}]"
+
+    def _get_Xs(self, nbin=4):
+        def get_chunked_data(locations, pixels):
+            """Loops through pixel trace groups and gets each PRF element into a dictionary"""
+            res = {}
+            for pdx in range(len(pixels)):
+                for location in locations:
+                    pix = pixels[pdx].value
+                    key = f"({location[0]}, {location[1]}) {pdx}"
+                    res[key] = {
+                        pix: self.psf.prf(
+                            row=location[0] + pixels[pdx].value,
+                            column=location[1],
+                            pixel=pixels[pdx].value,
+                            gradients=True,
+                        )
+                    }
+                    r = (res[key][pix][0].min(), res[key][pix][0].max())
+                    c = (res[key][pix][1].min(), res[key][pix][1].max())
+                    res[key]["r"] = r
+                    res[key]["c"] = c
+            return res
+
+        def collapse(dic, shape):
+            """For each location and pixel group, collapses the data into a single, small image"""
+            rshape, cshape = shape
+            corner = (dic["r"][0], dic["c"][0])
+            ar, dar0, dar1 = np.zeros((3, rshape, cshape))
+            for key, item in dic.items():
+                if key in ["r", "c"]:
+                    continue
+                rb, cb, arb = prep_for_add(
+                    row=item[0],
+                    column=item[1],
+                    prf=item[2],
+                    shape=(rshape, cshape),
+                    corner=corner,
+                )
+                _, _, dar0b = prep_for_add(
+                    row=item[0],
+                    column=item[1],
+                    prf=item[3],
+                    shape=(rshape, cshape),
+                    corner=corner,
+                )
+                _, _, dar1b = prep_for_add(
+                    row=item[0],
+                    column=item[1],
+                    prf=item[4],
+                    shape=(rshape, cshape),
+                    corner=corner,
+                )
+                ar[rb, cb] += arb
+                dar0[rb, cb] += dar0b
+                dar1[rb, cb] += dar1b
+
+            R, C = np.mgrid[:rshape, :cshape].astype(float)
+            R += corner[0]
+            C += corner[1]
+            corr = np.sum(ar)
+
+            return (
+                R,
+                C,
+                ar / corr,
+                (dar0 - dar0.mean()) / corr,
+                (dar1 - dar1.mean()) / corr,
+            )
+
+        pixs = self.pixel * self.psf.scale
+        data, grad0, grad1 = np.zeros((3, len(pixs), len(self.locations), *self.shape))
+        res = get_chunked_data(self.locations * self.psf.scale, pixs)
+        r = np.asarray([item["r"] for _, item in res.items()])
+        c = np.asarray([item["c"] for _, item in res.items()])
+        shape = (
+            np.ceil(np.max(r[:, 1] - r[:, 0])).astype(int),
+            np.ceil(np.max(c[:, 1] - c[:, 0])).astype(int),
+        )
+        R, C, data, grad0, grad1 = np.zeros((5, len(res), *shape))
+        for idx, key in enumerate(res.keys()):
+            R[idx], C[idx], data[idx], grad0[idx], grad1[idx] = collapse(
+                res[key], shape
+            )
+        self.data = data
+        # data, grad0, grad1 = data, grad0, grad1
+        self.X = Sparse3D(
+            data.transpose([1, 2, 0]),
+            R.transpose([1, 2, 0]) - self.corner[0],
+            C.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape,
+        )
+
+        self.dX0 = Sparse3D(
+            grad0.transpose([1, 2, 0]),
+            R.transpose([1, 2, 0]) - self.corner[0],
+            C.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape,
+        )
+
+        self.dX1 = Sparse3D(
+            grad1.transpose([1, 2, 0]),
+            R.transpose([1, 2, 0]) - self.corner[0],
+            C.transpose([1, 2, 0]) - self.corner[1],
+            imshape=self.shape,
+        )
+
+    def model(
+        self,
+        spectra: npt.ArrayLike,
+        delta_pos: Optional[npt.ArrayLike] = None,
+        quiet: bool = False,
+        downsample: bool = False,
+    ) -> npt.ArrayLike:
+        """`spectra` must have shape nwav x ntargets x ntime"""
+        if spectra.ndim == 1:
+            spectra = spectra[:, None, None]
+        elif spectra.ndim == 2:
+            spectra = spectra[:, :, None]
+        elif spectra.ndim != 3:
+            raise ValueError("Pass a 3D array for flux (npix, ntargets, ntime).")
+        if (spectra.shape[0] != self.npix) | (spectra.shape[1] != len(self)):
+            raise ValueError("`spectra` must have shape (npix, ntargets)")
+        if delta_pos is not None:
+            delta_pos = deepcopy(delta_pos) * float(self.scale)
+            if delta_pos.ndim == 1:
+                delta_pos = delta_pos[:, None]
+            elif delta_pos.ndim != 2:
+                raise ValueError("Pass 2D array for delta_pos (2, ntime).")
+
+        ar = self._get_ar(flux=np.vstack(spectra), delta_pos=delta_pos, quiet=quiet)
+
+        if self.scale == 1:
+            return ar
+        if downsample:
+            return downsample_array(ar, self.scale)
+        else:
+            return ar

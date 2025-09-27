@@ -99,9 +99,7 @@ def display_config() -> pd.DataFrame:
     dfs = []
     for section in config.sections():
         df = pd.DataFrame(
-            np.asarray(
-                [(key, value) for key, value in dict(config[section]).items()]
-            )
+            np.asarray([(key, value) for key, value in dict(config[section]).items()])
         )
         df["section"] = section
         df.columns = ["key", "value", "section"]
@@ -116,4 +114,4 @@ logger.setLevel(config["SETTINGS"]["log_level"])
 
 from .prf import PRF  # noqa: F401, E402
 from .psf import PSF  # noqa: F401, E402
-from .scene import ROIScene, Scene, TraceScene  # noqa: F401, E402
+from .scene import ROIScene, Scene, TraceScene, PixelTraceScene  # noqa: F401, E402
