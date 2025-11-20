@@ -4,7 +4,9 @@ src/pandorapsf/data/pandora_nir*.*
 src/pandorapsf/data/phoenix
 src/pandorapsf/data/phoenix.zip
 src/pandorapsf/data/pandora_gaussian_psf.fits
+docs/calibration/
 docs/calibration/*.fits
+
 
 # Mac things
 .DS_Store
