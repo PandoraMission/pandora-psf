@@ -12,6 +12,7 @@ pandorasat = ">=0.12.6"
 sparse3d = ">=1.0.3"
 appdirs = "^1.4.4"
 numpy = ">=1.26.0"
+pandoraref = ">=0.2.0"
 
 [tool.poetry.group.dev]
 optional = true
@@ -31,6 +32,10 @@ mkdocstrings = {version = "^0.28.2", extras = ["python"]}
 jupyter-contrib-nbextensions = "^0.7.0"
 notebook = ">=6.0.0,<7.0.0"
 lamatrix = ">=1.0.1"
+ipympl = "^0.9.7"
+ipywidgets = "^8.1.7"
+matplotlib = ">=3.7"
+jupyterlab-widgets = "^3.0.15"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

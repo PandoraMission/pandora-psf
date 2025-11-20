@@ -14,7 +14,12 @@ from pandorasat.phoenix import get_phoenix_model
 from . import DATADIR, PACKAGEDIR, logger
 from .docstrings import add_docstring
 from .plotting import plot_spatial, plot_spectral
-from .utils import bin_prf, verify_nir_psf_files, verify_vis_psf_files
+from .utils import (
+    bin_prf,
+    interpfunc,
+    verify_nir_psf_files,
+    verify_vis_psf_files,
+)
 
 __all__ = ["PSF"]
 
@@ -128,9 +133,12 @@ class PSF(object):
                     [np.hstack([dim, list(dims - set([dim]))]) + 2, 0, 1]
                 )
                 deshape = [
-                    np.where(reshape == idx)[0][0] for idx in range(len(reshape))
+                    np.where(reshape == idx)[0][0]
+                    for idx in range(len(reshape))
                 ]
-                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(deshape)
+                self.psf_flux = self.psf_flux.transpose(reshape)[s].transpose(
+                    deshape
+                )
 
                 midpoint = getattr(self, self.dimension_names[dim] + "1d")
                 midpoint = midpoint[len(midpoint) // 2]
@@ -196,7 +204,9 @@ class PSF(object):
             dim = np.where(np.in1d(dnms2, key))[0][0]
             for dnm in dnms:
                 X[dnm] = X[dnm].transpose(
-                    np.hstack([dim, list(set(np.arange(len(dnms2))) - set([dim]))])
+                    np.hstack(
+                        [dim, list(set(np.arange(len(dnms2))) - set([dim]))]
+                    )
                 )[0]
             dnms2.pop(dim)
         psf2 = PSF(
@@ -243,14 +253,14 @@ class PSF(object):
             self.trace_sensitivity,
         )
 
-        if (
-            not ((spectrum.unit * sens.unit) * wavelength.unit).to(
-                u.electron / u.second
-            )
-            == 1
-        ):
+        if not spectrum.unit.is_equivalent("erg / (Angstrom s cm2)"):
             raise ValueError(
                 "Spectrum must be in units equivalent to erg / (Angstrom s cm2)."
+            )
+
+        if not (wavelength.unit).is_equivalent(wavelength_grid.unit):
+            raise ValueError(
+                "`wavelength` and `wavelength_grid` must have equivalent units."
             )
 
         # Calculate the weighted flux contribution in each wavelength bin
@@ -261,13 +271,15 @@ class PSF(object):
                 np.hstack(
                     [
                         0,
-                        *np.interp(x, wavelength.value, spectrum.value * sens.value),
+                        *np.interp(
+                            x, wavelength.value, spectrum.value * sens.value
+                        ),
                         0,
                     ]
                 ),
                 np.hstack([x[0] - 1e-10, *x, x[-1] + 1e-10]),
-            )
-        integrated_flux *= u.electron / u.second
+            ) / (bounds1[idx] - bounds0[idx])
+        integrated_flux *= spectrum.unit * sens.unit
 
         return integrated_flux
 
@@ -416,8 +428,8 @@ class PSF(object):
         elif self.name == "nirda":
             detector = ps.NIRDetector()
             self._trace_pixel = np.arange(-150, 70, 0.5) * u.pixel
-            self._trace_wavelength = detector.reference.get_wavelength_position(
-                self._trace_pixel
+            self._trace_wavelength = (
+                detector.reference.get_wavelength_position(self._trace_pixel)
             )
             self._trace_sensitivity = detector.reference.get_sensitivity(
                 self._trace_wavelength
@@ -485,7 +497,11 @@ class PSF(object):
         # This should make the array ROW-major
         replace = {"x": "column", "y": "row"}
         dimension_names = [
-            (replace[i.name.lower()] if i.name.lower() in replace else i.name.lower())
+            (
+                replace[i.name.lower()]
+                if i.name.lower() in replace
+                else i.name.lower()
+            )
             for i in hdu[2:]
         ]
 
@@ -502,13 +518,20 @@ class PSF(object):
 
         # We expect the images to be in the first few dimensions
         psf_flux = hdu[1].data
-        if (np.asarray(psf_flux.shape)[l] == np.asarray(hdu[2].data.shape)).all():
-            psf_flux = psf_flux.transpose(np.hstack([1 + l[-1] + 1, l[-1] + 1, *l]))
+        if (
+            np.asarray(psf_flux.shape)[l] == np.asarray(hdu[2].data.shape)
+        ).all():
+            psf_flux = psf_flux.transpose(
+                np.hstack([1 + l[-1] + 1, l[-1] + 1, *l])
+            )
         else:
             psf_flux = psf_flux.transpose(np.hstack([1, 0, *l + 2]))
         dimension_names = [dimension_names[l1] for l1 in l]
         dimension_units = [u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
-        X = [hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"]) for l1 in l + 2]
+        X = [
+            hdu[l1].data.transpose(l) * u.Unit(hdu[l1].header["UNIT"])
+            for l1 in l + 2
+        ]
 
         return cls(
             name=name,
@@ -550,7 +573,9 @@ class PSF(object):
             dim = np.where(l)[0][0]
             value = u.Quantity(value, self.dimension_units[dim])
             bounds = getattr(self, self.dimension_names[dim] + "_bounds")
-            if (value.value < bounds[0].value) | (value.value > bounds[1].value):
+            if (value.value < bounds[0].value) | (
+                value.value > bounds[1].value
+            ):
                 if not self.extrapolate:
                     raise OutOfBoundsError(
                         f"Point ({value}) out of {self.dimension_names[dim]} bounds."
@@ -565,7 +590,19 @@ class PSF(object):
         return cleaned
 
     @add_docstring("gradients")
-    def psf(self, gradients=False, **kwargs):
+    def psf(self, *args, **kwargs):
+        """
+        Interpolate the PSF cube to a particular point
+
+        Returns
+        -------
+        ar : np.ndarray of shape self.shape
+            The interpolated PSF
+        """
+        return self._psf(*args, **kwargs)
+
+    @add_docstring("gradients")
+    def _psf(self, gradients=False, **kwargs):
         """
         Interpolate the PSF cube to a particular point
 
@@ -631,16 +668,16 @@ class PSF(object):
         row, column = u.Quantity(row, u.pixel), u.Quantity(column, u.pixel)
         if "row" in self.dimension_names:
             if gradients:
-                psf0, dpsf0, dpsf1 = self.psf(
+                psf0, dpsf0, dpsf1 = self._psf(
                     row=row, column=column, gradients=True, **kwargs
                 )
             else:
-                psf0 = self.psf(row=row, column=column, **kwargs)
+                psf0 = self._psf(row=row, column=column, **kwargs)
         else:
             if gradients:
-                psf0, dpsf0, dpsf1 = self.psf(gradients=True, **kwargs)
+                psf0, dpsf0, dpsf1 = self._psf(gradients=True, **kwargs)
             else:
-                psf0 = self.psf(**kwargs)
+                psf0 = self._psf(**kwargs)
         rb, cb, psfb = bin_prf(
             psf0,
             self.psf_row.value,
@@ -691,26 +728,6 @@ class PSF(object):
             image_type=image_type,
             **kwargs,
         )
-
-
-def interpfunc(l, lp, PSF0):
-    """Interpolation function.
-    Given a grid of points l and a desired point lp will interpolate n dimensional PSF0.
-    Grid is always assumed to be the last dimension."""
-    if l in lp:
-        PSF1 = PSF0[:, :, np.where(lp == l)[0][0]]
-    elif l < lp[0]:
-        PSF1 = PSF0[:, :, 0]
-    elif l > lp[-1]:
-        PSF1 = PSF0[:, :, -1]
-    else:
-        # Find the two closest frames
-        d = np.argsort(np.abs(lp - l))[:2]
-        d = d[np.argsort(lp[d])]
-        # Linearly interpolate
-        slope = (PSF0[:, :, d[0]] - PSF0[:, :, d[1]]) / (lp[d[0]] - lp[d[1]])
-        PSF1 = PSF0[:, :, d[1]] + (slope * (l - lp[d[1]]))
-    return PSF1
 
 
 def reorder(ar: np.ndarray, dim: int = 0):

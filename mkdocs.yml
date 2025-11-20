@@ -17,8 +17,11 @@ nav:
     - Example4: example-tracescene.ipynb
   - Calibration:
     - calibration/README.md
+    - calibration/building-initial-spectrum-normalization.ipynb
     - calibration/building-new-data-driven-prf-models.ipynb
-  
+    - calibration/building-new-data-driven-prf-nir.ipynb
+    - calibration/building-new-data-driven-wavelength-solution.ipynb
+
 theme:
   name: "material"
   icon:
