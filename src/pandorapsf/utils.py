@@ -908,7 +908,7 @@ def interp_prf(psf0, psf_column, psf_row, location=(0, 0), normalize=True):
     )(r, c, grid=True)
     if normalize:
         prf_im /= prf_im.sum()
-    return r, c, prf_im
+    return np.floor(r), np.floor(c), prf_im
 
 
 def downsample(ar, n=2):
@@ -935,3 +935,23 @@ def downsample(ar, n=2):
         )
     # Take the mean over the new dimensions
     return reshaped_array.sum(axis=(2, 4))
+
+
+def interpfunc(l, lp, PSF0):
+    """Interpolation function.
+    Given a grid of points l and a desired point lp will interpolate n dimensional PSF0.
+    Grid is always assumed to be the last dimension."""
+    if l in lp:
+        PSF1 = PSF0[:, :, np.where(lp == l)[0][0]]
+    elif l < lp[0]:
+        PSF1 = PSF0[:, :, 0]
+    elif l > lp[-1]:
+        PSF1 = PSF0[:, :, -1]
+    else:
+        # Find the two closest frames
+        d = np.argsort(np.abs(lp - l))[:2]
+        d = d[np.argsort(lp[d])]
+        # Linearly interpolate
+        slope = (PSF0[:, :, d[0]] - PSF0[:, :, d[1]]) / (lp[d[0]] - lp[d[1]])
+        PSF1 = PSF0[:, :, d[1]] + (slope * (l - lp[d[1]]))
+    return PSF1
