@@ -285,7 +285,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../calibration/" class="md-tabs__link">
+        <a href="../calibration/README.md" class="md-tabs__link">
           
   
   Calibration
@@ -645,15 +645,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#pandorapsf.prf.PRF.psf" class="md-nav__link">
-    <span class="md-ellipsis">
-      psf
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -876,11 +867,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../calibration/" class="md-nav__link">
+      <a href="../calibration/README.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Calibration Tutorials
+    None
     
   </span>
   
@@ -898,11 +889,77 @@
   
   
     <li class="md-nav__item">
-      <a href="../calibration/building-new-data-driven-prf-models/" class="md-nav__link">
+      <a href="../calibration/building-initial-spectrum-normalization.ipynb" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Building New Data Driven PRF Models for Visible
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calibration/building-new-data-driven-prf-models.ipynb" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calibration/building-new-data-driven-prf-nir.ipynb" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    None
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calibration/building-new-data-driven-wavelength-solution.ipynb" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    None
     
   </span>
   
@@ -1031,15 +1088,6 @@
   <a href="#pandorapsf.prf.PRF.prf" class="md-nav__link">
     <span class="md-ellipsis">
       prf
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pandorapsf.prf.PRF.psf" class="md-nav__link">
-    <span class="md-ellipsis">
-      psf
     </span>
   </a>
   
@@ -1796,76 +1844,6 @@ transpose: bool
                 <em>required</em>
             </td>
           </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>gradients</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether to return gradients. If True, will return an additional 2 arrays that contain the gradients in each axis.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="pandorapsf.prf.PRF.psf" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">psf</span><span class="p">(</span><span class="n">gradients</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
-
-</h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Interpolate the PSF cube to a particular point</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>ar</code></td>            <td>
-                  <code>np.ndarray of shape self.shape</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The interpolated PSF</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
           <tr class="doc-section-item">
             <td>
                 <code>gradients</code>
