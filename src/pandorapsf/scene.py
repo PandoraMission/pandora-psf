@@ -75,12 +75,21 @@ class Scene(object):
                 self.dX0.translate(tuple(coord))
                 self.dX1.translate(tuple(coord))
                 tdxs = np.where(unique_indices == index)[0]
-                ar[tdxs] = self.X.dot(flux[:, tdxs])
-                ar[tdxs] += self.dX0.dot(
-                    flux[:, tdxs] * -jitterdec[0, tdxs]
-                ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
+                if hasattr(flux, "unit"):
+                    ar[tdxs] = self.X.dot(flux[:, tdxs].value)
+                    ar[tdxs] += self.dX0.dot(
+                        flux[:, tdxs].value * -jitterdec[0, tdxs]
+                    ) + self.dX1.dot(flux[:, tdxs].value * -jitterdec[1, tdxs])
+                else:
+                    ar[tdxs] = self.X.dot(flux[:, tdxs])
+                    ar[tdxs] += self.dX0.dot(
+                        flux[:, tdxs] * -jitterdec[0, tdxs]
+                    ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
         else:
-            ar = self.X.dot(flux)
+            if hasattr(flux, "unit"):
+                ar = self.X.dot(flux.value)
+            else:
+                ar = self.X.dot(flux)
         if isinstance(flux, u.Quantity):
             return ar * flux.unit / u.pixel
         return ar
@@ -359,12 +368,21 @@ class ROIScene(Scene):
                 self.dX0.translate(tuple(coord))
                 self.dX1.translate(tuple(coord))
                 tdxs = np.where(unique_indices == index)[0]
-                ar[:, tdxs] = self.X.dot(flux[:, tdxs])
-                ar[:, tdxs] += self.dX0.dot(
-                    flux[:, tdxs] * -jitterdec[0, tdxs]
-                ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
+                if hasattr(flux, "unit"):
+                    ar[:, tdxs] = self.X.dot(flux.value[:, tdxs])
+                    ar[:, tdxs] += self.dX0.dot(
+                        flux.value[:, tdxs] * -jitterdec[0, tdxs]
+                    ) + self.dX1.dot(flux.value[:, tdxs] * -jitterdec[1, tdxs])
+                else:
+                    ar[:, tdxs] = self.X.dot(flux[:, tdxs])
+                    ar[:, tdxs] += self.dX0.dot(
+                        flux[:, tdxs] * -jitterdec[0, tdxs]
+                    ) + self.dX1.dot(flux[:, tdxs] * -jitterdec[1, tdxs])
         else:
-            ar = self.X.dot(flux)
+            if hasattr(flux, "unit"):
+                ar = self.X.dot(flux.value)
+            else:
+                ar = self.X.dot(flux)
         return ar
 
     def fit_images(

@@ -427,10 +427,16 @@ class PSF(object):
             )
         elif self.name == "nirda":
             detector = ps.NIRDetector()
-            self._trace_pixel = np.arange(-150, 70, 0.5) * u.pixel
+            self._trace_pixel = np.arange(-200, 200, 0.5) * u.pixel
             self._trace_wavelength = (
                 detector.reference.get_wavelength_position(self._trace_pixel)
             )
+            k = np.unique(np.sort(self._trace_wavelength), return_index=True)[
+                1
+            ][1:]
+            k = np.hstack([k[0] - 1, k])
+            self._trace_pixel = self._trace_pixel[k]
+            self._trace_wavelength = self._trace_wavelength[k]
             self._trace_sensitivity = detector.reference.get_sensitivity(
                 self._trace_wavelength
             )

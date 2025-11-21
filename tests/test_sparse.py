@@ -70,19 +70,19 @@ def test_roiSparse():
     #    assert sw.data.sum() == 370
     assert sw.dtype == float
 
-    assert sw.dot(np.ones(20)).shape == (3, 1, 10, 10)
+    assert sw.dot(np.ones(20)).shape == (3, 10, 10)
     assert isinstance(sw.dot(np.ones(20)), np.ndarray)
     assert np.prod(sw.tocsr().dot(np.ones(20)).shape) == np.prod(sw.imshape)
 
     # translate the data away everything should be zero:
     sw.translate((-150, -150))
-    assert sw.dot(np.ones(20)).shape == (3, 1, 10, 10)
+    assert sw.dot(np.ones(20)).shape == (3, 10, 10)
     assert isinstance(sw.dot(np.ones(20)), np.ndarray)
     assert sw.dot(np.ones(20)).sum() == 0
     assert sw.tocsr().dot(np.ones(20)).sum() == 0
 
     sw.reset()
-    assert sw.dot(np.ones(20)).shape == (3, 1, 10, 10)
+    assert sw.dot(np.ones(20)).shape == (3, 10, 10)
     assert isinstance(sw.dot(np.ones(20)), np.ndarray)
     assert sw.dot(np.ones(20)).sum() != 0
     assert sw.tocsr().dot(np.ones(20)).sum() != 0

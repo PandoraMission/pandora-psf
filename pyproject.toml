@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pandorapsf"
-version = "0.8.0"
+version = "0.8.1"
 description = ""
 authors = ["Christina Hedges <christina.l.hedges@nasa.gov>"]
 readme = "docs/README.md"

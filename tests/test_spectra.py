@@ -12,9 +12,7 @@ import pandorapsf as pp
 def test_vega():
     nirda = ps.NIRDetector()
     p = pp.PSF.from_name("nirda_fallback", transpose=True)
-    ts = pp.TraceScene(
-        np.asarray([[300, 40]]), psf=p, wavelength=p.trace_wavelength[:-1]
-    )
+    ts = pp.TraceScene(np.asarray([[200, 40]]), psf=p)
 
     wav, sed = ps.phoenix.load_vega()
     wav = wav.to(u.micron)
@@ -25,10 +23,10 @@ def test_vega():
     a = np.trapz(sens[k] * sed[k], wav[k]).to(u.electron / u.s)
 
     f = p.integrate_spectrum(wav[k], sed[k], ts.wavelength)
-    k = np.isfinite(f)
+    j = np.isfinite(f)
 
     # The total flux through the sensitivity curve after integrating to a lower resolution
-    b = np.trapz(f[k], ts.wavelength[k]).to(u.electron / u.s)
+    b = np.trapz(f[j], ts.wavelength[j]).to(u.electron / u.s)
 
     # Flux should be conserved
     assert np.isclose(a, b, rtol=1e-3)
@@ -40,7 +38,7 @@ def test_vega():
     spectrum_per_pix = (ar.sum(axis=1)).to(u.electron / u.second / u.pixel)
 
     # Flux should be conserved
-    pix = (np.arange(0, 400, 1) - 300) * u.pixel
+    pix = (np.arange(0, 400, 1) - 200) * u.pixel
     c = np.trapz(spectrum_per_pix, pix)
     assert np.isclose(a, c, rtol=1e-3)
 
