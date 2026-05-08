@@ -2,6 +2,7 @@
 import configparser  # noqa: E402
 import os  # noqa
 from importlib.metadata import PackageNotFoundError, version  # noqa
+from pathlib import Path
 
 # Third-party
 import numpy as np
@@ -19,9 +20,12 @@ def get_version():
 __version__ = get_version()
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
-TESTDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/tests/"
-DOCSDIR = "/".join(PACKAGEDIR.split("/")[:-2]) + "/docs/"
-PANDORASTYLE = "{}/data/pandora.mplstyle".format(PACKAGEDIR)
+_PACKAGE_PATH = Path(__file__).resolve().parent
+_REPO_PATH = _PACKAGE_PATH.parent.parent
+PACKAGEDIR = str(_PACKAGE_PATH)
+TESTDIR = str(_REPO_PATH / "tests") + os.sep
+DOCSDIR = str(_REPO_PATH / "docs") + os.sep
+PANDORASTYLE = str(_PACKAGE_PATH / "data" / "pandora.mplstyle")
 
 # Third-party
 from pandorasat import get_logger  # noqa: E402
@@ -29,8 +33,8 @@ from pandorasat import get_logger  # noqa: E402
 logger = get_logger("pandorapsf")
 
 CONFIGDIR = user_config_dir("pandorapsf")
-os.makedirs(CONFIGDIR, exist_ok=True)
-CONFIGPATH = os.path.join(CONFIGDIR, "config.ini")
+Path(CONFIGDIR).mkdir(parents=True, exist_ok=True)
+CONFIGPATH = str(Path(CONFIGDIR) / "config.ini")
 
 
 def reset_config():
@@ -111,7 +115,7 @@ def display_config() -> pd.DataFrame:
 
 
 DATADIR = config["SETTINGS"]["data_dir"]
-os.makedirs(DATADIR, exist_ok=True)
+Path(DATADIR).mkdir(parents=True, exist_ok=True)
 logger.setLevel(config["SETTINGS"]["log_level"])
 
 from .prf import PRF  # noqa: F401, E402
