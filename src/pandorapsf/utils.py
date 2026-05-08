@@ -1,10 +1,10 @@
 """Handy utilities for PSFs"""
 
 # Standard library
-import os
 import shutil  # noqa: E402
 from datetime import datetime
 from functools import lru_cache
+from pathlib import Path
 
 # Third-party
 import astropy.units as u
@@ -18,11 +18,17 @@ from scipy.ndimage import gaussian_filter
 
 from . import DATADIR, PACKAGEDIR, config, logger
 
+DATA_DIR = Path(DATADIR)
+PACKAGE_DIR = Path(PACKAGEDIR)
+VIS_PSF_PATH = DATA_DIR / "pandora_vis_psf.fits"
+VIS_PRF_PATH = DATA_DIR / "pandora_vis_prf.fits"
+NIR_PSF_PATH = DATA_DIR / "pandora_nir_psf.fits"
+
 
 @lru_cache()
 def verify_vis_psf_files():
     """Check that the PSF files exist, and have the right times in them."""
-    if not os.path.isfile(f"{DATADIR}/pandora_vis_psf.fits"):
+    if not VIS_PSF_PATH.is_file():
         # Third-party
         from astropy.utils.data import download_file  # noqa: E402
 
@@ -32,12 +38,10 @@ def verify_vis_psf_files():
             config["SETTINGS"]["vis_psf_download_location"],
             pkgname="pandora-psf",
         )
-        shutil.move(p, f"{DATADIR}/pandora_vis_psf.fits")
-        logger.warning(
-            f"VIS PSF downloaded to {DATADIR}/pandora_vis_psf.fits."
-        )
+        shutil.move(p, VIS_PSF_PATH)
+        logger.warning(f"VIS PSF downloaded to {VIS_PSF_PATH}.")
 
-    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
+    hdulist = fits.open(VIS_PSF_PATH)
     hdulist.verify("exception")
     if not (
         hdulist[0].header["DATE"]
@@ -57,13 +61,13 @@ def verify_vis_psf_files():
                 )
                 for hdu in hdulist
             ]
-        ).writeto(DATADIR + "/pandora_vis_psf.fits", overwrite=True)
+        ).writeto(VIS_PSF_PATH, overwrite=True)
 
 
 @lru_cache()
 def verify_vis_prf_files():
     """Check that the PRF files exist, and have the right times in them."""
-    if not os.path.isfile(f"{DATADIR}/pandora_vis_prf.fits"):
+    if not VIS_PRF_PATH.is_file():
         # Third-party
         from astropy.utils.data import download_file  # noqa: E402
 
@@ -73,12 +77,10 @@ def verify_vis_prf_files():
             config["SETTINGS"]["vis_prf_download_location"],
             pkgname="pandora-psf",
         )
-        shutil.move(p, f"{DATADIR}/pandora_vis_prf.fits")
-        logger.warning(
-            f"VIS PSF downloaded to {DATADIR}/pandora_vis_prf.fits."
-        )
+        shutil.move(p, VIS_PRF_PATH)
+        logger.warning(f"VIS PSF downloaded to {VIS_PRF_PATH}.")
 
-    hdulist = fits.open(DATADIR + "/pandora_vis_prf.fits")
+    hdulist = fits.open(VIS_PRF_PATH)
     hdulist.verify("exception")
     if not (
         hdulist[0].header["CREATED"]
@@ -98,13 +100,13 @@ def verify_vis_prf_files():
                 )
                 for hdu in hdulist
             ]
-        ).writeto(DATADIR + "/pandora_vis_prf.fits", overwrite=True)
+        ).writeto(VIS_PRF_PATH, overwrite=True)
 
 
 @lru_cache()
 def verify_nir_psf_files():
     """Check that the PSF files exist, and have the right times in them."""
-    if not os.path.isfile(f"{DATADIR}/pandora_nir_psf.fits"):
+    if not NIR_PSF_PATH.is_file():
         # Third-party
         from astropy.utils.data import download_file  # noqa: E402
 
@@ -114,12 +116,10 @@ def verify_nir_psf_files():
             config["SETTINGS"]["nir_psf_download_location"],
             pkgname="pandora-psf",
         )
-        shutil.move(p, f"{DATADIR}/pandora_nir_psf.fits")
-        logger.warning(
-            f"NIR PSF downloaded to {DATADIR}/pandora_nir_psf.fits."
-        )
+        shutil.move(p, NIR_PSF_PATH)
+        logger.warning(f"NIR PSF downloaded to {NIR_PSF_PATH}.")
 
-    hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
+    hdulist = fits.open(NIR_PSF_PATH)
     hdulist.verify("exception")
     if not (
         hdulist[0].header["DATE"]
@@ -139,7 +139,7 @@ def verify_nir_psf_files():
                 )
                 for hdu in hdulist
             ]
-        ).writeto(DATADIR + "/pandora_nir_psf.fits", overwrite=True)
+        ).writeto(NIR_PSF_PATH, overwrite=True)
 
 
 def make_pixel_files():
@@ -193,7 +193,7 @@ def make_pixel_files():
         return sw_qe * u.electron / u.photon
 
     def throughput(wavelength):
-        df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
+        df = pd.read_csv(PACKAGE_DIR / "data" / "dichroic-transmission.csv")
         throughput = np.interp(
             wavelength.to(u.angstrom).value, *np.asarray(df).T
         )
@@ -201,7 +201,7 @@ def make_pixel_files():
 
     mirror_diameter = 0.43 * u.m
 
-    df = pd.read_csv(f"{PACKAGEDIR}/data/pixel_vs_wavelength.csv")
+    df = pd.read_csv(PACKAGE_DIR / "data" / "pixel_vs_wavelength.csv")
     pixel = np.round(np.arange(-400, 80, 0.25), 5) * u.pixel
     wav = (
         np.polyval(np.polyfit(df.Pixel, df.Wavelength, 3), pixel.value)
@@ -239,10 +239,10 @@ def make_pixel_files():
     hdu.header.append(
         fits.Card("CORRUNIT", corr.unit.to_string(), "units of correction")
     )
-    hdu.writeto(f"{PACKAGEDIR}/data/nirda-wav-solution.fits", overwrite=True)
+    hdu.writeto(PACKAGE_DIR / "data" / "nirda-wav-solution.fits", overwrite=True)
 
     def qe(wavelength):  # noqa: F811
-        df = pd.read_csv(f"{PACKAGEDIR}/data/pandora_visible_qe.csv")
+        df = pd.read_csv(PACKAGE_DIR / "data" / "pandora_visible_qe.csv")
         wav, transmission = (
             np.asarray(df.Wavelength) * u.angstrom,
             np.asarray(df.Transmission),
@@ -254,7 +254,7 @@ def make_pixel_files():
         )
 
     def throughput(wavelength):  # noqa: F811
-        df = pd.read_csv(f"{PACKAGEDIR}/data/dichroic-transmission.csv")
+        df = pd.read_csv(PACKAGE_DIR / "data" / "dichroic-transmission.csv")
         throughput = 1 - np.interp(
             wavelength.to(u.angstrom).value, *np.asarray(df).T
         )
@@ -293,7 +293,7 @@ def make_pixel_files():
     hdu.header.append(
         fits.Card("CORRUNIT", corr.unit.to_string(), "units of correction")
     )
-    hdu.writeto(f"{PACKAGEDIR}/data/visda-wav-solution.fits", overwrite=True)
+    hdu.writeto(PACKAGE_DIR / "data" / "visda-wav-solution.fits", overwrite=True)
 
 
 def _open_LLNL_file(
@@ -476,7 +476,7 @@ def make_PSF_fits_files(
         [
             ("AUTHOR1", "LLNL"),
             ("AUTHOR2", "Pandora DPC"),
-            ("ORIGIN", filename.split("/")[-1]),
+            ("ORIGIN", Path(filename).name),
             ("CREATED", created_on),
             ("DATE", datetime.now().isoformat()),
             (
@@ -518,7 +518,7 @@ def make_lowres_package_data():
 
     psf = PSF.from_name("nirda")
     psf = psf.freeze_dimension(row=0, column=0)
-    hdulist = fits.open(DATADIR + "/pandora_nir_psf.fits")
+    hdulist = fits.open(NIR_PSF_PATH)
     hdr = hdulist[0].header
     hdr["SUFFIX"] = (
         hdulist[0].header["SUFFIX"] + "_"
@@ -543,12 +543,10 @@ def make_lowres_package_data():
         ]
     )
     hdu[2].header["UNIT"] = psf.wavelength.unit.to_string()
-    hdu.writeto(
-        PACKAGEDIR + "/data/pandora_nir_psf_lowres.fits", overwrite=True
-    )
+    hdu.writeto(PACKAGE_DIR / "data" / "pandora_nir_psf_lowres.fits", overwrite=True)
 
     psf = PSF.from_name("visda")
-    hdulist = fits.open(DATADIR + "/pandora_vis_psf.fits")
+    hdulist = fits.open(VIS_PSF_PATH)
     hdr = hdulist[0].header
     hdr["SUFFIX"] = (
         hdulist[0].header["SUFFIX"] + "_"
@@ -577,9 +575,7 @@ def make_lowres_package_data():
     )
     hdu[2].header["UNIT"] = psf.row.unit.to_string()
     hdu[3].header["UNIT"] = psf.column.unit.to_string()
-    hdu.writeto(
-        PACKAGEDIR + "/data/pandora_vis_psf_lowres.fits", overwrite=True
-    )
+    hdu.writeto(PACKAGE_DIR / "data" / "pandora_vis_psf_lowres.fits", overwrite=True)
 
 
 # def make_vis_PSF_fits_files(dir, nbin=1, suffix="_hr"):

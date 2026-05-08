@@ -1,6 +1,7 @@
 """Defines the PSF class"""
 
 # Standard library
+from pathlib import Path
 from typing import Dict, List, Union
 
 # Third-party
@@ -356,7 +357,7 @@ class PSF(object):
         if name.lower() in ["gauss", "gaussian", "test"]:
             p = PSF.from_file(
                 "gaussian",
-                f"{PACKAGEDIR}/data/pandora_gaussian_psf.fits",
+                Path(PACKAGEDIR) / "data" / "pandora_gaussian_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -368,7 +369,7 @@ class PSF(object):
             verify_vis_psf_files()
             p = PSF.from_file(
                 "visda",
-                f"{DATADIR}/pandora_vis_psf.fits",
+                Path(DATADIR) / "pandora_vis_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -383,7 +384,7 @@ class PSF(object):
             logger.info("Loading low resolution fallback file for VISDA.")
             p = PSF.from_file(
                 "visda",
-                f"{PACKAGEDIR}/data/pandora_vis_psf_lowres.fits",
+                Path(PACKAGEDIR) / "data" / "pandora_vis_psf_lowres.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -395,7 +396,7 @@ class PSF(object):
             verify_nir_psf_files()
             p = PSF.from_file(
                 "nirda",
-                f"{DATADIR}/pandora_nir_psf.fits",
+                Path(DATADIR) / "pandora_nir_psf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -406,7 +407,7 @@ class PSF(object):
             logger.info("Loading low resolution fallback file for NIRDA.")
             p = PSF.from_file(
                 "nirda",
-                f"{PACKAGEDIR}/data/pandora_nir_psf_lowres.fits",
+                Path(PACKAGEDIR) / "data" / "pandora_nir_psf_lowres.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
@@ -469,7 +470,7 @@ class PSF(object):
     def from_file(
         cls,
         name: str,
-        file: str = f"{PACKAGEDIR}/data/pandora_vis_2024-05.fits",
+        file: Union[str, Path] = Path(PACKAGEDIR) / "data" / "pandora_vis_2024-05.fits",
         transpose: bool = False,
         extrapolate: bool = False,
         scale: int = 1,
@@ -490,7 +491,7 @@ class PSF(object):
         psf : pandorapsf.PSF
             Returns a PSF object
         """
-        if isinstance(file, str):
+        if isinstance(file, (str, Path)):
             hdu = fits.open(file)
         elif isinstance(file, fits.HDUList):
             hdu = file

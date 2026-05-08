@@ -1,6 +1,8 @@
 """Defines the PRF class"""
 
 # Third-party
+from pathlib import Path
+
 import astropy.units as u
 import numpy as np
 import pandorasat as ps
@@ -211,7 +213,7 @@ class PRF(PSF):
             verify_vis_prf_files()
             p = PRF.from_file(
                 "visda",
-                f"{DATADIR}/pandora_vis_prf.fits",
+                Path(DATADIR) / "pandora_vis_prf.fits",
                 transpose=transpose,
                 extrapolate=True,
                 scale=scale,
